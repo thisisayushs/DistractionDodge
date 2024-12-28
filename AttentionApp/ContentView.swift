@@ -46,9 +46,25 @@ struct MainCircle: View {
     }
 }
 
+// Add NotificationAnimation view modifier
+struct NotificationAnimation: ViewModifier {
+    let index: Int
+    
+    func body(content: Content) -> some View {
+        content
+            .offset(y: -20)
+            .animation(
+                .spring(response: 0.5, dampingFraction: 0.65)
+                .delay(Double(index) * 0.15),
+                value: index
+            )
+    }
+}
+
 // Update NotificationView to use app-specific colors
 struct NotificationView: View {
     let distraction: Distraction
+    let index: Int  // Add index parameter
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -84,6 +100,7 @@ struct NotificationView: View {
                 .shadow(radius: 5)
         )
         .frame(width: 300)
+        .modifier(NotificationAnimation(index: index))  // Add animation modifier
     }
 }
 
@@ -128,11 +145,23 @@ struct ContentView: View {
                 })
                 .edgesIgnoringSafeArea(.all)
                 
-                // Distractions
-                ForEach(distractions) { distraction in
-                    NotificationView(distraction: distraction)
-                        .position(distraction.position)
-                        .transition(.scale.combined(with: .opacity))
+                // Update Distractions view with indexed animations
+                ForEach(Array(distractions.enumerated()), id: \.element.id) { index, distraction in
+                    NotificationView(distraction: distraction, index: index)
+                        .position(
+                            x: distraction.position.x,
+                            y: distraction.position.y + 20  // Offset to account for animation
+                        )
+                        .transition(
+                            .asymmetric(
+                                insertion: .scale(scale: 0.8)
+                                    .combined(with: .opacity)
+                                    .animation(.spring(response: 0.4, dampingFraction: 0.6)),
+                                removal: .scale(scale: 0.9)
+                                    .combined(with: .opacity)
+                                    .animation(.easeOut(duration: 0.2))
+                            )
+                        )
                 }
                 
                 // Main circle with simplified properties
