@@ -6,8 +6,9 @@
 //
 
 import SwiftUI
+import AVFoundation
 
-// Update Distraction model to include color information
+// Update Distraction model to include color information and sound ID
 struct Distraction: Identifiable {
     let id = UUID()
     var position: CGPoint
@@ -15,6 +16,7 @@ struct Distraction: Identifiable {
     var message: String
     var appIcon: String
     var iconColors: [Color]  // Array for gradient colors
+    var soundID: SystemSoundID  // Add sound ID
 }
 
 // Add simple MainCircle view
@@ -114,24 +116,32 @@ struct ContentView: View {
     @State private var distractions: [Distraction] = []
     @State private var distractionTimer: Timer? = nil
     
-    // Update notification content with app-specific colors
-    private let notificationData: [(title: String, message: String, icon: String, colors: [Color])] = [
+    // Update notification content with app-specific colors and sounds
+    private let notificationData: [(title: String, message: String, icon: String, colors: [Color], sound: SystemSoundID)] = [
         ("Messages", "Mom: Are you coming for dinner?", "message.fill",
-         [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)]),  // iOS Messages green
+         [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)],
+         1007),  // note sound
         ("Calendar", "Team Meeting in 15 minutes", "calendar",
-         [.red, .orange]),
+         [.red, .orange],
+         1005),  // chords sound
         ("Mail", "Weekly Report Due Today", "envelope.fill",
-         [.blue, .cyan]),
+         [.blue, .cyan],
+         1000),  // default notification sound
         ("Reminders", "Pick up groceries", "list.bullet",
-         [.orange, .yellow]),
+         [.orange, .yellow],
+         1005),  // chords sound
         ("FaceTime", "Missed call from Dad", "video.fill",
-         [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)]),  // iOS FaceTime green
+         [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)],
+         1002),  // droplet sound
         ("Weather", "Rain expected in your area", "cloud.rain.fill",
-         [.blue, .cyan]),
+         [.blue, .cyan],
+         1307),  // default notification sound
         ("Photos", "New Memory: Last Summer", "photo.fill",
-         [.purple, .indigo]),
+         [.purple, .indigo],
+         1118),  // Droplet Sound
         ("Clock", "Alarm for 7:00 AM", "alarm.fill",
-         [.orange, .red])
+         [.orange, .red],
+         1005)    // default notification sound
     ]
     
     var body: some View {
@@ -206,7 +216,7 @@ struct ContentView: View {
         }
     }
     
-    // Update distraction management function to include colors
+    // Update distraction management function to include colors and sounds
     private func startDistractions() {
         distractionTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
             withAnimation {
@@ -217,20 +227,26 @@ struct ContentView: View {
             let screenHeight = UIScreen.main.bounds.height
             let numberOfDistractions = Int.random(in: 1...2)
             
-            withAnimation {
-                for _ in 0..<numberOfDistractions {
-                    let notificationContent = notificationData.randomElement()!
-                    let newDistraction = Distraction(
-                        position: CGPoint(
-                            x: CGFloat.random(in: 150...(screenWidth-150)),
-                            y: CGFloat.random(in: 100...(screenHeight-100))
-                        ),
-                        title: notificationContent.title,
-                        message: notificationContent.message,
-                        appIcon: notificationContent.icon,
-                        iconColors: notificationContent.colors
-                    )
-                    distractions.append(newDistraction)
+            DispatchQueue.main.async {
+                withAnimation {
+                    for _ in 0..<numberOfDistractions {
+                        let notificationContent = notificationData.randomElement()!
+                        let newDistraction = Distraction(
+                            position: CGPoint(
+                                x: CGFloat.random(in: 150...(screenWidth-150)),
+                                y: CGFloat.random(in: 100...(screenHeight-100))
+                            ),
+                            title: notificationContent.title,
+                            message: notificationContent.message,
+                            appIcon: notificationContent.icon,
+                            iconColors: notificationContent.colors,
+                            soundID: notificationContent.sound
+                        )
+                        distractions.append(newDistraction)
+                        
+                        // Play app-specific sound
+                        AudioServicesPlaySystemSound(notificationContent.sound)
+                    }
                 }
             }
             
