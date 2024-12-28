@@ -61,10 +61,10 @@ struct NotificationAnimation: ViewModifier {
     }
 }
 
-// Update NotificationView to use app-specific colors
+// Update NotificationView to use static colors
 struct NotificationView: View {
     let distraction: Distraction
-    let index: Int  // Add index parameter
+    let index: Int
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -83,10 +83,10 @@ struct NotificationView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(distraction.title)
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.black)
                     Text(distraction.message)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color(white: 0.5))
                         .lineLimit(2)
                 }
                 
@@ -96,11 +96,12 @@ struct NotificationView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(.systemBackground))
-                .shadow(radius: 5)
+                .fill(Color.white)
+                .shadow(color: Color.white.opacity(0.1),
+                        radius: 5)
         )
         .frame(width: 300)
-        .modifier(NotificationAnimation(index: index))  // Add animation modifier
+        .modifier(NotificationAnimation(index: index))
     }
 }
 
