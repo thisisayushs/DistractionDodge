@@ -107,6 +107,71 @@ struct NotificationView: View {
     }
 }
 
+struct AppMessages {
+    static let messages = [
+        "Messages": [
+            "Mom: Are you coming for dinner?",
+            "Dad: Just landed at the airport",
+            "John: Let's meet for coffee",
+            "Sara: Don't forget about tomorrow",
+            "Alex: Check out this link"
+        ],
+        "Calendar": [
+            "Team Meeting in 15 minutes",
+            "Doctor's Appointment at 2 PM",
+            "Project Deadline Tomorrow",
+            "Lunch with colleagues",
+            "Weekly Review at 4 PM"
+        ],
+        "Mail": [
+            "Weekly Report Due Today",
+            "New email from HR Department",
+            "Meeting agenda updated",
+            "Invoice received",
+            "Travel itinerary confirmed"
+        ],
+        "Reminders": [
+            "Pick up groceries",
+            "Call the dentist",
+            "Pay electricity bill",
+            "Submit expense report",
+            "Book flight tickets"
+        ],
+        "FaceTime": [
+            "Missed call from Dad",
+            "Mom wants to FaceTime",
+            "Incoming call from John",
+            "Video call request",
+            "Group call from Family"
+        ],
+        "Weather": [
+            "Rain expected in your area",
+            "Temperature dropping tonight",
+            "High winds alert",
+            "Clear skies this afternoon",
+            "Storm warning for tonight"
+        ],
+        "Photos": [
+            "New Memory: Last Summer",
+            "Photos from your trip",
+            "Sharing suggestion: Beach Day",
+            "New shared album invite",
+            "Featured photos selected"
+        ],
+        "Clock": [
+            "Alarm for 7:00 AM",
+            "Timer completed",
+            "Bedtime in 30 minutes",
+            "Wake up alarm set",
+            "Timer paused"
+        ]
+    ]
+    
+    static func randomMessage(for app: String) -> String {
+        return messages[app]?.randomElement() ?? "New Notification"
+    }
+}
+
 struct ContentView: View {
     // Add state variables for position and gaze tracking
     @State private var position = CGPoint(x: UIScreen.main.bounds.width / 2,
@@ -116,32 +181,32 @@ struct ContentView: View {
     @State private var distractions: [Distraction] = []
     @State private var distractionTimer: Timer? = nil
     
-    // Update notification content with app-specific colors and sounds
-    private let notificationData: [(title: String, message: String, icon: String, colors: [Color], sound: SystemSoundID)] = [
-        ("Messages", "Mom: Are you coming for dinner?", "message.fill",
+    // Update notification data with correct sound IDs
+    private let notificationData: [(title: String, icon: String, colors: [Color], sound: SystemSoundID)] = [
+        ("Messages", "message.fill",
          [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)],
          1007),  // note sound
-        ("Calendar", "Team Meeting in 15 minutes", "calendar",
+        ("Calendar", "calendar",
          [.red, .orange],
          1005),  // chords sound
-        ("Mail", "Weekly Report Due Today", "envelope.fill",
+        ("Mail", "envelope.fill",
          [.blue, .cyan],
          1000),  // default notification sound
-        ("Reminders", "Pick up groceries", "list.bullet",
+        ("Reminders", "list.bullet",
          [.orange, .yellow],
          1005),  // chords sound
-        ("FaceTime", "Missed call from Dad", "video.fill",
+        ("FaceTime", "video.fill",
          [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)],
          1002),  // droplet sound
-        ("Weather", "Rain expected in your area", "cloud.rain.fill",
+        ("Weather", "cloud.rain.fill",
          [.blue, .cyan],
          1307),  // default notification sound
-        ("Photos", "New Memory: Last Summer", "photo.fill",
+        ("Photos", "photo.fill",
          [.purple, .indigo],
          1118),  // Droplet Sound
-        ("Clock", "Alarm for 7:00 AM", "alarm.fill",
+        ("Clock", "alarm.fill",
          [.orange, .red],
-         1005)    // default notification sound
+         1005)    // chords sound
     ]
     
     var body: some View {
@@ -237,7 +302,7 @@ struct ContentView: View {
                                 y: CGFloat.random(in: 100...(screenHeight-100))
                             ),
                             title: notificationContent.title,
-                            message: notificationContent.message,
+                            message: AppMessages.randomMessage(for: notificationContent.title),
                             appIcon: notificationContent.icon,
                             iconColors: notificationContent.colors,
                             soundID: notificationContent.sound
