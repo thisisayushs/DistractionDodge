@@ -7,43 +7,14 @@
 
 import SwiftUI
 
-// Add Distraction model
+// Update Distraction model to include color information
 struct Distraction: Identifiable {
     let id = UUID()
     var position: CGPoint
-    var color: Color
-    var shape: DistractionShape
-}
-
-// Add shape types for distractions
-enum DistractionShape {
-    case circle, square, triangle
-    
-    func view(color: Color) -> some View {
-        Group {
-            switch self {
-            case .circle:
-                Circle().fill(color)
-            case .square:
-                Rectangle().fill(color)
-            case .triangle:
-                Triangle().fill(color)
-            }
-        }
-        .frame(width: 60, height: 60)
-    }
-}
-
-// Add Triangle shape
-struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
-        return path
-    }
+    var title: String
+    var message: String
+    var appIcon: String
+    var iconColors: [Color]  // Array for gradient colors
 }
 
 // Add simple MainCircle view
@@ -75,6 +46,47 @@ struct MainCircle: View {
     }
 }
 
+// Update NotificationView to use app-specific colors
+struct NotificationView: View {
+    let distraction: Distraction
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Image(systemName: distraction.appIcon)
+                    .font(.title2)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: distraction.iconColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 30, height: 30)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(distraction.title)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text(distraction.message)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+            }
+            .padding()
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.systemBackground))
+                .shadow(radius: 5)
+        )
+        .frame(width: 300)
+    }
+}
+
 struct ContentView: View {
     // Add state variables for position and gaze tracking
     @State private var position = CGPoint(x: UIScreen.main.bounds.width / 2,
@@ -84,8 +96,25 @@ struct ContentView: View {
     @State private var distractions: [Distraction] = []
     @State private var distractionTimer: Timer? = nil
     
-    // Colors for distractions
-    private let distractionColors: [Color] = [.red, .orange, .yellow, .pink, .cyan]
+    // Update notification content with app-specific colors
+    private let notificationData: [(title: String, message: String, icon: String, colors: [Color])] = [
+        ("Messages", "Mom: Are you coming for dinner?", "message.fill",
+         [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)]),  // iOS Messages green
+        ("Calendar", "Team Meeting in 15 minutes", "calendar",
+         [.red, .orange]),
+        ("Mail", "Weekly Report Due Today", "envelope.fill",
+         [.blue, .cyan]),
+        ("Reminders", "Pick up groceries", "list.bullet",
+         [.orange, .yellow]),
+        ("FaceTime", "Missed call from Dad", "video.fill",
+         [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)]),  // iOS FaceTime green
+        ("Weather", "Rain expected in your area", "cloud.rain.fill",
+         [.blue, .cyan]),
+        ("Photos", "New Memory: Last Summer", "photo.fill",
+         [.purple, .indigo]),
+        ("Clock", "Alarm for 7:00 AM", "alarm.fill",
+         [.orange, .red])
+    ]
     
     var body: some View {
         GeometryReader { geometry in
@@ -101,7 +130,7 @@ struct ContentView: View {
                 
                 // Distractions
                 ForEach(distractions) { distraction in
-                    distraction.shape.view(color: distraction.color)
+                    NotificationView(distraction: distraction)
                         .position(distraction.position)
                         .transition(.scale.combined(with: .opacity))
                 }
@@ -147,7 +176,7 @@ struct ContentView: View {
         }
     }
     
-    // Distraction management function
+    // Update distraction management function to include colors
     private func startDistractions() {
         distractionTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
             withAnimation {
@@ -156,18 +185,20 @@ struct ContentView: View {
             
             let screenWidth = UIScreen.main.bounds.width
             let screenHeight = UIScreen.main.bounds.height
-            let numberOfDistractions = Int.random(in: 1...3)
+            let numberOfDistractions = Int.random(in: 1...2)
             
             withAnimation {
                 for _ in 0..<numberOfDistractions {
+                    let notificationContent = notificationData.randomElement()!
                     let newDistraction = Distraction(
                         position: CGPoint(
-                            x: CGFloat.random(in: 50...(screenWidth-50)),
-                            y: CGFloat.random(in: 50...(screenHeight-50))
+                            x: CGFloat.random(in: 150...(screenWidth-150)),
+                            y: CGFloat.random(in: 100...(screenHeight-100))
                         ),
-                        color: distractionColors.randomElement() ?? .red,
-                        shape: [DistractionShape.circle, .square, .triangle]
-                            .randomElement() ?? .circle
+                        title: notificationContent.title,
+                        message: notificationContent.message,
+                        appIcon: notificationContent.icon,
+                        iconColors: notificationContent.colors
                     )
                     distractions.append(newDistraction)
                 }
