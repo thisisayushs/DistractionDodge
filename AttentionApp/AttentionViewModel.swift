@@ -10,6 +10,10 @@ class AttentionViewModel: ObservableObject {
     private var timer: Timer?
     private var distractionTimer: Timer?
     
+    private var wasActiveBeforeBackground = false
+    
+    private var isInBackground = false
+    
     let notificationData: [(title: String, icon: String, colors: [Color], sound: SystemSoundID)] = [
         ("Messages", "message.fill",
          [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)],
@@ -37,16 +41,53 @@ class AttentionViewModel: ObservableObject {
          1005)
     ]
     
+    init() {
+        setupNotificationObservers()
+    }
+    
+    private func setupNotificationObservers() {
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            self.wasActiveBeforeBackground = (self.timer != nil || self.distractionTimer != nil)
+            self.pauseGame()
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            if self.wasActiveBeforeBackground {
+                self.resumeGame()
+            }
+        }
+    }
+    
     func startGame() {
         startRandomMovement()
         startDistractions()
     }
     
-    func stopGame() {
+    private func pauseGame() {
         timer?.invalidate()
         distractionTimer?.invalidate()
         timer = nil
         distractionTimer = nil
+    }
+    
+    private func resumeGame() {
+        startGame()
+    }
+    
+    func stopGame() {
+        wasActiveBeforeBackground = false
+        pauseGame()
+        distractions.removeAll()
     }
     
     func updateGazeStatus(_ isGazing: Bool) {
@@ -93,8 +134,15 @@ class AttentionViewModel: ObservableObject {
                     soundID: notificationContent.sound
                 )
                 self.distractions.append(newDistraction)
-                AudioServicesPlaySystemSound(notificationContent.sound)
+                
+                if UIApplication.shared.applicationState == .active {
+                    AudioServicesPlaySystemSound(notificationContent.sound)
+                }
             }
         }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }
