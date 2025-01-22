@@ -29,6 +29,8 @@ class AttentionViewModel: ObservableObject {
     private var moveDirection = CGPoint(x: 1, y: 1)
     private var currentNotificationInterval: TimeInterval = 2.0
     private var distractionProbability: Double = 0.2
+    private var scoreMultiplier: Int = 1
+    private var lastFocusState: Bool = false
     
     let notificationData: [(title: String, icon: String, colors: [Color], sound: SystemSoundID)] = [
         ("Messages", "message.fill",
@@ -96,6 +98,8 @@ class AttentionViewModel: ObservableObject {
         focusStreak = 0
         bestStreak = 0
         totalFocusTime = 0
+        scoreMultiplier = 1
+        lastFocusState = false
         position = CGPoint(x: UIScreen.main.bounds.width / 2,
                           y: UIScreen.main.bounds.height / 2)
         
@@ -161,6 +165,12 @@ class AttentionViewModel: ObservableObject {
     }
     
     func updateGazeStatus(_ isGazing: Bool) {
+        if lastFocusState && !isGazing {
+            let streakPenalty = min(Int(focusStreak), 10)
+            score = max(0, score - streakPenalty)
+            scoreMultiplier = 1
+        }
+        
         isGazingAtObject = isGazing
         if !isGazing {
             if focusStreak > bestStreak {
@@ -168,6 +178,8 @@ class AttentionViewModel: ObservableObject {
             }
             focusStreak = 0
         }
+        
+        lastFocusState = isGazing
     }
     
     private func startRandomMovement() {
@@ -200,7 +212,7 @@ class AttentionViewModel: ObservableObject {
             
             let baseProb = 0.15
             let timeBonus = (60.0 - self.gameTime) * 0.003
-            let probability = min(baseProb + timeBonus, 0.4) // Cap at 40% chance
+            let probability = min(baseProb + timeBonus, 0.4)
             
             if Double.random(in: 0...1) < probability {
                 let screenWidth = UIScreen.main.bounds.width
@@ -246,10 +258,15 @@ class AttentionViewModel: ObservableObject {
     }
     
     private func updateScore() {
-        score += 1
+        score += 1 * scoreMultiplier
         
-        let streakBonus = min(Int(focusStreak) / 10, 2)
-        score += streakBonus
+        if Int(focusStreak) % 5 == 0 {
+            scoreMultiplier = min(scoreMultiplier + 1, 3)
+        }
+        
+        if Int(focusStreak) % 10 == 0 {
+            score += 5
+        }
     }
     
     func handleDistractionTap() {
@@ -258,6 +275,4 @@ class AttentionViewModel: ObservableObject {
         gameActive = false
         stopGame()
     }
-    
-    
 }

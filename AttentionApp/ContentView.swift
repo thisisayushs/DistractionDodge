@@ -60,12 +60,26 @@ struct ContentView: View {
                 
                 VStack {
                     HStack(spacing: 20) {
-                        FloatingCard(title: "Time", value: "\(Int(viewModel.gameTime))s")
-                            .opacity(viewModel.gameTime <= 10 ? 0.8 + 0.2 * sin(Double.pi * 2 * Double(viewModel.gameTime)) : 1.0)
+                        FloatingCard(
+                            title: "Time",
+                            value: "\(Int(viewModel.gameTime))s",
+                            glowCondition: viewModel.gameTime <= 10,
+                            glowColor: .red
+                        )
                         
-                        FloatingCard(title: "Score", value: "\(viewModel.score)")
+                        FloatingCard(
+                            title: "Score",
+                            value: "\(viewModel.score)",
+                            glowCondition: viewModel.score >= 100,
+                            glowColor: .yellow
+                        )
                         
-                        FloatingCard(title: "Streak", value: "\(Int(viewModel.focusStreak))s")
+                        FloatingCard(
+                            title: "Streak",
+                            value: "\(Int(viewModel.focusStreak))s",
+                            glowCondition: viewModel.focusStreak >= 10,
+                            glowColor: .orange
+                        )
                     }
                     .padding(.top, 40)
                     
@@ -100,6 +114,9 @@ struct ContentView: View {
 struct FloatingCard: View {
     let title: String
     let value: String
+    let glowCondition: Bool
+    let glowColor: Color
+    @State private var isGlowing = false
     
     var body: some View {
         HStack(spacing: 10) {
@@ -116,10 +133,24 @@ struct FloatingCard: View {
                 .fill(Color.white.opacity(0.15))
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        .stroke(glowCondition ? glowColor : Color.white.opacity(0.3), lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+                .shadow(color: glowCondition ? glowColor.opacity(isGlowing ? 0.6 : 0.0) : .black.opacity(0.2),
+                        radius: glowCondition ? 8 : 10,
+                        x: 0,
+                        y: 5)
         )
+        .onChange(of: glowCondition) { _, newValue in
+            if newValue {
+                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    isGlowing = true
+                }
+            } else {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isGlowing = false
+                }
+            }
+        }
     }
 }
 
@@ -155,7 +186,7 @@ struct GameSummaryView: View {
                             .bold()
                             .foregroundColor(.white)
                         
-                        Text("You got distracted")
+                        Text("You got distracted and tapped on a distraction object.")
                             .font(.system(.body, design: .rounded))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)

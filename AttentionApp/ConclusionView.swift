@@ -13,6 +13,7 @@ struct ConclusionView: View {
     @AppStorage("hasCompletedIntroduction") private var hasCompletedIntroduction = false
     @State private var score = 0
     @State private var showRestartIntroduction = false
+    @State private var scoreScale: CGFloat = 0.5
     
     // Gradient colors remain the same
     private let gradientColors: [Color] = [.black.opacity(0.8), .blue.opacity(0.25)]
@@ -54,14 +55,22 @@ struct ConclusionView: View {
                     Text("\(score)")
                         .font(.system(size: 80, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
+                        .scaleEffect(scoreScale)
                         .onAppear {
-                            withAnimation(
-                                .spring(
-                                    response: 0.6,
-                                    dampingFraction: 0.8,
-                                    blendDuration: 0
-                                )
-                            ) {
+                            score = 0 
+                            scoreScale = 0.5 
+                            
+                            // Animate scale with bounce
+                            withAnimation(.spring(
+                                response: 0.5,
+                                dampingFraction: 0.6,
+                                blendDuration: 0
+                            )) {
+                                scoreScale = 1.0 
+                            }
+                            
+                            // Animate score counting up
+                            withAnimation(.easeOut(duration: 1.0)) {
                                 score = viewModel.score
                             }
                         }
