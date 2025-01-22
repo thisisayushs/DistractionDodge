@@ -6,13 +6,21 @@ class AttentionViewModel: ObservableObject {
                                       y: UIScreen.main.bounds.height / 2)
     @Published var isGazingAtObject = false
     @Published var distractions: [Distraction] = []
+    @Published var score: Int = 0
+    @Published var focusStreak: TimeInterval = 0
+    @Published var distractionsIgnored: Int = 0
+    @Published var gameTime: TimeInterval = 60
+    @Published var gameActive = false
+    @Published var backgroundGradient: [Color] = [.black.opacity(0.8), .cyan.opacity(0.2)]
     
     private var timer: Timer?
     private var distractionTimer: Timer?
-    
+    private var focusStreakTimer: Timer?
+    private var gameTimer: Timer?
     private var wasActiveBeforeBackground = false
-    
     private var isInBackground = false
+    private var lastDistractionsIgnored: Int = 0
+    private var moveDirection = CGPoint(x: 1, y: 1)
     
     let notificationData: [(title: String, icon: String, colors: [Color], sound: SystemSoundID)] = [
         ("Messages", "message.fill",
@@ -69,15 +77,59 @@ class AttentionViewModel: ObservableObject {
     }
     
     func startGame() {
+        // Reset all game states
+        stopGame() // First stop any existing game
+        gameTime = 60 // Reset the game time to initial value
+        gameActive = true
+        score = 0
+        focusStreak = 0
+        distractionsIgnored = 0
+        lastDistractionsIgnored = 0 // Reset this counter too
+        position = CGPoint(x: UIScreen.main.bounds.width / 2,
+                          y: UIScreen.main.bounds.height / 2)
+        
+        // Start all game components
         startRandomMovement()
         startDistractions()
+        startFocusStreakTimer()
+        startGameTimer()
+    }
+    
+    private func startGameTimer() {
+        gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            guard let self = self else { return }
+            if self.gameTime > 0 {
+                self.gameTime -= 1
+            } else {
+                self.endGame()
+            }
+        }
+    }
+    
+    private func endGame() {
+        gameActive = false
+        stopGame() // Use stopGame instead of pauseGame for proper cleanup
+    }
+    
+    func calculateStars() -> Int {
+        let maxScore = 1000
+        let percentage = Double(score) / Double(maxScore)
+        
+        if percentage >= 0.8 { return 3 }
+        if percentage >= 0.5 { return 2 }
+        if percentage >= 0.2 { return 1 }
+        return 0
     }
     
     private func pauseGame() {
         timer?.invalidate()
         distractionTimer?.invalidate()
+        focusStreakTimer?.invalidate()
+        gameTimer?.invalidate()
         timer = nil
         distractionTimer = nil
+        focusStreakTimer = nil
+        gameTimer = nil
     }
     
     private func resumeGame() {
@@ -88,25 +140,44 @@ class AttentionViewModel: ObservableObject {
         wasActiveBeforeBackground = false
         pauseGame()
         distractions.removeAll()
+        timer?.invalidate()
+        distractionTimer?.invalidate()
+        focusStreakTimer?.invalidate()
+        gameTimer?.invalidate()
+        timer = nil
+        distractionTimer = nil
+        focusStreakTimer = nil
+        gameTimer = nil
     }
     
     func updateGazeStatus(_ isGazing: Bool) {
         isGazingAtObject = isGazing
+        if !isGazing {
+            focusStreak = 0
+        }
     }
     
     private func startRandomMovement() {
-        timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+        let speed: CGFloat = 3.0
+        timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            let screenWidth = UIScreen.main.bounds.width
-            let screenHeight = UIScreen.main.bounds.height
             
-            let safeX = (100...Int(screenWidth - 100))
-            let safeY = (100...Int(screenHeight - 100))
+            let screenSize = UIScreen.main.bounds
+            let ballSize: CGFloat = 100
             
-            self.position = CGPoint(
-                x: CGFloat(safeX.randomElement() ?? Int(screenWidth/2)),
-                y: CGFloat(safeY.randomElement() ?? Int(screenHeight/2))
-            )
+            var newX = self.position.x + (self.moveDirection.x * speed)
+            var newY = self.position.y + (self.moveDirection.y * speed)
+            
+            if newX <= ballSize/2 || newX >= screenSize.width - ballSize/2 {
+                self.moveDirection.x *= -1
+                newX = self.position.x + (self.moveDirection.x * speed)
+            }
+            if newY <= ballSize/2 || newY >= screenSize.height - ballSize/2 {
+                self.moveDirection.y *= -1
+                newY = self.position.y + (self.moveDirection.y * speed)
+            }
+            
+            self.position = CGPoint(x: newX, y: newY)
         }
     }
     
@@ -114,13 +185,12 @@ class AttentionViewModel: ObservableObject {
         distractionTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             
-            self.distractions.removeAll()
+            let probability = 0.10 + (60.0 - self.gameTime) * 0.002
             
-            let screenWidth = UIScreen.main.bounds.width
-            let screenHeight = UIScreen.main.bounds.height
-            let numberOfDistractions = Int.random(in: 1...2)
-            
-            for _ in 0..<numberOfDistractions {
+            if Double.random(in: 0...1) < probability {
+                let screenWidth = UIScreen.main.bounds.width
+                let screenHeight = UIScreen.main.bounds.height
+                
                 let notificationContent = self.notificationData.randomElement()!
                 let newDistraction = Distraction(
                     position: CGPoint(
@@ -133,13 +203,39 @@ class AttentionViewModel: ObservableObject {
                     iconColors: notificationContent.colors,
                     soundID: notificationContent.sound
                 )
-                self.distractions.append(newDistraction)
+                
+                withAnimation {
+                    self.distractions.append(newDistraction)
+                    if self.distractions.count > 3 {
+                        self.distractions.removeFirst()
+                    }
+                }
                 
                 if UIApplication.shared.applicationState == .active {
                     AudioServicesPlaySystemSound(notificationContent.sound)
                 }
             }
         }
+    }
+    
+    private func startFocusStreakTimer() {
+        focusStreakTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self, self.isGazingAtObject else { return }
+            self.focusStreak += 1
+            self.updateScore()
+        }
+    }
+    
+    private func updateScore() {
+        let streakBonus = Int(pow(2, min(focusStreak / 5, 5)))
+        score += 10 * streakBonus
+        
+        let newDistractionsIgnored = distractions.count
+        if newDistractionsIgnored > lastDistractionsIgnored {
+            distractionsIgnored += newDistractionsIgnored - lastDistractionsIgnored
+            score += (newDistractionsIgnored - lastDistractionsIgnored) * 5
+        }
+        lastDistractionsIgnored = newDistractionsIgnored
     }
     
     deinit {

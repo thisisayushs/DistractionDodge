@@ -41,9 +41,10 @@ struct IntroductionView: View {
     @State private var isGlowing = false
     @State private var ballPosition = CGPoint(x: 100, y: UIScreen.main.bounds.height / 2)
     @State private var notificationTimer: Timer?
-    @State private var notifications: [(type: NotificationType, position: CGPoint)] = []
+    @State private var notifications: [(type: NotificationType, position: CGPoint, id: UUID)] = []
     @State private var moveDirection = CGPoint(x: 1, y: 1)
     @GestureState private var dragOffset: CGFloat = 0
+    @State private var showContentView = false
     
     // Gradient colors remain the same
     let gradientColors: [(start: Color, end: Color)] = [
@@ -93,8 +94,7 @@ struct IntroductionView: View {
             content: [
                 "Distraction Dodge is more than just a game—it's a tool to help you:",
                 "Strengthen your focus through fun and engaging challenges.",
-                "Learn to ignore digital distractions in a safe, controlled environment.",
-                "Track your progress as you build the focus skills you need for work, school, and life."
+                "Learn to ignore digital distractions in a safe, controlled environment."
             ],
             sfSymbol: "target",
             emoji: "🔔",
@@ -131,72 +131,69 @@ struct IntroductionView: View {
     
     // Update ball movement function with improved collision detection
     private func moveBallContinuously() {
-            Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
-                guard self.currentIndex == 3 else {
-                    timer.invalidate()
-                    return
-                }
-                
-                let speed: CGFloat = 3.0
-                let ballSize: CGFloat = 100
-                let collisionRadius: CGFloat = 35  // Adjusted for better feel
-                let screenSize = UIScreen.main.bounds
-                
-                // Update position
-                var newX = self.ballPosition.x + (self.moveDirection.x * speed)
-                var newY = self.ballPosition.y + (self.moveDirection.y * speed)
-                
-                // Bounce off walls
-                if newX <= ballSize/2 || newX >= screenSize.width - ballSize/2 {
-                    self.moveDirection.x *= -1
-                    newX = self.ballPosition.x + (self.moveDirection.x * speed)
-                }
-                if newY <= ballSize/2 || newY >= screenSize.height - ballSize/2 {
-                    self.moveDirection.y *= -1
-                    newY = self.ballPosition.y + (self.moveDirection.y * speed)
-                }
-                
-                let newPosition = CGPoint(x: newX, y: newY)
-                
-                // Immediate collision check and removal
-                self.notifications.removeAll { notification in
-                    let distance = sqrt(
-                        pow(newPosition.x - notification.position.x, 2) +
-                        pow(newPosition.y - notification.position.y, 2)
-                    )
-                    return distance < collisionRadius
-                }
-                
-                self.ballPosition = newPosition
+        Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
+            guard self.currentIndex == 3 else {
+                timer.invalidate()
+                return
             }
+            
+            let speed: CGFloat = 3.0
+            let ballSize: CGFloat = 100
+            let screenSize = UIScreen.main.bounds
+            
+            // Update position
+            var newX = self.ballPosition.x + (self.moveDirection.x * speed)
+            var newY = self.ballPosition.y + (self.moveDirection.y * speed)
+            
+            // Bounce off walls
+            if newX <= ballSize/2 || newX >= screenSize.width - ballSize/2 {
+                self.moveDirection.x *= -1
+                newX = self.ballPosition.x + (self.moveDirection.x * speed)
+            }
+            if newY <= ballSize/2 || newY >= screenSize.height - ballSize/2 {
+                self.moveDirection.y *= -1
+                newY = self.ballPosition.y + (self.moveDirection.y * speed)
+            }
+            
+            self.ballPosition = CGPoint(x: newX, y: newY)
         }
+    }
 
     
     // Update notification generation function
     private func generateNotifications() {
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { timer in
+        Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { timer in
             guard self.currentIndex == 3 else {
                 timer.invalidate()
                 return
             }
             
             // Safe area insets to avoid buttons
-            let topSafeArea: CGFloat = 100  // Avoid top button
-            let bottomSafeArea: CGFloat = 120  // Avoid bottom button
-            let sideSafeArea: CGFloat = 50  // Side padding
+            let topSafeArea: CGFloat = 100
+            let bottomSafeArea: CGFloat = 120
+            let sideSafeArea: CGFloat = 50
             
             let newNotification = (
                 type: NotificationType.allCases.randomElement()!,
                 position: CGPoint(
                     x: CGFloat.random(in: sideSafeArea...(UIScreen.main.bounds.width - sideSafeArea)),
                     y: CGFloat.random(in: topSafeArea...(UIScreen.main.bounds.height - bottomSafeArea))
-                )
+                ),
+                id: UUID()
             )
             
-            withAnimation(.easeInOut(duration: 1.0)) {
+            withAnimation(.easeInOut(duration: 0.5)) {
                 self.notifications.append(newNotification)
-                if self.notifications.count > 5 {
+                if self.notifications.count > 8 {
                     self.notifications.removeFirst()
+                }
+            }
+            
+            // Remove notification after a random duration
+            let lifetime = Double.random(in: 3...6)
+            DispatchQueue.main.asyncAfter(deadline: .now() + lifetime) {
+                withAnimation(.easeOut(duration: 0.5)) {
+                    self.notifications.removeAll { $0.id == newNotification.id }
                 }
             }
         }
@@ -258,12 +255,21 @@ struct IntroductionView: View {
                 
                 // Animated notifications
                 if self.currentIndex == 3 {
-                    ForEach(self.notifications.indices, id: \.self) { index in
-                        Image(systemName: self.notifications[index].type.rawValue)
+                    ForEach(self.notifications, id: \.id) { notification in
+                        Image(systemName: notification.type.rawValue)
                             .font(.system(size: 30))
                             .foregroundColor(.white.opacity(0.8))
-                            .position(self.notifications[index].position)
-                            .transition(.scale.combined(with: .opacity))
+                            .position(notification.position)
+                            .transition(
+                                .asymmetric(
+                                    insertion: .scale(scale: 0.8)
+                                        .combined(with: .opacity)
+                                        .animation(.spring(response: 0.4, dampingFraction: 0.6)),
+                                    removal: .scale(scale: 0.9)
+                                        .combined(with: .opacity)
+                                        .animation(.easeOut(duration: 0.5))
+                                )
+                            )
                     }
                 }
                 
@@ -388,8 +394,13 @@ struct IntroductionView: View {
                     
                     // Enhanced button
                     Button(action: {
-                        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                            self.navigate(forward: true)
+                        if self.currentIndex == self.screens.count - 1 {
+                            // On the last screen, show ContentView
+                            self.showContentView = true
+                        } else {
+                            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                                self.navigate(forward: true)
+                            }
                         }
                     }) {
                         HStack {
@@ -431,6 +442,9 @@ struct IntroductionView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .fullScreenCover(isPresented: $showContentView) {
+            ContentView()
+        }
         .onDisappear {
             // Clean up animations
             self.notifications.removeAll()

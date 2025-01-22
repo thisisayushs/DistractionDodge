@@ -1,5 +1,97 @@
 import SwiftUI
 
+struct GlassBackground: View {
+    var body: some View {
+        ZStack {
+            Color.white.opacity(0.15)
+            
+            // Blur effect
+            Rectangle()
+                .fill(Color.white)
+                .opacity(0.05)
+                .blur(radius: 10)
+            
+            // Subtle gradient overlay
+            LinearGradient(
+                gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+}
+
+struct NotificationView: View {
+    let distraction: Distraction
+    let index: Int
+    @State private var isHovered = false
+    @State private var isDismissing = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Image(systemName: distraction.appIcon)
+                    .font(.title2)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: distraction.iconColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 30, height: 30)
+                    .modifier(PulseEffect())
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(distraction.title)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(distraction.message)
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+                
+                Button(action: {
+                    withAnimation(.easeInOut) {
+                        isDismissing = true
+                    }
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.white)
+                        .opacity(isHovered ? 1 : 0.7)
+                }
+            }
+            .padding()
+        }
+        .background(
+            ZStack {
+                GlassBackground()
+                    .cornerRadius(14)
+                
+                // Subtle border
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.white.opacity(0.3), lineWidth: 0.5)
+            }
+        )
+        .frame(width: 300)
+        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+        .rotationEffect(isDismissing ? .degrees(10) : .zero)
+        .opacity(isDismissing ? 0 : 1)
+        .offset(x: isDismissing ? 100 : 0)
+        .modifier(NotificationAnimation(index: index))
+    }
+}
+
+// PulseEffect and NotificationAnimation remain unchanged
+
 struct ShakeEffect: GeometryEffect {
     var amount: CGFloat = 10
     var shakesPerUnit = 3
@@ -51,70 +143,22 @@ struct NotificationAnimation: ViewModifier {
     }
 }
 
-struct NotificationView: View {
-    let distraction: Distraction
-    let index: Int
-    @State private var isHovered = false
-    @State private var isDismissing = false
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Image(systemName: distraction.appIcon)
-                    .font(.title2)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: distraction.iconColors,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 30, height: 30)
-                    .modifier(PulseEffect())
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(distraction.title)
-                        .font(.headline)
-                        .foregroundColor(.black)
-                    Text(distraction.message)
-                        .font(.subheadline)
-                        .foregroundColor(Color(white: 0.5))
-                        .lineLimit(2)
-                }
-                
-                Spacer()
-                
-                Button(action: {
-                    withAnimation(.easeInOut) {
-                        isDismissing = true
-                    }
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
-                        .opacity(isHovered ? 1 : 0.5)
-                }
-            }
-            .padding()
+// Preview
+struct NotificationView_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
+            NotificationView(
+                distraction: Distraction(
+                    position: .zero,
+                    title: "Message",
+                    message: "New message from John",
+                    appIcon: "message.fill",
+                    iconColors: [.green, .blue],
+                    soundID: 1007
+                ),
+                index: 0
+            )
         }
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.white)
-                .shadow(color: Color.white.opacity(0.1),
-                        radius: 5)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(isHovered ? Color.blue : Color.clear, lineWidth: 2)
-                )
-        )
-        .frame(width: 300)
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isHovered = hovering
-            }
-        }
-        .rotationEffect(isDismissing ? .degrees(10) : .zero)
-        .opacity(isDismissing ? 0 : 1)
-        .offset(x: isDismissing ? 100 : 0)
-        .modifier(NotificationAnimation(index: index))
     }
 }
