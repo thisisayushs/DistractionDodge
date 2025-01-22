@@ -85,11 +85,11 @@ class AttentionViewModel: ObservableObject {
     }
     
     func startGame() {
+        endGameReason = .timeUp
         gameActive = true
         currentNotificationInterval = 2.0
         distractionProbability = 0.2
-        scheduleNextNotification()
-        // Reset all game states
+        
         stopGame()
         gameTime = 60
         score = 0
@@ -99,7 +99,6 @@ class AttentionViewModel: ObservableObject {
         position = CGPoint(x: UIScreen.main.bounds.width / 2,
                           y: UIScreen.main.bounds.height / 2)
         
-        // Start all game components
         startRandomMovement()
         startDistractions()
         startFocusStreakTimer()
@@ -118,7 +117,6 @@ class AttentionViewModel: ObservableObject {
     }
     
     private func endGame() {
-        endGameReason = .timeUp
         gameActive = false
         stopGame()
     }
@@ -194,10 +192,12 @@ class AttentionViewModel: ObservableObject {
     }
     
     private func startDistractions() {
-        distractionTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+        distractionTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             
-            let probability = 0.10 + (60.0 - self.gameTime) * 0.002
+            let baseProb = 0.15
+            let timeBonus = (60.0 - self.gameTime) * 0.003
+            let probability = min(baseProb + timeBonus, 0.4) // Cap at 40% chance
             
             if Double.random(in: 0...1) < probability {
                 let screenWidth = UIScreen.main.bounds.width
@@ -252,47 +252,11 @@ class AttentionViewModel: ObservableObject {
         lastDistractionsIgnored = newDistractionsIgnored
     }
     
-    private func scheduleNextNotification() {
-        Timer.scheduledTimer(withTimeInterval: currentNotificationInterval, repeats: false) { [weak self] _ in
-            guard let self = self else { return }
-            guard self.gameActive else { return }
-            
-            if Double.random(in: 0...1) < self.distractionProbability {
-                let screenWidth = UIScreen.main.bounds.width
-                let screenHeight = UIScreen.main.bounds.height
-                
-                let notificationContent = self.notificationData.randomElement()!
-                let newDistraction = Distraction(
-                    position: CGPoint(
-                        x: CGFloat.random(in: 150...(screenWidth-150)),
-                        y: CGFloat.random(in: 100...(screenHeight-100))
-                    ),
-                    title: notificationContent.title,
-                    message: AppMessages.randomMessage(for: notificationContent.title),
-                    appIcon: notificationContent.icon,
-                    iconColors: notificationContent.colors,
-                    soundID: notificationContent.sound
-                )
-                
-                withAnimation {
-                    self.distractions.append(newDistraction)
-                    if self.distractions.count > 3 {
-                        self.distractions.removeFirst()
-                    }
-                }
-                
-                if UIApplication.shared.applicationState == .active {
-                    AudioServicesPlaySystemSound(notificationContent.sound)
-                }
-            }
-            self.scheduleNextNotification()
-        }
-    }
-    
     func handleDistractionTap() {
         AudioServicesPlaySystemSound(1521) // Error sound
         endGameReason = .distractionTap
-        endGame()
+        gameActive = false
+        stopGame()
     }
     
     deinit {

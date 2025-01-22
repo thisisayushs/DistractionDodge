@@ -121,7 +121,7 @@ struct GameSummaryView: View {
     
     var body: some View {
         VStack(spacing: 30) {
-            Text(viewModel.endGameReason == .timeUp ? "Time's Up!" : "Distracted!")
+            Text(viewModel.endGameReason == .timeUp ? "Time's Up!" : "Game Over!")
                 .font(.system(.title, design: .rounded))
                 .bold()
                 .foregroundColor(viewModel.endGameReason == .timeUp ? .blue : .red)

@@ -29,48 +29,58 @@ struct NotificationView: View {
     @State private var isDismissing = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Image(systemName: distraction.appIcon)
-                    .font(.title2)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: distraction.iconColors,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 30, height: 30)
-                    .modifier(PulseEffect())
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(distraction.title)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text(distraction.message)
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.8))
-                        .lineLimit(2)
-                }
-                
-                Spacer()
-                
-                Button(action: {
-                    withAnimation(.easeInOut) {
-                        isDismissing = true
-                        // Add delay before game over
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            viewModel.handleDistractionTap()
-                        }
-                    }
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.white)
-                        .opacity(isHovered ? 1 : 0.7)
-                }
+        // Content wrapper to handle taps on the entire notification
+        Button(action: {
+            withAnimation {
+                viewModel.handleDistractionTap()
             }
-            .padding()
+        }) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 12) {
+                    Image(systemName: distraction.appIcon)
+                        .font(.title2)
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: distraction.iconColors,
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 30, height: 30)
+                        .modifier(PulseEffect())
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(distraction.title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Text(distraction.message)
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
+                            .lineLimit(2)
+                    }
+                    
+                    Spacer()
+                    
+                    // Close button with separate tap handling
+                    Button(action: {
+                        withAnimation(.easeInOut) {
+                            isDismissing = true
+                        }
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.white)
+                            .opacity(isHovered ? 1 : 0.7)
+                    }
+                    // Prevent the parent tap from triggering
+                    .buttonStyle(PlainButtonStyle())
+                    // Stop tap from propagating to parent
+                    .allowsHitTesting(true)
+                }
+                .padding()
+            }
         }
+        // Use plain style to keep custom appearance
+        .buttonStyle(PlainButtonStyle())
         .background(
             ZStack {
                 GlassBackground()
@@ -83,15 +93,6 @@ struct NotificationView: View {
         )
         .frame(width: 300)
         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-        .onTapGesture {
-            withAnimation {
-                isDismissing = true
-                // Add delay before game over
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    viewModel.handleDistractionTap()
-                }
-            }
-        }
         .rotationEffect(isDismissing ? .degrees(10) : .zero)
         .opacity(isDismissing ? 0 : 1)
         .offset(x: isDismissing ? 100 : 0)
