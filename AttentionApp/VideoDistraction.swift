@@ -19,9 +19,11 @@ struct FloatingElement: Identifiable {
 }
 
 struct VideoDistraction: View {
+    @EnvironmentObject var viewModel: AttentionViewModel
     @State private var offset: CGFloat = 0
     @State private var currentIndex = 0
     @State private var floatingElements: [FloatingElement] = []
+    @GestureState private var translation: CGFloat = 0
     
     let videos = [
         VideoContent(
@@ -115,6 +117,31 @@ struct VideoDistraction: View {
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .shadow(radius: 10)
             .offset(y: offset)
+            .gesture(
+                DragGesture()
+                    .updating($translation) { value, state, _ in
+                        state = value.translation.height
+                    }
+                    .onEnded { value in
+                        let threshold = geometry.size.height * 0.25
+                        if abs(value.translation.height) > threshold {
+                            withAnimation {
+                                currentIndex = value.translation.height > 0 ? 
+                                    (currentIndex - 1 + videos.count) % videos.count :
+                                    (currentIndex + 1) % videos.count
+                                resetFloatingElements(width: geometry.size.width, height: geometry.size.height)
+                                
+                                // Add delay before game over
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    viewModel.handleDistractionTap()
+                                }
+                            }
+                        }
+                    }
+            )
+            .onTapGesture {
+                viewModel.handleDistractionTap()
+            }
             .onAppear {
                 startAnimations(in: geometry)
             }

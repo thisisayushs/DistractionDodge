@@ -12,6 +12,12 @@ class AttentionViewModel: ObservableObject {
     @Published var gameTime: TimeInterval = 60
     @Published var gameActive = false
     @Published var backgroundGradient: [Color] = [.black.opacity(0.8), .cyan.opacity(0.2)]
+    @Published var endGameReason: EndGameReason = .timeUp
+    
+    enum EndGameReason {
+        case timeUp
+        case distractionTap
+    }
     
     private var timer: Timer?
     private var distractionTimer: Timer?
@@ -112,12 +118,13 @@ class AttentionViewModel: ObservableObject {
     }
     
     private func endGame() {
+        endGameReason = .timeUp
         gameActive = false
         stopGame()
     }
     
     func calculateStars() -> Int {
-        let maxScore = 1000
+        let maxScore = 100 
         let percentage = Double(score) / Double(maxScore)
         
         if percentage >= 0.8 { return 3 }
@@ -232,13 +239,15 @@ class AttentionViewModel: ObservableObject {
     }
     
     private func updateScore() {
-        let streakBonus = Int(pow(2, min(focusStreak / 5, 5)))
-        score += 10 * streakBonus
+        score += 1
+        
+        let streakBonus = min(Int(focusStreak) / 10, 2)
+        score += streakBonus
         
         let newDistractionsIgnored = distractions.count
         if newDistractionsIgnored > lastDistractionsIgnored {
             distractionsIgnored += newDistractionsIgnored - lastDistractionsIgnored
-            score += (newDistractionsIgnored - lastDistractionsIgnored) * 5
+            score += (newDistractionsIgnored - lastDistractionsIgnored) * 3
         }
         lastDistractionsIgnored = newDistractionsIgnored
     }
@@ -278,6 +287,12 @@ class AttentionViewModel: ObservableObject {
             }
             self.scheduleNextNotification()
         }
+    }
+    
+    func handleDistractionTap() {
+        AudioServicesPlaySystemSound(1521) // Error sound
+        endGameReason = .distractionTap
+        endGame()
     }
     
     deinit {

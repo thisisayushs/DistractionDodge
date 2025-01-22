@@ -34,10 +34,12 @@ struct ContentView: View {
                     .position(videoPosition)
                     .opacity(viewModel.gameTime >= 45 ? 0 : 1) 
                     .animation(.easeInOut(duration: 1.0), value: viewModel.gameTime)
+                    .environmentObject(viewModel)
                 
                 ForEach(Array(zip(viewModel.distractions.indices, viewModel.distractions)), id: \.1.id) { index, distraction in
                     NotificationView(distraction: distraction, index: index)
                         .position(distraction.position)
+                        .environmentObject(viewModel)
                         .transition(
                             .asymmetric(
                                 insertion: .scale(scale: 0.8)
@@ -119,9 +121,17 @@ struct GameSummaryView: View {
     
     var body: some View {
         VStack(spacing: 30) {
-            Text("Game Over!")
+            Text(viewModel.endGameReason == .timeUp ? "Time's Up!" : "Distracted!")
                 .font(.system(.title, design: .rounded))
                 .bold()
+                .foregroundColor(viewModel.endGameReason == .timeUp ? .blue : .red)
+            
+            if viewModel.endGameReason == .distractionTap {
+                Text("You got distracted!")
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundColor(.red)
+                    .padding(.bottom)
+            }
             
             HStack {
                 ForEach(0..<3) { index in
@@ -143,7 +153,7 @@ struct GameSummaryView: View {
             }
             .font(.system(.body, design: .rounded))
             
-            Button("Play Again") {
+            Button("Try Again") {
                 isPresented = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     viewModel.startGame()
@@ -153,7 +163,7 @@ struct GameSummaryView: View {
             .foregroundColor(.white)
             .padding(.horizontal, 40)
             .padding(.vertical, 15)
-            .background(Color.blue)
+            .background(viewModel.endGameReason == .timeUp ? Color.blue : Color.red)
             .cornerRadius(25)
             .shadow(radius: 5)
         }

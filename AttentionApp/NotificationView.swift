@@ -24,6 +24,7 @@ struct GlassBackground: View {
 struct NotificationView: View {
     let distraction: Distraction
     let index: Int
+    @EnvironmentObject var viewModel: AttentionViewModel
     @State private var isHovered = false
     @State private var isDismissing = false
     
@@ -57,6 +58,10 @@ struct NotificationView: View {
                 Button(action: {
                     withAnimation(.easeInOut) {
                         isDismissing = true
+                        // Add delay before game over
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            viewModel.handleDistractionTap()
+                        }
                     }
                 }) {
                     Image(systemName: "xmark.circle.fill")
@@ -78,9 +83,13 @@ struct NotificationView: View {
         )
         .frame(width: 300)
         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isHovered = hovering
+        .onTapGesture {
+            withAnimation {
+                isDismissing = true
+                // Add delay before game over
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    viewModel.handleDistractionTap()
+                }
             }
         }
         .rotationEffect(isDismissing ? .degrees(10) : .zero)
@@ -89,8 +98,6 @@ struct NotificationView: View {
         .modifier(NotificationAnimation(index: index))
     }
 }
-
-// PulseEffect and NotificationAnimation remain unchanged
 
 struct ShakeEffect: GeometryEffect {
     var amount: CGFloat = 10
@@ -143,7 +150,6 @@ struct NotificationAnimation: ViewModifier {
     }
 }
 
-// Preview
 struct NotificationView_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
