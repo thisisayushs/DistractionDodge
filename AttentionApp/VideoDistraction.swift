@@ -16,6 +16,7 @@ struct FloatingElement: Identifiable {
     var scale: CGFloat
     var rotation: Double
     let content: String
+    var velocity: CGPoint 
 }
 
 struct VideoDistraction: View {
@@ -177,7 +178,6 @@ struct VideoDistraction: View {
     }
     
     private func startAnimations(in geometry: GeometryProxy) {
-        // Store geometry values
         let width = geometry.size.width
         let height = geometry.size.height
         
@@ -200,9 +200,9 @@ struct VideoDistraction: View {
         }
         
         // Improved animation timer
-        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-            withAnimation(.easeInOut(duration: 0.05)) {
-                updateFloatingElements(height: height)
+        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 0.016)) {
+                updateFloatingElements(height: height, width: width)
             }
         }
     }
@@ -211,10 +211,10 @@ struct VideoDistraction: View {
         let currentVideo = videos[currentIndex]
         let elements = (currentVideo.emojis + currentVideo.symbols)
         
-        // Ensure minimum number of elements
-        let minimumElements = 8
-        let repeatedElements = elements.count < minimumElements ?
-            elements + elements : elements
+        // Increased minimum elements for more content
+        let minimumElements = 12
+        let repeatedElements = elements.count < minimumElements ? 
+            elements + elements + elements : elements
         
         floatingElements = repeatedElements.map { content in
             FloatingElement(
@@ -222,25 +222,58 @@ struct VideoDistraction: View {
                     x: CGFloat.random(in: 0...width),
                     y: CGFloat.random(in: 0...height)
                 ),
-                scale: CGFloat.random(in: 0.8...1.2),
+                scale: CGFloat.random(in: 1.0...1.8), 
                 rotation: Double.random(in: 0...360),
-                content: content
+                content: content,
+                velocity: CGPoint( 
+                    x: CGFloat.random(in: -2...2),
+                    y: CGFloat.random(in: -3...0)
+                )
             )
         }
     }
     
-    private func updateFloatingElements(height: CGFloat) {
+    private func updateFloatingElements(height: CGFloat, width: CGFloat) {
+        let dampening: CGFloat = 0.98 
+        let maxSpeed: CGFloat = 5.0
+        
         for i in floatingElements.indices {
-            floatingElements[i].position.y -= CGFloat.random(in: 1.5...2.5)
-            floatingElements[i].rotation += Double.random(in: -3...3)
+            // Update velocity with some randomization
+            floatingElements[i].velocity.x += CGFloat.random(in: -0.5...0.5)
+            floatingElements[i].velocity.y += CGFloat.random(in: -0.5...0.3)
             
-            // Smoother scale changes
-            let scaleChange = CGFloat.random(in: -0.02...0.02)
-            floatingElements[i].scale = (floatingElements[i].scale + scaleChange).clamped(to: 0.8...1.2)
+            // Apply dampening
+            floatingElements[i].velocity.x *= dampening
+            floatingElements[i].velocity.y *= dampening
             
-            // Reset position with offset for continuous flow
+            // Limit maximum speed
+            floatingElements[i].velocity.x = floatingElements[i].velocity.x.clamped(to: -maxSpeed...maxSpeed)
+            floatingElements[i].velocity.y = floatingElements[i].velocity.y.clamped(to: -maxSpeed...maxSpeed)
+            
+            // Update position based on velocity
+            floatingElements[i].position.x += floatingElements[i].velocity.x
+            floatingElements[i].position.y += floatingElements[i].velocity.y
+            
+            // Rotate based on movement direction
+            let rotationSpeed = abs(floatingElements[i].velocity.x) + abs(floatingElements[i].velocity.y)
+            floatingElements[i].rotation += Double(rotationSpeed * 2.0)
+            
+            // Scale breathing effect
+            let time = Date().timeIntervalSince1970
+            let breathingScale = sin(time * 2 + Double(i)) * 0.2
+            floatingElements[i].scale = (1.4 + breathingScale).clamped(to: 0.8...2.0)
+            
+            // Screen wrapping with smooth transition
+            if floatingElements[i].position.x < -50 {
+                floatingElements[i].position.x = width + 50
+            } else if floatingElements[i].position.x > width + 50 {
+                floatingElements[i].position.x = -50
+            }
+            
             if floatingElements[i].position.y < -50 {
                 floatingElements[i].position.y = height + 50
+            } else if floatingElements[i].position.y > height + 50 {
+                floatingElements[i].position.y = -50
             }
         }
     }
