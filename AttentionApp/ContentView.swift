@@ -13,6 +13,7 @@ import AVFoundation
 struct ContentView: View {
     @StateObject private var viewModel = AttentionViewModel()
     @State private var showGameSummary = false
+    @State private var showConclusion = false
     @State private var videoPosition = CGPoint(x: UIScreen.main.bounds.width * 0.6,
                                               y: UIScreen.main.bounds.height * 0.6)
     
@@ -80,11 +81,18 @@ struct ContentView: View {
         }
         .onChange(of: viewModel.gameActive) { wasActive, isActive in
             if !isActive && wasActive {
-                showGameSummary = true
+                if viewModel.endGameReason == .timeUp {
+                    showConclusion = true
+                } else {
+                    showGameSummary = true
+                }
             }
         }
         .sheet(isPresented: $showGameSummary) {
             GameSummaryView(viewModel: viewModel, isPresented: $showGameSummary)
+        }
+        .fullScreenCover(isPresented: $showConclusion) {
+            ConclusionView(viewModel: viewModel)
         }
     }
 }
@@ -121,84 +129,50 @@ struct GameSummaryView: View {
     
     var body: some View {
         ZStack {
-            // Background gradient based on game state
             LinearGradient(
-                gradient: Gradient(colors: viewModel.endGameReason == .timeUp ?
-                    [.blue.opacity(0.8), .cyan.opacity(0.2)] :
-                    [.red.opacity(0.8), .orange.opacity(0.2)]),
+                gradient: Gradient(colors: [.red.opacity(0.8), .orange.opacity(0.2)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
             
             VStack(spacing: 35) {
-                if viewModel.endGameReason == .distractionTap {
-                    VStack(spacing: 25) {
-                        // Floating icon with background glow
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 60))
-                            .foregroundStyle(
-                                .linearGradient(
-                                    colors: [.yellow, .orange],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
+                VStack(spacing: 25) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 60))
+                        .foregroundStyle(
+                            .linearGradient(
+                                colors: [.yellow, .orange],
+                                startPoint: .top,
+                                endPoint: .bottom
                             )
-                            
-                            .padding(.bottom)
-                        
-                        // Message in floating card style
-                        VStack(spacing: 15) {
-                            Text("Attention Lost!")
-                                .font(.system(.title, design: .rounded))
-                                .bold()
-                                .foregroundColor(.white)
-                            
-                            Text("You got distracted")
-                                .font(.system(.body, design: .rounded))
-                                .foregroundColor(.white.opacity(0.9))
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding(.vertical, 25)
-                        .padding(.horizontal, 30)
-                        .background(
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(.white.opacity(0.15))
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .stroke(.white.opacity(0.3), lineWidth: 1)
-                                )
-                                .shadow(color: .black.opacity(0.2), radius: 15)
                         )
-                    }
-                } else {
-                    Text("Time's Up!")
-                        .font(.system(.title, design: .rounded))
-                        .bold()
-                        .foregroundColor(.blue)
+                        .padding(.bottom)
                     
                     VStack(spacing: 15) {
-                        HStack {
-                            ForEach(0..<3) { index in
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(index < viewModel.calculateStars() ? .yellow : .gray)
-                                    .shadow(color: .black.opacity(0.2), radius: 5)
-                                    .scaleEffect(index < viewModel.calculateStars() ? 1.2 : 1.0)
-                                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: viewModel.calculateStars())
-                            }
-                        }
-                        .padding(.vertical)
+                        Text("Attention Lost!")
+                            .font(.system(.title, design: .rounded))
+                            .bold()
+                            .foregroundColor(.white)
                         
-                        Text("Final Score: \(viewModel.score)")
-                            .font(.title2)
-                        Text("Longest Focus Streak: \(Int(viewModel.focusStreak))s")
-                        Text("Distractions Ignored: \(viewModel.distractionsIgnored)")
+                        Text("You got distracted")
+                            .font(.system(.body, design: .rounded))
+                            .foregroundColor(.white.opacity(0.9))
+                            .multilineTextAlignment(.center)
                     }
-                    .font(.system(.body, design: .rounded))
+                    .padding(.vertical, 25)
+                    .padding(.horizontal, 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 25)
+                            .fill(.white.opacity(0.15))
+                            .background(
+                                RoundedRectangle(cornerRadius: 25)
+                                    .stroke(.white.opacity(0.3), lineWidth: 1)
+                            )
+                            .shadow(color: .black.opacity(0.2), radius: 15)
+                    )
                 }
                 
-                // Try again button with consistent style
                 Button {
                     isPresented = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -214,8 +188,7 @@ struct GameSummaryView: View {
                             Capsule()
                                 .fill(
                                     LinearGradient(
-                                        colors: viewModel.endGameReason == .timeUp ?
-                                            [.blue, .cyan] : [.orange, .red],
+                                        colors: [.orange, .red],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
@@ -227,6 +200,8 @@ struct GameSummaryView: View {
             }
             .padding(40)
         }
+        .presentationBackground(.clear)
+        .presentationCornerRadius(35)
     }
 }
 
