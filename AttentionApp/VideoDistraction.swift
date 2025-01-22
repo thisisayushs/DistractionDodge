@@ -64,19 +64,28 @@ struct VideoDistraction: View {
                 .opacity(0.8)
                 .animation(.easeInOut(duration: 1.0), value: currentIndex)
                 
-                // Floating elements container with clipping
+                // Floating elements container with improved visibility
                 ZStack {
                     ForEach(floatingElements) { element in
-                        Text(element.content)
-                            .font(.system(size: 30))
-                            .position(element.position)
-                            .scaleEffect(element.scale)
-                            .rotationEffect(.degrees(element.rotation))
+                        if element.content.first?.isEmoji ?? false {
+                            Text(element.content)
+                                .font(.system(size: 35))
+                                .position(element.position)
+                                .scaleEffect(element.scale)
+                                .rotationEffect(.degrees(element.rotation))
+                        } else {
+                            Image(systemName: element.content)
+                                .font(.system(size: 30, weight: .bold))
+                                .foregroundColor(.white)
+                                .position(element.position)
+                                .scaleEffect(element.scale)
+                                .rotationEffect(.degrees(element.rotation))
+                        }
                     }
                 }
-                .clipped() // Add clipping to contain floating elements
+                .clipped()
                 
-                VStack(alignment: .leading, spacing: 15) { // Increased spacing
+                VStack(alignment: .leading, spacing: 15) {
                     Spacer()
                     
                     // Video title with padding
@@ -100,7 +109,7 @@ struct VideoDistraction: View {
                         .padding(.bottom, 10)
                     
                     // Mock interaction buttons with padding
-                    HStack(spacing: 20) { // Increased spacing between buttons
+                    HStack(spacing: 20) {
                         ForEach(["heart.fill", "message.fill", "arrow.2.squarepath"], id: \.self) { symbolName in
                             Image(systemName: symbolName)
                                 .foregroundColor(.white)
@@ -108,7 +117,7 @@ struct VideoDistraction: View {
                         }
                     }
                     .padding(.horizontal, 15)
-                    .padding(.bottom, 15) // Added bottom padding
+                    .padding(.bottom, 15)
                 }
                 .padding(.horizontal, 10)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
@@ -126,7 +135,7 @@ struct VideoDistraction: View {
                         let threshold = geometry.size.height * 0.25
                         if abs(value.translation.height) > threshold {
                             withAnimation {
-                                currentIndex = value.translation.height > 0 ? 
+                                currentIndex = value.translation.height > 0 ?
                                     (currentIndex - 1 + videos.count) % videos.count :
                                     (currentIndex + 1) % videos.count
                                 resetFloatingElements(width: geometry.size.width, height: geometry.size.height)
@@ -144,12 +153,31 @@ struct VideoDistraction: View {
             }
             .onAppear {
                 startAnimations(in: geometry)
+                // Initial elements with delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    resetFloatingElements(width: geometry.size.width, height: geometry.size.height)
+                }
+            }
+            .onDisappear {
+                // Clean up timers
+                invalidateTimers()
             }
         }
     }
     
+    // Add timer properties
+    @State private var contentTimer: Timer?
+    @State private var animationTimer: Timer?
+    
+    private func invalidateTimers() {
+        contentTimer?.invalidate()
+        animationTimer?.invalidate()
+        contentTimer = nil
+        animationTimer = nil
+    }
+    
     private func startAnimations(in geometry: GeometryProxy) {
-        // Store geometry values locally
+        // Store geometry values
         let width = geometry.size.width
         let height = geometry.size.height
         
@@ -162,54 +190,72 @@ struct VideoDistraction: View {
             offset = 30
         }
         
-        // Change video content periodically
-        Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
+        // Improved content timer
+        invalidateTimers()
+        contentTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
             withAnimation {
                 currentIndex = (currentIndex + 1) % videos.count
-                // Use stored values instead of geometry directly
                 resetFloatingElements(width: width, height: height)
             }
         }
         
-        // Initial floating elements
-        resetFloatingElements(width: width, height: height)
-        
-        // Animate floating elements
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            withAnimation(.easeInOut(duration: 0.1)) {
-                // Use stored values instead of geometry directly
+        // Improved animation timer
+        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 0.05)) {
                 updateFloatingElements(height: height)
             }
         }
     }
     
-    // Updated to accept width and height instead of GeometryProxy
     private func resetFloatingElements(width: CGFloat, height: CGFloat) {
         let currentVideo = videos[currentIndex]
-        floatingElements = (currentVideo.emojis + currentVideo.symbols).map { content in
+        let elements = (currentVideo.emojis + currentVideo.symbols)
+        
+        // Ensure minimum number of elements
+        let minimumElements = 8
+        let repeatedElements = elements.count < minimumElements ?
+            elements + elements : elements
+        
+        floatingElements = repeatedElements.map { content in
             FloatingElement(
                 position: CGPoint(
                     x: CGFloat.random(in: 0...width),
                     y: CGFloat.random(in: 0...height)
                 ),
-                scale: CGFloat.random(in: 0.5...1.5),
+                scale: CGFloat.random(in: 0.8...1.2),
                 rotation: Double.random(in: 0...360),
                 content: content
             )
         }
     }
     
-    // Updated to accept height instead of GeometryProxy
     private func updateFloatingElements(height: CGFloat) {
         for i in floatingElements.indices {
-            floatingElements[i].position.y -= CGFloat.random(in: 1...3)
-            floatingElements[i].rotation += Double.random(in: -5...5)
-            floatingElements[i].scale += CGFloat.random(in: -0.05...0.05).clamped(to: 0.5...1.5)
+            floatingElements[i].position.y -= CGFloat.random(in: 1.5...2.5)
+            floatingElements[i].rotation += Double.random(in: -3...3)
             
-            if floatingElements[i].position.y < 0 {
-                floatingElements[i].position.y = height
+            // Smoother scale changes
+            let scaleChange = CGFloat.random(in: -0.02...0.02)
+            floatingElements[i].scale = (floatingElements[i].scale + scaleChange).clamped(to: 0.8...1.2)
+            
+            // Reset position with offset for continuous flow
+            if floatingElements[i].position.y < -50 {
+                floatingElements[i].position.y = height + 50
             }
         }
+    }
+}
+
+extension Character {
+    var isEmoji: Bool {
+        guard let scalar = UnicodeScalar(String(self)) else { return false }
+        return scalar.properties.isEmoji
+    }
+}
+
+extension String {
+    var isEmoji: Bool {
+        count == 1 && first?.isEmoji == true
     }
 }
 
