@@ -21,6 +21,8 @@ class AttentionViewModel: ObservableObject {
     private var isInBackground = false
     private var lastDistractionsIgnored: Int = 0
     private var moveDirection = CGPoint(x: 1, y: 1)
+    private var currentNotificationInterval: TimeInterval = 2.0
+    private var distractionProbability: Double = 0.2
     
     let notificationData: [(title: String, icon: String, colors: [Color], sound: SystemSoundID)] = [
         ("Messages", "message.fill",
@@ -77,14 +79,17 @@ class AttentionViewModel: ObservableObject {
     }
     
     func startGame() {
-        // Reset all game states
-        stopGame() // First stop any existing game
-        gameTime = 60 // Reset the game time to initial value
         gameActive = true
+        currentNotificationInterval = 2.0
+        distractionProbability = 0.2
+        scheduleNextNotification()
+        // Reset all game states
+        stopGame()
+        gameTime = 60
         score = 0
         focusStreak = 0
         distractionsIgnored = 0
-        lastDistractionsIgnored = 0 // Reset this counter too
+        lastDistractionsIgnored = 0
         position = CGPoint(x: UIScreen.main.bounds.width / 2,
                           y: UIScreen.main.bounds.height / 2)
         
@@ -108,7 +113,7 @@ class AttentionViewModel: ObservableObject {
     
     private func endGame() {
         gameActive = false
-        stopGame() // Use stopGame instead of pauseGame for proper cleanup
+        stopGame()
     }
     
     func calculateStars() -> Int {
@@ -236,6 +241,43 @@ class AttentionViewModel: ObservableObject {
             score += (newDistractionsIgnored - lastDistractionsIgnored) * 5
         }
         lastDistractionsIgnored = newDistractionsIgnored
+    }
+    
+    private func scheduleNextNotification() {
+        Timer.scheduledTimer(withTimeInterval: currentNotificationInterval, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            guard self.gameActive else { return }
+            
+            if Double.random(in: 0...1) < self.distractionProbability {
+                let screenWidth = UIScreen.main.bounds.width
+                let screenHeight = UIScreen.main.bounds.height
+                
+                let notificationContent = self.notificationData.randomElement()!
+                let newDistraction = Distraction(
+                    position: CGPoint(
+                        x: CGFloat.random(in: 150...(screenWidth-150)),
+                        y: CGFloat.random(in: 100...(screenHeight-100))
+                    ),
+                    title: notificationContent.title,
+                    message: AppMessages.randomMessage(for: notificationContent.title),
+                    appIcon: notificationContent.icon,
+                    iconColors: notificationContent.colors,
+                    soundID: notificationContent.sound
+                )
+                
+                withAnimation {
+                    self.distractions.append(newDistraction)
+                    if self.distractions.count > 3 {
+                        self.distractions.removeFirst()
+                    }
+                }
+                
+                if UIApplication.shared.applicationState == .active {
+                    AudioServicesPlaySystemSound(notificationContent.sound)
+                }
+            }
+            self.scheduleNextNotification()
+        }
     }
     
     deinit {
