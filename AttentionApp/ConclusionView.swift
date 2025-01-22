@@ -14,23 +14,23 @@ struct ConclusionView: View {
     @State private var score = 0
     @State private var showRestartIntroduction = false
     
-    // Add gradient colors to match app style
+    // Gradient colors remain the same
     private let gradientColors: [Color] = [.black.opacity(0.8), .blue.opacity(0.25)]
     
-    // Focus improvement tips based on performance
+    // Updated focus improvement tips based on score
     private var focusTips: String {
-        if viewModel.distractionsIgnored < 3 {
-            return "Tip: Try to maintain your gaze on the target even when notifications appear. The first moment of distraction is crucial."
-        } else if viewModel.focusStreak < 10 {
-            return "Tip: Your focus duration could improve. Try to follow the target's movement more consistently."
+        if viewModel.score < 20 {
+            return "Tip: Try to maintain your gaze on the target consistently. Small improvements in focus can lead to better scores."
+        } else if viewModel.score < 40 {
+            return "Tip: Your focus is improving! Try to build longer streaks by staying locked on the target."
         } else {
-            return "Great job maintaining focus! Keep practicing to improve your score even further."
+            return "Excellent focus control! Keep challenging yourself to maintain even longer streaks."
         }
     }
     
     var body: some View {
         ZStack {
-            // Background gradient matching app style
+            // Background elements remain the same
             LinearGradient(
                 gradient: Gradient(colors: gradientColors),
                 startPoint: .topLeading,
@@ -55,7 +55,13 @@ struct ConclusionView: View {
                         .font(.system(size: 80, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .onAppear {
-                            withAnimation(.spring(duration: 2.0)) {
+                            withAnimation(
+                                .spring(
+                                    response: 0.6,
+                                    dampingFraction: 0.8,
+                                    blendDuration: 0
+                                )
+                            ) {
                                 score = viewModel.score
                             }
                         }
@@ -71,14 +77,15 @@ struct ConclusionView: View {
                                 .fill(Color.white.opacity(0.15))
                         )
                     
-                    // Statistics cards with consistent styling
+                    // Updated to use bestStreak instead of focusStreak
                     HStack(spacing: 20) {
-                        StatCard(title: "Focus Time",
-                                value: "\(Int(viewModel.focusStreak))s",
+                        StatCard(title: "Total Focus",
+                                value: "\(Int(viewModel.totalFocusTime))s",
                                 icon: "clock.fill")
-                        StatCard(title: "Ignored",
-                                value: "\(viewModel.distractionsIgnored)",
-                                icon: "bell.slash.fill")
+                        
+                        StatCard(title: "Best Streak",
+                                value: "\(Int(viewModel.bestStreak))s",
+                                icon: "bolt.fill")
                     }
                 }
                 

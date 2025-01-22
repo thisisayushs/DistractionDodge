@@ -8,7 +8,8 @@ class AttentionViewModel: ObservableObject {
     @Published var distractions: [Distraction] = []
     @Published var score: Int = 0
     @Published var focusStreak: TimeInterval = 0
-    @Published var distractionsIgnored: Int = 0
+    @Published var bestStreak: TimeInterval = 0
+    @Published var totalFocusTime: TimeInterval = 0
     @Published var gameTime: TimeInterval = 60
     @Published var gameActive = false
     @Published var backgroundGradient: [Color] = [.black.opacity(0.8), .cyan.opacity(0.2)]
@@ -25,7 +26,6 @@ class AttentionViewModel: ObservableObject {
     private var gameTimer: Timer?
     private var wasActiveBeforeBackground = false
     private var isInBackground = false
-    private var lastDistractionsIgnored: Int = 0
     private var moveDirection = CGPoint(x: 1, y: 1)
     private var currentNotificationInterval: TimeInterval = 2.0
     private var distractionProbability: Double = 0.2
@@ -94,8 +94,8 @@ class AttentionViewModel: ObservableObject {
         gameTime = 60
         score = 0
         focusStreak = 0
-        distractionsIgnored = 0
-        lastDistractionsIgnored = 0
+        bestStreak = 0
+        totalFocusTime = 0
         position = CGPoint(x: UIScreen.main.bounds.width / 2,
                           y: UIScreen.main.bounds.height / 2)
         
@@ -122,7 +122,7 @@ class AttentionViewModel: ObservableObject {
     }
     
     func calculateStars() -> Int {
-        let maxScore = 100 
+        let maxScore = 100
         let percentage = Double(score) / Double(maxScore)
         
         if percentage >= 0.8 { return 3 }
@@ -163,6 +163,9 @@ class AttentionViewModel: ObservableObject {
     func updateGazeStatus(_ isGazing: Bool) {
         isGazingAtObject = isGazing
         if !isGazing {
+            if focusStreak > bestStreak {
+                bestStreak = focusStreak
+            }
             focusStreak = 0
         }
     }
@@ -234,6 +237,10 @@ class AttentionViewModel: ObservableObject {
         focusStreakTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self, self.isGazingAtObject else { return }
             self.focusStreak += 1
+            self.totalFocusTime += 1
+            if self.focusStreak > self.bestStreak {
+                self.bestStreak = self.focusStreak
+            }
             self.updateScore()
         }
     }
@@ -243,23 +250,14 @@ class AttentionViewModel: ObservableObject {
         
         let streakBonus = min(Int(focusStreak) / 10, 2)
         score += streakBonus
-        
-        let newDistractionsIgnored = distractions.count
-        if newDistractionsIgnored > lastDistractionsIgnored {
-            distractionsIgnored += newDistractionsIgnored - lastDistractionsIgnored
-            score += (newDistractionsIgnored - lastDistractionsIgnored) * 3
-        }
-        lastDistractionsIgnored = newDistractionsIgnored
     }
     
     func handleDistractionTap() {
-        AudioServicesPlaySystemSound(1521) // Error sound
+        
         endGameReason = .distractionTap
         gameActive = false
         stopGame()
     }
     
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
+    
 }
