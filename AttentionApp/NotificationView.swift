@@ -61,10 +61,14 @@ struct NotificationView: View {
                     
                     Spacer()
                     
-                    // Close button with separate tap handling
+                    // Modified close button with game over trigger
                     Button(action: {
                         withAnimation(.easeInOut) {
                             isDismissing = true
+                            // Add delay to allow animation to complete before game over
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                viewModel.handleDistractionTap()
+                            }
                         }
                     }) {
                         Image(systemName: "xmark.circle.fill")
