@@ -32,7 +32,7 @@ struct ContentView: View {
                 
                 VideoDistraction()
                     .position(videoPosition)
-                    .opacity(viewModel.gameTime >= 45 ? 0 : 1) 
+                    .opacity(viewModel.gameTime >= 45 ? 0 : 1)
                     .animation(.easeInOut(duration: 1.0), value: viewModel.gameTime)
                     .environmentObject(viewModel)
                 
@@ -120,54 +120,113 @@ struct GameSummaryView: View {
     @Binding var isPresented: Bool
     
     var body: some View {
-        VStack(spacing: 30) {
-            Text(viewModel.endGameReason == .timeUp ? "Time's Up!" : "Game Over!")
-                .font(.system(.title, design: .rounded))
-                .bold()
-                .foregroundColor(viewModel.endGameReason == .timeUp ? .blue : .red)
+        ZStack {
+            // Background gradient based on game state
+            LinearGradient(
+                gradient: Gradient(colors: viewModel.endGameReason == .timeUp ?
+                    [.blue.opacity(0.8), .cyan.opacity(0.2)] :
+                    [.red.opacity(0.8), .orange.opacity(0.2)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            if viewModel.endGameReason == .distractionTap {
-                Text("You got distracted!")
-                    .font(.system(.headline, design: .rounded))
-                    .foregroundColor(.red)
-                    .padding(.bottom)
-            }
-            
-            HStack {
-                ForEach(0..<3) { index in
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 40))
-                        .foregroundColor(index < viewModel.calculateStars() ? .yellow : .gray)
-                        .shadow(color: .black.opacity(0.2), radius: 5)
-                        .scaleEffect(index < viewModel.calculateStars() ? 1.2 : 1.0)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: viewModel.calculateStars())
+            VStack(spacing: 35) {
+                if viewModel.endGameReason == .distractionTap {
+                    VStack(spacing: 25) {
+                        // Floating icon with background glow
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(
+                                .linearGradient(
+                                    colors: [.yellow, .orange],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            
+                            .padding(.bottom)
+                        
+                        // Message in floating card style
+                        VStack(spacing: 15) {
+                            Text("Attention Lost!")
+                                .font(.system(.title, design: .rounded))
+                                .bold()
+                                .foregroundColor(.white)
+                            
+                            Text("You got distracted")
+                                .font(.system(.body, design: .rounded))
+                                .foregroundColor(.white.opacity(0.9))
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.vertical, 25)
+                        .padding(.horizontal, 30)
+                        .background(
+                            RoundedRectangle(cornerRadius: 25)
+                                .fill(.white.opacity(0.15))
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .stroke(.white.opacity(0.3), lineWidth: 1)
+                                )
+                                .shadow(color: .black.opacity(0.2), radius: 15)
+                        )
+                    }
+                } else {
+                    Text("Time's Up!")
+                        .font(.system(.title, design: .rounded))
+                        .bold()
+                        .foregroundColor(.blue)
+                    
+                    VStack(spacing: 15) {
+                        HStack {
+                            ForEach(0..<3) { index in
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(index < viewModel.calculateStars() ? .yellow : .gray)
+                                    .shadow(color: .black.opacity(0.2), radius: 5)
+                                    .scaleEffect(index < viewModel.calculateStars() ? 1.2 : 1.0)
+                                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: viewModel.calculateStars())
+                            }
+                        }
+                        .padding(.vertical)
+                        
+                        Text("Final Score: \(viewModel.score)")
+                            .font(.title2)
+                        Text("Longest Focus Streak: \(Int(viewModel.focusStreak))s")
+                        Text("Distractions Ignored: \(viewModel.distractionsIgnored)")
+                    }
+                    .font(.system(.body, design: .rounded))
                 }
-            }
-            .padding(.vertical)
-            
-            VStack(spacing: 15) {
-                Text("Final Score: \(viewModel.score)")
-                    .font(.title2)
-                Text("Longest Focus Streak: \(Int(viewModel.focusStreak))s")
-                Text("Distractions Ignored: \(viewModel.distractionsIgnored)")
-            }
-            .font(.system(.body, design: .rounded))
-            
-            Button("Try Again") {
-                isPresented = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    viewModel.startGame()
+                
+                // Try again button with consistent style
+                Button {
+                    isPresented = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        viewModel.startGame()
+                    }
+                } label: {
+                    Text("Try Again")
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 40)
+                        .padding(.vertical, 15)
+                        .background(
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: viewModel.endGameReason == .timeUp ?
+                                            [.blue, .cyan] : [.orange, .red],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                        )
+                        .shadow(color: .black.opacity(0.2), radius: 10)
                 }
+                .padding(.top, 20)
             }
-            .font(.headline)
-            .foregroundColor(.white)
-            .padding(.horizontal, 40)
-            .padding(.vertical, 15)
-            .background(viewModel.endGameReason == .timeUp ? Color.blue : Color.red)
-            .cornerRadius(25)
-            .shadow(radius: 5)
+            .padding(40)
         }
-        .padding(40)
     }
 }
 
