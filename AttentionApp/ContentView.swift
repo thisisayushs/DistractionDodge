@@ -13,8 +13,8 @@ import AVFoundation
 struct ContentView: View {
     @StateObject private var viewModel = AttentionViewModel()
     @State private var showGameSummary = false
-    @State private var videoPosition = CGPoint(x: UIScreen.main.bounds.width * 0.7,
-                                              y: UIScreen.main.bounds.height * 0.3)
+    @State private var videoPosition = CGPoint(x: UIScreen.main.bounds.width * 0.6,
+                                              y: UIScreen.main.bounds.height * 0.6)
     
     var body: some View {
         GeometryReader { geometry in
