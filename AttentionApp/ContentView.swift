@@ -14,6 +14,7 @@ struct ContentView: View {
     @StateObject private var viewModel = AttentionViewModel()
     @State private var showGameSummary = false
     @State private var showConclusion = false
+    @State private var showPauseMenu = false
     @State private var videoPosition = CGPoint(x: UIScreen.main.bounds.width * 0.6,
                                               y: UIScreen.main.bounds.height * 0.6)
     
@@ -80,8 +81,28 @@ struct ContentView: View {
                             glowCondition: viewModel.focusStreak >= 10,
                             glowColor: .orange
                         )
+                        
+                        Spacer()
+                        
+                        Button {
+                            viewModel.pauseGame()
+                            showPauseMenu = true
+                        } label: {
+                            Image(systemName: "pause.circle.fill")
+                                .font(.system(size: 35))
+                                .foregroundStyle(
+                                    .linearGradient(
+                                        colors: [.white, .white.opacity(0.7)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .frame(width: 44, height: 44)
+                        }
+                        .padding(.trailing, 20)
                     }
                     .padding(.top, 40)
+                    .padding(.leading)
                     
                     Spacer()
                 }
@@ -107,6 +128,9 @@ struct ContentView: View {
         }
         .fullScreenCover(isPresented: $showConclusion) {
             ConclusionView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showPauseMenu) {
+            PauseMenuView(viewModel: viewModel)
         }
     }
 }

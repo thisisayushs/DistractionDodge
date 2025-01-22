@@ -11,9 +11,10 @@ struct ConclusionView: View {
     @ObservedObject var viewModel: AttentionViewModel
     @Environment(\.dismiss) var dismiss
     @AppStorage("hasCompletedIntroduction") private var hasCompletedIntroduction = false
-    @State private var score = 0
+    @State private var displayedScore = 0
     @State private var showRestartIntroduction = false
     @State private var scoreScale: CGFloat = 0.5
+    @State private var isAnimating = false
     
     // Gradient colors remain the same
     private let gradientColors: [Color] = [.black.opacity(0.8), .blue.opacity(0.25)]
@@ -52,26 +53,50 @@ struct ConclusionView: View {
                         .foregroundColor(.white)
                         .padding(.top, 20)
                     
-                    Text("\(score)")
+                    Text("\(displayedScore)")
                         .font(.system(size: 80, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .scaleEffect(scoreScale)
+                        .animation(.interpolatingSpring(stiffness: 170, damping: 15).delay(0.1), value: scoreScale)
                         .onAppear {
-                            score = 0 
-                            scoreScale = 0.5 
+                            // Reset initial state
+                            displayedScore = 0
+                            scoreScale = 0.5
+                            isAnimating = false
                             
-                            // Animate scale with bounce
-                            withAnimation(.spring(
-                                response: 0.5,
-                                dampingFraction: 0.6,
-                                blendDuration: 0
-                            )) {
-                                scoreScale = 1.0 
+                            // Animate scale first
+                            withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.5)) {
+                                scoreScale = 1.0
                             }
                             
-                            // Animate score counting up
-                            withAnimation(.easeOut(duration: 1.0)) {
-                                score = viewModel.score
+                            // Then start counting up
+                            let finalScore = viewModel.score
+                            let animationDuration: TimeInterval = 1.5
+                            
+                            // Use timer for smoother counting animation
+                            let timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
+                                if displayedScore < finalScore {
+                                    displayedScore += 1
+                                    
+                                    // Add bounce effect on multiples of 10
+                                    if displayedScore % 10 == 0 {
+                                        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                                            scoreScale = 1.1
+                                        }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                            withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                                                scoreScale = 1.0
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    timer.invalidate()
+                                }
+                            }
+                            
+                            // Adjust timer interval based on score to maintain consistent animation duration
+                            if finalScore > 0 {
+                                timer.tolerance = animationDuration / Double(finalScore)
                             }
                         }
                     

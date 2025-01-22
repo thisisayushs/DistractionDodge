@@ -14,6 +14,7 @@ class AttentionViewModel: ObservableObject {
     @Published var gameActive = false
     @Published var backgroundGradient: [Color] = [.black.opacity(0.8), .cyan.opacity(0.2)]
     @Published var endGameReason: EndGameReason = .timeUp
+    @Published var isPaused = false
     
     enum EndGameReason {
         case timeUp
@@ -135,7 +136,8 @@ class AttentionViewModel: ObservableObject {
         return 0
     }
     
-    private func pauseGame() {
+    func pauseGame() {
+        isPaused = true
         timer?.invalidate()
         distractionTimer?.invalidate()
         focusStreakTimer?.invalidate()
@@ -146,8 +148,12 @@ class AttentionViewModel: ObservableObject {
         gameTimer = nil
     }
     
-    private func resumeGame() {
-        startGame()
+    func resumeGame() {
+        isPaused = false
+        startRandomMovement()
+        startDistractions()
+        startFocusStreakTimer()
+        startGameTimer()
     }
     
     func stopGame() {
