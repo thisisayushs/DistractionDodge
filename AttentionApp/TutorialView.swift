@@ -63,6 +63,13 @@ struct TutorialView: View {
             scoringType: .introduction
         ),
         TutorialStep(
+            title: "Dodge the Distractions",
+            description: [
+                "Stay focused! Don't look at or tap any notifications that appear."
+            ],
+            scoringType: .distractions
+        ),
+        TutorialStep(
             title: "Base Scoring",
             description: [
                 "Every second of focus counts! Watch your score grow as you maintain your gaze."
@@ -89,13 +96,6 @@ struct TutorialView: View {
                 "Be careful! Looking away has consequences.",
             ],
             scoringType: .penalty
-        ),
-        TutorialStep(
-            title: "Dodge the Distractions",
-            description: [
-                "Stay focused! Don't look at or tap any notifications that appear.",
-            ],
-            scoringType: .distractions
         )
     ]
     
@@ -556,7 +556,7 @@ struct TutorialView: View {
 
     private func startDistractionDemo() {
         Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { timer in
-            guard currentStep == 5 else {
+            guard currentStep == 1 else {
                 timer.invalidate()
                 return
             }
