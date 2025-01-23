@@ -120,9 +120,9 @@ struct TutorialView: View {
                         .padding(.top, 60)
                         .padding(.bottom, 10)
                     
-                    Text(currentStep == 0 ? 
-                        tutorialSteps[0].description[isMovingBall ? 2 : 
-                                                  (hasDemonstratedFollowing ? 3 : 
+                    Text(currentStep == 0 ?
+                        tutorialSteps[0].description[isMovingBall ? 2 :
+                                                  (hasDemonstratedFollowing ? 3 :
                                                    (demoIsGazing ? 1 : 0))] :
                         tutorialSteps[currentStep].description[0])
                         .font(.system(size: 20, weight: .medium, design: .rounded))
@@ -219,12 +219,20 @@ struct TutorialView: View {
                                         )
                                     )
                                 
-                                MainCircle(isGazingAtTarget: true, position: CGPoint(x: geometry.size.width / 2,
-                                                                                   y: geometry.size.height / 2))
+                                MainCircle(isGazingAtTarget: true,
+                                          position: CGPoint(x: UIScreen.main.bounds.width / 2,
+                                                           y: UIScreen.main.bounds.height * 0.22))
                                     .overlay(
                                         Text("+1")
                                             .font(.system(size: 24, weight: .bold, design: .rounded))
-                                            .foregroundColor(.green)
+                                            .foregroundStyle(
+                                                .linearGradient(
+                                                    colors: [.yellow, .white],
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
+                                            )
+                                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
                                             .opacity(showScoreIncrementIndicator ? 1 : 0)
                                             .offset(y: showScoreIncrementIndicator ? -30 : 0)
                                     )
@@ -545,14 +553,31 @@ struct TutorialView: View {
     
     private func startBaseScoring() {
         demoScore = 0
+        showNextButton = false
+        nextButtonScale = 1.0
+        
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             guard tutorialSteps[currentStep].scoringType == .baseScoring else {
                 timer.invalidate()
                 return
             }
+            
             withAnimation {
                 demoScore += 1
                 showScoreIncrementIndicator = true
+                
+                if demoScore == 10 {
+                    demoScore = 0 // Reset to zero at exactly 100
+                    // Start next button bounce animation
+                    showNextButton = true
+                    withAnimation(
+                        .easeInOut(duration: 0.5)
+                        .repeatForever(autoreverses: true)
+                    ) {
+                        nextButtonScale = 1.1
+                    }
+                }
+                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     withAnimation {
                         showScoreIncrementIndicator = false
