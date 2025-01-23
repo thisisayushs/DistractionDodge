@@ -22,6 +22,47 @@ enum ScoringType {
     case summary
 }
 
+// Add this elegant text modifier at the top of the file, after other modifiers
+struct ElegantTextEffect: ViewModifier {
+    let isShowing: Bool
+    let style: TextStyle
+    
+    enum TextStyle {
+        case bonus
+        case penalty
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .opacity(isShowing ? 1 : 0)
+            .scaleEffect(isShowing ? 1 : 0.8)
+            .rotationEffect(.degrees(isShowing ? 0 : style == .bonus ? -10 : 10))
+            .offset(y: isShowing ? 0 : style == .bonus ? 20 : -20)
+            .blur(radius: isShowing ? 0 : 5)
+            .animation(
+                .spring(response: 0.6, dampingFraction: 0.7)
+                .speed(0.8),
+                value: isShowing
+            )
+    }
+}
+
+struct FloatingScoreModifier: ViewModifier {
+    let isShowing: Bool
+    
+    func body(content: Content) -> some View {
+        content
+            .opacity(isShowing ? 1 : 0)
+            .scaleEffect(isShowing ? 1.2 : 0.8)
+            .offset(y: isShowing ? -50 : 0)
+            .animation(
+                .spring(response: 0.6, dampingFraction: 0.7)
+                .speed(0.7),
+                value: isShowing
+            )
+    }
+}
+
 struct TutorialView: View {
     @State private var currentStep = 0
     @State private var showContentView = false
@@ -53,6 +94,7 @@ struct TutorialView: View {
     @State private var showTutorialGameSummary = false
     @State private var isNavigating = false
     @GestureState private var dragOffset: CGFloat = 0
+    @State private var showSkipAlert = false  // Add this line
 
     let tutorialSteps = [
         TutorialStep(
@@ -131,6 +173,33 @@ struct TutorialView: View {
                 )
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 1.0), value: currentStep)
+                
+                // Add skip button overlay
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            showSkipAlert = true
+                        }) {
+                            Text("Skip")
+                                .font(.system(size: 17, weight: .medium, design: .rounded))
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.white.opacity(0.15))
+                                        .overlay(
+                                            Capsule()
+                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .padding(.top, 50)
+                        .padding(.trailing, 20)
+                    }
+                    Spacer()
+                }
                 
                 VStack(spacing: 0) {
                     // Title with transition
@@ -239,6 +308,10 @@ struct TutorialView: View {
                                 // Bottom instructions
                                 
                             }
+                            .id("introduction\(currentStep)")
+                            .onDisappear {
+                                cleanupCurrentDemo()
+                            }
                         
                         case .baseScoring:
                             VStack(spacing: 40) {
@@ -257,21 +330,24 @@ struct TutorialView: View {
                                                            y: UIScreen.main.bounds.height * 0.22))
                                     .overlay(
                                         Text("+1")
-                                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                                            .font(.system(size: 28, weight: .bold, design: .rounded))
                                             .foregroundStyle(
                                                 .linearGradient(
-                                                    colors: [.yellow, .white],
+                                                    colors: [.yellow, .orange],
                                                     startPoint: .top,
                                                     endPoint: .bottom
                                                 )
                                             )
                                             .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                                            .opacity(showScoreIncrementIndicator ? 1 : 0)
-                                            .offset(y: showScoreIncrementIndicator ? -30 : 0)
+                                            .modifier(FloatingScoreModifier(isShowing: showScoreIncrementIndicator))
                                     )
                                     .onAppear {
                                         startBaseScoring()
                                     }
+                            }
+                            .id("scoring\(currentStep)")
+                            .onDisappear {
+                                cleanupCurrentDemo()
                             }
                         
                         case .multiplier:
@@ -324,6 +400,10 @@ struct TutorialView: View {
                                         startMultiplierDemo()
                                     }
                             }
+                            .id("multiplier\(currentStep)")
+                            .onDisappear {
+                                cleanupCurrentDemo()
+                            }
                         
                         case .streakBonus:
                             VStack(spacing: 40) {
@@ -369,7 +449,7 @@ struct TutorialView: View {
                                                 endPoint: .trailing
                                             )
                                         )
-                                        .transition(.scale.combined(with: .opacity))
+                                        .modifier(ElegantTextEffect(isShowing: showBonusIndicator, style: .bonus))
                                 }
                                 
                                 MainCircle(isGazingAtTarget: true,
@@ -379,6 +459,10 @@ struct TutorialView: View {
                                     .onAppear {
                                         startStreakBonusDemo()
                                     }
+                            }
+                            .id("streak\(currentStep)")
+                            .onDisappear {
+                                cleanupCurrentDemo()
                             }
                         
                         case .penalty:
@@ -429,11 +513,16 @@ struct TutorialView: View {
                                         startPenaltyDemo()
                                     }
                             }
+                            .id("penalty\(currentStep)")
+                            .onDisappear {
+                                cleanupCurrentDemo()
+                            }
                         
                         case .summary:
                             ScrollView {
                                 // Summary cards remain the same
                             }
+                            .id("summary\(currentStep)")
                         
                         case .distractions:
                             ZStack {
@@ -503,6 +592,10 @@ struct TutorialView: View {
                                 // Start showing distractions
                                 startDistractionDemo()
                             }
+                            .id("distractions\(currentStep)")
+                            .onDisappear {
+                                cleanupCurrentDemo()
+                            }
                        
                         }
                     }
@@ -511,7 +604,6 @@ struct TutorialView: View {
                         insertion: .move(edge: .trailing).combined(with: .opacity),
                         removal: .move(edge: .leading).combined(with: .opacity)
                     ))
-                    .id("content\(currentStep)")
                     
                     Spacer()
                     
@@ -575,11 +667,23 @@ struct TutorialView: View {
                 )
             }
         }
+        .onChange(of: currentStep) { oldValue, newValue in
+            cleanupCurrentDemo()
+            resetStateForStep(newValue)
+        }
         .preferredColorScheme(.dark)
         .fullScreenCover(isPresented: $showContentView) {
             ContentView()
         }
         .animation(.spring(response: 0.6, dampingFraction: 0.7), value: currentStep)
+        .alert("Skip Tutorial?", isPresented: $showSkipAlert) {
+            Button("Skip", role: .destructive) {
+                showContentView = true
+            }
+            Button("Continue Tutorial", role: .cancel) {}
+        } message: {
+            Text("You are about to skip the tutorial, You will be taken directly to the game.")
+        }
     }
     
     private func startBaseScoring() {
@@ -846,6 +950,14 @@ struct TutorialView: View {
             
             self.customPosition = CGPoint(x: newX, y: newY)
         }
+    }
+    
+    private func cleanupCurrentDemo() {
+        // Implement cleanup logic here
+    }
+    
+    private func resetStateForStep(_ step: Int) {
+        // Implement state reset logic here
     }
 }
 
