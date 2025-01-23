@@ -45,6 +45,7 @@ struct IntroductionView: View {
     @State private var moveDirection = CGPoint(x: 1, y: 1)
     @GestureState private var dragOffset: CGFloat = 0
     @State private var showContentView = false
+    @State private var showTutorial = false
     
     // Gradient colors remain the same
     let gradientColors: [(start: Color, end: Color)] = [
@@ -395,8 +396,8 @@ struct IntroductionView: View {
                     // Enhanced button
                     Button(action: {
                         if self.currentIndex == self.screens.count - 1 {
-                            // On the last screen, show ContentView
-                            self.showContentView = true
+                            // On the last screen, show TutorialView
+                            self.showTutorial = true
                         } else {
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                                 self.navigate(forward: true)
@@ -442,8 +443,8 @@ struct IntroductionView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .fullScreenCover(isPresented: $showContentView) {
-            ContentView()
+        .fullScreenCover(isPresented: $showTutorial) {
+            TutorialView()
         }
         .onDisappear {
             // Clean up animations
