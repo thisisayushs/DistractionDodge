@@ -239,6 +239,11 @@ struct IntroductionView: View {
         generateNotifications()
     }
     
+    // Add these properties for animation control
+    @State private var activeLineIndex = 0
+    @State private var completedLines: Set<Int> = []
+    @State private var allLinesComplete = false
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -293,136 +298,45 @@ struct IntroductionView: View {
                 VStack {
                     // Back button remains the same
                     if self.currentIndex > 0 {
-                        HStack {
-                            Button(action: {
-                                self.navigate(forward: false)
-                            }) {
-                                HStack {
-                                    Image(systemName: "chevron.left")
-                                        .font(.system(size: 20, weight: .bold))
-                                    Text("Back")
-                                        .font(.system(size: 18, weight: .bold))
-                                }
-                                .foregroundColor(.white)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.white.opacity(0.2))
-                                        .overlay(
-                                            Capsule()
-                                                .stroke(Color.white, lineWidth: 1)
-                                        )
-                                )
-                            }
-                            .padding(.leading, 20)
-                            .disabled(self.isNavigating)
-                            Spacer()
+                        BackButtonView(isNavigating: self.isNavigating) {
+                            self.navigate(forward: false)
                         }
-                        .padding(.top, 20)
                     }
                     
                     Spacer()
                     
                     // Content section update
-                    VStack(spacing: 30) {
-                        if self.currentIndex == 3 {
-                            // Updated bell emoji animation
-                            Text(self.screens[self.currentIndex].emoji)
-                                .font(.system(size: 100))
-                                .scaleEffect(bellScale)
-                                .rotationEffect(.degrees(bellRotation))
-                                .onAppear {
-                                    startBellAnimation()
-                                }
-                                .onDisappear {
-                                    bellScale = 1
-                                    bellRotation = -20
-                                }
-                                .padding(.bottom, 30)
-                        } else {
-                            // Regular emoji animation for other screens remains the same
-                            Text(self.screens[self.currentIndex].emoji)
-                                .font(.system(size: 100))
-                                .scaleEffect(emojiScale)
-                                .rotationEffect(.degrees(emojiRotation))
-                                .onAppear {
-                                    withAnimation(
-                                        .spring(response: 0.6, dampingFraction: 0.6)
-                                        .repeatForever(autoreverses: true)
-                                    ) {
-                                        emojiScale = 1.2
-                                    }
-                                    
-                                    withAnimation(
-                                        .easeInOut(duration: 2)
-                                        .repeatForever(autoreverses: true)
-                                    ) {
-                                        emojiRotation = 10
-                                    }
-                                }
-                                .onDisappear {
-                                    emojiScale = 1
-                                    emojiRotation = 0
-                                }
-                                .padding(.bottom, 30)
-                        }
-
-                        Text(self.screens[self.currentIndex].title)
-                            .font(.system(size: 42, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                            .transition(.scale.combined(with: .opacity))
-                            .id("title\(self.currentIndex)")
-                        
-                        VStack(spacing: 25) {
-                            ForEach(self.screens[self.currentIndex].content.indices, id: \.self) { index in
-                                Text(self.screens[self.currentIndex].content[index])
-                                    .font(.system(size: 20, weight: .medium, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.9))
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal)
-                                    .transition(.move(edge: .trailing).combined(with: .opacity))
-                                    .id("content\(self.currentIndex)\(index)")
-                            }
-                        }
-                        .padding(.top, 20)
-                    }
-                    .padding(.horizontal)
+                    IntroductionContentView(
+                        screen: self.screens[self.currentIndex],
+                        activeLineIndex: $activeLineIndex,
+                        completedLines: $completedLines,
+                        allLinesComplete: $allLinesComplete,
+                        bellScale: $bellScale,
+                        bellRotation: $bellRotation,
+                        emojiScale: $emojiScale,
+                        emojiRotation: $emojiRotation,
+                        currentIndex: self.currentIndex
+                    )
                     
                     Spacer()
                     
-                    // Enhanced button
-                    Button(action: {
+                    // Modified button with bounce animation
+                    NavigationButtonView(
+                        buttonText: self.screens[self.currentIndex].buttonText,
+                        allLinesComplete: self.allLinesComplete,
+                        isLastScreen: self.currentIndex == self.screens.count - 1
+                    ) {
                         if self.currentIndex == self.screens.count - 1 {
-                            // On the last screen, show TutorialView
                             self.showTutorial = true
                         } else {
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                                 self.navigate(forward: true)
+                                self.activeLineIndex = 0
+                                self.completedLines.removeAll()
+                                self.allLinesComplete = false
                             }
                         }
-                    }) {
-                        HStack {
-                            Text(self.screens[self.currentIndex].buttonText)
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.vertical, 16)
-                        .padding(.horizontal, 35)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.2))
-                                .overlay(
-                                    Capsule()
-                                        .stroke(Color.white, lineWidth: 1.5)
-                                )
-                                .shadow(color: .white.opacity(0.3), radius: 5, x: 0, y: 2)
-                        )
                     }
-                    .disabled(self.isNavigating)
-                    .padding(.bottom, 40)
                 }
                 .padding()
                 // Add gesture recognizer
@@ -450,17 +364,194 @@ struct IntroductionView: View {
             // Clean up animations
             self.notifications.removeAll()
         }
-        .onChange(of: self.currentIndex) { oldIndex, newIndex in
-            if newIndex != 3 {
-                self.notifications.removeAll()
-            } else {
-                // Reset all animations when returning to screen 4
-                resetAndStartAnimations()
-            }
+        .onChange(of: self.currentIndex) { _, _ in
+            // Reset animation state when screen changes
+            self.activeLineIndex = 0
+            self.completedLines.removeAll()
+            self.allLinesComplete = false
         }
     }
+}
+
+// Extract the content section into a separate view
+struct IntroductionContentView: View {
+    // Properties remain the same
+    let screen: Screen
+    @Binding var activeLineIndex: Int
+    @Binding var completedLines: Set<Int>
+    @Binding var allLinesComplete: Bool
+    @Binding var bellScale: CGFloat
+    @Binding var bellRotation: Double
+    @Binding var emojiScale: CGFloat
+    @Binding var emojiRotation: CGFloat
+    let currentIndex: Int
     
-    // Cleanup remains the same
+    var body: some View {
+        VStack(spacing: 30) {
+            // Updated emoji section with fixed bell animation
+            if currentIndex == 3 {
+                Text(screen.emoji)
+                    .font(.system(size: 100))
+                    .scaleEffect(bellScale)
+                    .rotationEffect(.degrees(bellRotation))
+                    .onAppear {
+                        // Start bell animations immediately
+                        withAnimation(
+                            .easeInOut(duration: 0.5)
+                            .repeatForever(autoreverses: true)
+                        ) {
+                            bellScale = 1.1
+                        }
+                        
+                        withAnimation(
+                            .easeInOut(duration: 0.5)
+                            .repeatForever(autoreverses: true)
+                        ) {
+                            bellRotation = 20
+                        }
+                    }
+                    .onDisappear {
+                        // Reset bell animation when disappearing
+                        withAnimation(.easeInOut) {
+                            bellScale = 1
+                            bellRotation = -20
+                        }
+                    }
+                    .padding(.bottom, 30)
+            } else {
+                Text(screen.emoji)
+                    .font(.system(size: 100))
+                    .scaleEffect(emojiScale)
+                    .rotationEffect(.degrees(emojiRotation))
+                    .onAppear {
+                        withAnimation(
+                            .spring(response: 0.6, dampingFraction: 0.6)
+                            .repeatForever(autoreverses: true)
+                        ) {
+                            emojiScale = 1.2
+                        }
+                        
+                        withAnimation(
+                            .easeInOut(duration: 2)
+                            .repeatForever(autoreverses: true)
+                        ) {
+                            emojiRotation = 10
+                        }
+                    }
+                    .onDisappear {
+                        withAnimation(.easeInOut) {
+                            emojiScale = 1
+                            emojiRotation = 0
+                        }
+                    }
+                    .padding(.bottom, 30)
+            }
+            
+            // Rest of the view remains the same
+            Text(screen.title)
+                .font(.system(size: 42, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+                .transition(.scale.combined(with: .opacity))
+                .id("title\(currentIndex)")
+            
+            VStack(alignment: .leading, spacing: 25) {
+                ForEach(screen.content.indices, id: \.self) { index in
+                    TypewriterText(
+                        text: screen.content[index],
+                        index: index,
+                        activeIndex: $activeLineIndex
+                    ) {
+                        withAnimation {
+                            completedLines.insert(index)
+                            if index < screen.content.count - 1 {
+                                activeLineIndex += 1
+                            } else {
+                                allLinesComplete = true
+                            }
+                        }
+                    }
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .leading).combined(with: .opacity),
+                        removal: .move(edge: .trailing).combined(with: .opacity)
+                    ))
+                    .id("content\(currentIndex)\(index)")
+                }
+            }
+            .padding(.top, 20)
+            .padding(.horizontal)
+        }
+        .padding(.horizontal)
+    }
+}
+
+// Back button view
+struct BackButtonView: View {
+    let isNavigating: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        HStack {
+            Button(action: action) {
+                HStack {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 20, weight: .bold))
+                    Text("Back")
+                        .font(.system(size: 18, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .background(
+                    Capsule()
+                        .fill(Color.white.opacity(0.2))
+                        .overlay(Capsule().stroke(Color.white, lineWidth: 1))
+                )
+            }
+            .padding(.leading, 20)
+            .disabled(isNavigating)
+            Spacer()
+        }
+        .padding(.top, 20)
+    }
+}
+
+// Navigation button view
+struct NavigationButtonView: View {
+    let buttonText: String
+    let allLinesComplete: Bool
+    let isLastScreen: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(buttonText)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+            }
+            .foregroundColor(.white)
+            .padding(.vertical, 16)
+            .padding(.horizontal, 35)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.2))
+                    .overlay(Capsule().stroke(Color.white, lineWidth: 1.5))
+                    .shadow(color: .white.opacity(0.3), radius: 5, x: 0, y: 2)
+            )
+            // Only apply bounce animation when button is active
+            .scaleEffect(allLinesComplete ? 1.1 : 1.0)
+            // Only animate when button is active
+            .animation(allLinesComplete ?
+                .easeInOut(duration: 0.5).repeatForever(autoreverses: true) :
+                .easeInOut(duration: 0.3),
+                value: allLinesComplete
+            )
+        }
+        .opacity(allLinesComplete ? 1 : 0.5)
+        .disabled(!allLinesComplete)
+        .padding(.bottom, 40)
+    }
 }
 
 // DistractionBackground struct with fix
@@ -501,6 +592,9 @@ struct FloatingAnimation: ViewModifier {
     }
 }
 
-#Preview {
-    IntroductionView()
+// Preview
+struct IntroductionView_Previews: PreviewProvider {
+    static var previews: some View {
+        IntroductionView()
+    }
 }
