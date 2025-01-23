@@ -38,7 +38,10 @@ struct TutorialView: View {
     @State private var showScoreIncrementIndicator = false
     @State private var showBonusIndicator = false
     @State private var showPenaltyIndicator = false
-
+    @State private var elapsedTime: Int = 0
+    @State private var streakTime: Int = 0
+    @State private var penaltyTimer: Timer? = nil
+    
     @State private var isMovingBall = false
     @State private var moveDirection = CGPoint(x: 1, y: 1)
     @State private var hasDemonstratedFollowing = false
@@ -47,9 +50,9 @@ struct TutorialView: View {
                                               y: UIScreen.main.bounds.height * 0.15)
     @State private var nextButtonScale: CGFloat = 1.0
 
-    @State private var showWarning = false
-    @State private var warningOffset: CGFloat = -20
     @State private var showTutorialGameSummary = false
+    @State private var isNavigating = false
+    @GestureState private var dragOffset: CGFloat = 0
 
     let tutorialSteps = [
         TutorialStep(
@@ -101,25 +104,50 @@ struct TutorialView: View {
         )
     ]
     
+    private func navigate(forward: Bool) {
+        if !isNavigating {
+            isNavigating = true
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                if forward && currentStep < tutorialSteps.count - 1 {
+                    currentStep += 1
+                } else if !forward && currentStep > 0 {
+                    currentStep -= 1
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                isNavigating = false
+            }
+        }
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background gradient
+                // Background gradient with animation
                 LinearGradient(
                     gradient: Gradient(colors: [.black.opacity(0.8), .blue.opacity(0.2)]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
+                .animation(.easeInOut(duration: 1.0), value: currentStep)
                 
                 VStack(spacing: 0) {
-                    // Title section
+                    // Title with transition
                     Text(tutorialSteps[currentStep].title)
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .padding(.top, 60)
                         .padding(.bottom, 10)
+                        .padding(.horizontal)
+                        .multilineTextAlignment(.center)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
+                        .id("title\(currentStep)")
                     
+                    // Description with transition
                     Text(currentStep == 0 ?
                         tutorialSteps[0].description[isMovingBall ? 2 :
                                                   (hasDemonstratedFollowing ? 3 :
@@ -130,6 +158,11 @@ struct TutorialView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 30)
                         .padding(.bottom, 40)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
+                        .id("description\(currentStep)")
                         .animation(.easeInOut, value: isMovingBall)
                         .animation(.easeInOut, value: hasDemonstratedFollowing)
                         .animation(.easeInOut, value: demoIsGazing)
@@ -253,6 +286,15 @@ struct TutorialView: View {
                                             .foregroundStyle(.white)
                                     }
                                     
+                                    // Added timer display
+                                    VStack(alignment: .center) {
+                                        Text("Time")
+                                            .font(.system(size: 20, weight: .medium))
+                                        Text("\(elapsedTime)s")
+                                            .font(.system(size: 36, weight: .bold))
+                                            .foregroundStyle(.white)
+                                    }
+                                    
                                     // Multiplier display
                                     VStack(alignment: .center) {
                                         Text("Multiplier")
@@ -275,8 +317,9 @@ struct TutorialView: View {
                                         .fill(Color.white.opacity(0.15))
                                 )
                                 
-                                MainCircle(isGazingAtTarget: true, position: CGPoint(x: geometry.size.width / 2,
-                                                                                   y: geometry.size.height / 2))
+                                MainCircle(isGazingAtTarget: true,
+                                          position: CGPoint(x: UIScreen.main.bounds.width / 2,
+                                                           y: UIScreen.main.bounds.height * 0.20))
                                     .onAppear {
                                         startMultiplierDemo()
                                     }
@@ -329,8 +372,9 @@ struct TutorialView: View {
                                         .transition(.scale.combined(with: .opacity))
                                 }
                                 
-                                MainCircle(isGazingAtTarget: true, position: CGPoint(x: geometry.size.width / 2,
-                                                                                   y: geometry.size.height / 2))
+                                MainCircle(isGazingAtTarget: true,
+                                          position: CGPoint(x: UIScreen.main.bounds.width / 2,
+                                                           y: UIScreen.main.bounds.height * 0.20))
                                     .scaleEffect(showBonusIndicator ? 1.1 : 1.0)
                                     .onAppear {
                                         startStreakBonusDemo()
@@ -340,7 +384,7 @@ struct TutorialView: View {
                         case .penalty:
                             VStack(spacing: 40) {
                                 HStack(spacing: 30) {
-                                    // Score display
+                                    // Score display with potentially reset value
                                     VStack(alignment: .center) {
                                         Text("Score")
                                             .font(.system(size: 20, weight: .medium))
@@ -349,7 +393,7 @@ struct TutorialView: View {
                                             .foregroundStyle(.white)
                                     }
                                     
-                                    // Penalty display
+                                    // Penalty display remains the same
                                     VStack(alignment: .center) {
                                         Text("Penalty")
                                             .font(.system(size: 20, weight: .medium))
@@ -378,8 +422,9 @@ struct TutorialView: View {
                                         .transition(.scale.combined(with: .opacity))
                                 }
                                 
-                                MainCircle(isGazingAtTarget: !showPenaltyIndicator, position: CGPoint(x: geometry.size.width / 2,
-                                                                                                   y: geometry.size.height / 2))
+                                MainCircle(isGazingAtTarget: !showPenaltyIndicator,
+                                          position: CGPoint(x: geometry.size.width / 2,
+                                           y: geometry.size.height / 5))
                                     .onAppear {
                                         startPenaltyDemo()
                                     }
@@ -424,21 +469,6 @@ struct TutorialView: View {
                                     Spacer()
                                 }
                                 
-                                // Add warning overlay
-                                if showWarning {
-                                    Text("Don't tap notifications!")
-                                        .font(.system(size: 24, weight: .bold))
-                                        .foregroundColor(.red)
-                                        .padding(.vertical, 12)
-                                        .padding(.horizontal, 24)
-                                        .background(
-                                            Capsule()
-                                                .fill(Color.black.opacity(0.8))
-                                        )
-                                        .offset(y: warningOffset)
-                                        .transition(.scale.combined(with: .opacity))
-                                }
-                                
                                 // Update to use actual NotificationView but non-interactive
                                 if showDemoDistraction {
                                     NotificationView(
@@ -477,13 +507,18 @@ struct TutorialView: View {
                         }
                     }
                     .frame(height: geometry.size.height * 0.4)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
+                    .id("content\(currentStep)")
                     
                     Spacer()
                     
-                    // Navigation buttons
+                    // Navigation buttons with animation
                     HStack(spacing: 20) {
                         if currentStep > 0 {
-                            Button(action: { currentStep -= 1 }) {
+                            Button(action: { navigate(forward: false) }) {
                                 HStack {
                                     Image(systemName: "chevron.left")
                                     Text("Previous")
@@ -493,18 +528,15 @@ struct TutorialView: View {
                                 .padding(.vertical, 10)
                                 .background(Capsule().fill(Color.white.opacity(0.2)))
                             }
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                            .disabled(isNavigating)
                         }
                         
                         Button(action: {
-                            withAnimation {
-                                if currentStep < tutorialSteps.count - 1 {
-                                    // Stop the bounce animation when tapped
-                                    nextButtonScale = 1.0
-                                    showNextButton = false
-                                    currentStep += 1
-                                } else {
-                                    showContentView = true
-                                }
+                            if currentStep < tutorialSteps.count - 1 {
+                                navigate(forward: true)
+                            } else {
+                                showContentView = true
                             }
                         }) {
                             HStack {
@@ -519,36 +551,35 @@ struct TutorialView: View {
                             .background(Capsule().fill(Color.white.opacity(0.2)))
                             .scaleEffect(showNextButton ? nextButtonScale : 1.0)
                         }
+                        .disabled(isNavigating)
                     }
                     .padding(.bottom, 50)
                 }
-            }
-            .onChange(of: currentStep) { oldValue, newValue in
-                // Reset all states when navigating away from or back to introduction
-                if oldValue == 0 || newValue == 0 {
-                    isMovingBall = false
-                    hasDemonstratedFollowing = false
-                    demoIsGazing = false
-                    nextButtonScale = 1.0
-                    showNextButton = false
-                    customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
-                                           y: UIScreen.main.bounds.height * 0.15)
-                    moveDirection = CGPoint(x: 1, y: 1)
-                }
-                // Reset ball movement and animations when navigating away
-                if currentStep != 1 {
-                    isMovingBall = false
-                    nextButtonScale = 1.0
-                    showNextButton = false
-                }
+                .padding()
+                // Gesture recognizer for swipe navigation
+                .gesture(
+                    DragGesture()
+                        .updating($dragOffset) { value, state, _ in
+                            state = value.translation.width
+                        }
+                        .onEnded { value in
+                            let threshold: CGFloat = 50
+                            if !isNavigating {
+                                if value.translation.width > threshold {
+                                    navigate(forward: false)
+                                } else if value.translation.width < -threshold {
+                                    navigate(forward: true)
+                                }
+                            }
+                        }
+                )
             }
         }
+        .preferredColorScheme(.dark)
         .fullScreenCover(isPresented: $showContentView) {
             ContentView()
         }
-        .onAppear {
-            // Remove the position setting here as we're using GeometryReader instead
-        }
+        .animation(.spring(response: 0.6, dampingFraction: 0.7), value: currentStep)
     }
     
     private func startBaseScoring() {
@@ -590,17 +621,48 @@ struct TutorialView: View {
     private func startMultiplierDemo() {
         demoScore = 0
         demoMultiplier = 1
-        demoStreak = 0
+        elapsedTime = 0
+        showNextButton = false
+        nextButtonScale = 1.0
+        var hasStartedBounce = false
+        
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             guard tutorialSteps[currentStep].scoringType == .multiplier else {
                 timer.invalidate()
                 return
             }
+            
             withAnimation {
-                demoStreak += 1
+                elapsedTime += 1
                 demoScore += demoMultiplier
-                if demoStreak % 5 == 0 {
+                
+                // Update multiplier every 5 seconds, cap at 3
+                if elapsedTime % 5 == 0 && demoMultiplier < 3 {
                     demoMultiplier += 1
+                }
+                
+                // Reset at 60 seconds and start bounce
+                if elapsedTime >= 60 && !hasStartedBounce {
+                    hasStartedBounce = true
+                    demoScore = 0
+                    demoMultiplier = 1
+                    elapsedTime = 0
+                    
+                    // Start next button bounce
+                    showNextButton = true
+                    withAnimation(
+                        .easeInOut(duration: 0.5)
+                        .repeatForever(autoreverses: true)
+                    ) {
+                        nextButtonScale = 1.1
+                    }
+                }
+                
+                // Reset values at 60 seconds
+                if elapsedTime >= 60 {
+                    demoScore = 0
+                    demoMultiplier = 1
+                    elapsedTime = 0
                 }
             }
         }
@@ -609,7 +671,11 @@ struct TutorialView: View {
     private func startStreakBonusDemo() {
         demoScore = 0
         demoStreak = 0
+        streakTime = 0
         showBonusIndicator = false
+        showNextButton = false
+        nextButtonScale = 1.0
+        var hasStartedBounce = false
         
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             guard tutorialSteps[currentStep].scoringType == .streakBonus else {
@@ -617,6 +683,7 @@ struct TutorialView: View {
                 return
             }
             
+            streakTime += 1
             demoStreak += 1
             demoScore += 1
             
@@ -632,6 +699,32 @@ struct TutorialView: View {
                     }
                 }
             }
+            
+            // Reset at 60 seconds and start bounce
+            if streakTime >= 60 && !hasStartedBounce {
+                hasStartedBounce = true
+                withAnimation {
+                    demoScore = 0
+                    demoStreak = 0
+                    streakTime = 0
+                    
+                    // Start next button bounce
+                    showNextButton = true
+                    withAnimation(
+                        .easeInOut(duration: 0.5)
+                        .repeatForever(autoreverses: true)
+                    ) {
+                        nextButtonScale = 1.1
+                    }
+                }
+            }
+            
+            // Continue resetting values at 60 seconds
+            if streakTime >= 60 {
+                demoScore = 0
+                demoStreak = 0
+                streakTime = 0
+            }
         }
     }
 
@@ -639,13 +732,25 @@ struct TutorialView: View {
         demoScore = 30
         demoStreak = 8
         showPenaltyIndicator = false
+        showNextButton = false
+        nextButtonScale = 1.0
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation(.easeInOut(duration: 0.5)) {
                 showPenaltyIndicator = true
                 demoScore = max(0, demoScore - min(demoStreak, 10))
+                
+                // Start button bounce when focus is lost
+                showNextButton = true
+                withAnimation(
+                    .easeInOut(duration: 0.5)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    nextButtonScale = 1.1
+                }
             }
             
+            // Reset score after 2 seconds (original behavior)
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 demoScore = 30
                 demoStreak = 8
