@@ -33,7 +33,7 @@ struct TutorialView: View {
     @State private var showScoreCard = false
     @State private var showMultiplierCard = false
     @State private var showPenaltyCard = false
-    @State private var showDemoDistraction = true
+    @State private var showDemoDistraction = false
     @State private var demoMultiplier = 1
     @State private var showScoreIncrementIndicator = false
     @State private var showBonusIndicator = false
@@ -47,25 +47,27 @@ struct TutorialView: View {
                                               y: UIScreen.main.bounds.height * 0.15)
     @State private var nextButtonScale: CGFloat = 1.0
 
+    @State private var showWarning = false
+    @State private var warningOffset: CGFloat = -20
+    @State private var showTutorialGameSummary = false
+
     let tutorialSteps = [
         TutorialStep(
             title: "Prepare to Train Your Focus",
             description: [
-                // Initial positioning
                 "Position your device steadily so your face is clearly visible to the camera.",
-                // When stationary
                 "Look at the circle until it starts glowing.",
-                // When circle starts moving
                 "Now follow the moving circle with your eyes.",
-                // When circle stops and returns
                 "Great! You've mastered the basics. Tap 'Next' to continue."
             ],
             scoringType: .introduction
         ),
         TutorialStep(
-            title: "Dodge the Distractions",
+            title: "Stay Focused Despite Distractions",
             description: [
-                "Stay focused! Don't look at or tap any notifications that appear."
+                "Keep your eyes on the moving circle while notifications appear.",
+                "Remember: Looking at or tapping notifications ends your training.",
+                "The most challenging part will be resisting the urge to tap interesting notifications."
             ],
             scoringType: .distractions
         ),
@@ -382,22 +384,86 @@ struct TutorialView: View {
                         
                         case .distractions:
                             ZStack {
-                                MainCircle(isGazingAtTarget: true, position: CGPoint(x: geometry.size.width / 2,
-                                                                                   y: geometry.size.height / 2))
+                                // EyeTrackingView and VStack remain the same
+                                EyeTrackingView { isGazing in
+                                    self.demoIsGazing = isGazing
+                                }
+                                
+                                VStack(spacing: 60) {
+                                    // Gaze tracking indicator
+                                    HStack {
+                                        Image(systemName: "eye")
+                                            .font(.system(size: 24))
+                                        Text("Keep Following")
+                                            .font(.system(size: 18, weight: .medium))
+                                    }
+                                    .foregroundColor(demoIsGazing ? .green : .white.opacity(0.5))
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 16)
+                                    .background(
+                                        Capsule()
+                                            .fill(Color.white.opacity(0.15))
+                                    )
+                                    .shadow(color: demoIsGazing ? .green.opacity(0.5) : .clear, radius: 10)
+                                    
+                                    Spacer()
+                                    
+                                    // Moving ball continues from previous screen
+                                    MainCircle(isGazingAtTarget: demoIsGazing,
+                                              position: customPosition)
+                                        .padding(.bottom, 100)
+                                    
+                                    Spacer()
+                                }
+                                
+                                // Add warning overlay
+                                if showWarning {
+                                    Text("Don't tap notifications!")
+                                        .font(.system(size: 24, weight: .bold))
+                                        .foregroundColor(.red)
+                                        .padding(.vertical, 12)
+                                        .padding(.horizontal, 24)
+                                        .background(
+                                            Capsule()
+                                                .fill(Color.black.opacity(0.8))
+                                        )
+                                        .offset(y: warningOffset)
+                                        .transition(.scale.combined(with: .opacity))
+                                }
+                                
+                                // Update to use actual NotificationView but non-interactive
                                 if showDemoDistraction {
                                     NotificationView(
                                         distraction: Distraction(
                                             position: CGPoint(x: UIScreen.main.bounds.width * 0.7,
                                                             y: UIScreen.main.bounds.height * 0.4),
                                             title: "Messages",
-                                            message: "Don't look here!",
+                                            message: "🎮 Game night tonight?",
                                             appIcon: "message.fill",
                                             iconColors: [.green, .blue],
                                             soundID: 1007
                                         ),
                                         index: 0
                                     )
+                                    .environmentObject(AttentionViewModel())
+                                    .allowsHitTesting(false) // Make entire notification non-interactive
+                                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
                                 }
+                            }
+                            .sheet(isPresented: $showTutorialGameSummary) {
+                                GameSummaryView(
+                                    viewModel: AttentionViewModel(),
+                                    isPresented: $showTutorialGameSummary
+                                )
+                            }
+                            .onAppear {
+                                // Continue ball movement from previous screen
+                                if !isMovingBall {
+                                    isMovingBall = true
+                                    startBallMovement()
+                                }
+                                // Start showing distractions
+                                startDistractionDemo()
                             }
                        
                         }
@@ -422,10 +488,15 @@ struct TutorialView: View {
                         }
                         
                         Button(action: {
-                            if currentStep < tutorialSteps.count - 1 {
-                                currentStep += 1
-                            } else {
-                                showContentView = true
+                            withAnimation {
+                                if currentStep < tutorialSteps.count - 1 {
+                                    // Stop the bounce animation when tapped
+                                    nextButtonScale = 1.0
+                                    showNextButton = false
+                                    currentStep += 1
+                                } else {
+                                    showContentView = true
+                                }
                             }
                         }) {
                             HStack {
@@ -455,6 +526,12 @@ struct TutorialView: View {
                     customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
                                            y: UIScreen.main.bounds.height * 0.15)
                     moveDirection = CGPoint(x: 1, y: 1)
+                }
+                // Reset ball movement and animations when navigating away
+                if currentStep != 1 {
+                    isMovingBall = false
+                    nextButtonScale = 1.0
+                    showNextButton = false
                 }
             }
         }
@@ -555,13 +632,61 @@ struct TutorialView: View {
     }
 
     private func startDistractionDemo() {
+        var distractionCount = 0
+        isMovingBall = true
+        startBallMovement()
+        showDemoDistraction = false  // Ensure it starts hidden
+        
         Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { timer in
-            guard currentStep == 1 else {
+            guard currentStep == 1 && isMovingBall else {
                 timer.invalidate()
                 return
             }
-            withAnimation {
-                showDemoDistraction.toggle()
+            
+            distractionCount += 1
+            if distractionCount >= 3 {
+                timer.invalidate()
+                showDemoDistraction = false // Hide notification before ending
+                
+                // After last distraction, wait 2 seconds then return ball to center
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation(.easeInOut(duration: 1.0)) {
+                        isMovingBall = false
+                        customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
+                                               y: UIScreen.main.bounds.height * 0.15)
+                    }
+                    
+                    // Start button bounce and keep it bouncing
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        showNextButton = true
+                        withAnimation(
+                            .easeInOut(duration: 0.5)
+                            .repeatForever(autoreverses: true)
+                        ) {
+                            nextButtonScale = 1.1
+                        }
+                    }
+                }
+                return
+            }
+            
+            // Show notification with proper animation
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                showDemoDistraction = true
+            }
+            
+            // Auto-dismiss after 2 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation(.easeOut) {
+                    showDemoDistraction = false
+                    
+                    // Show again after a brief pause
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                            showDemoDistraction = true
+                        }
+                    }
+                }
             }
         }
     }
