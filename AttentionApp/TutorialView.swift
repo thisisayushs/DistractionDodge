@@ -95,6 +95,7 @@ struct TutorialView: View {
     @State private var isNavigating = false
     @GestureState private var dragOffset: CGFloat = 0
     @State private var showSkipAlert = false  // Add this line
+    @State private var penaltyScreenAppearCount = 0
 
     let tutorialSteps = [
         TutorialStep(
@@ -476,12 +477,12 @@ struct TutorialView: View {
                         case .penalty:
                             VStack(spacing: 40) {
                                 HStack(spacing: 30) {
-                                    // Score display with potentially reset value
+                                    // Score display remains the same
                                     VStack(alignment: .center) {
                                         Text("Score")
                                             .font(.system(size: 20, weight: .medium, design: .rounded))
                                         Text("\(demoScore)")
-                                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                                            .font(.system(size: 36, weight: .bold))
                                             .foregroundStyle(.white)
                                     }
                                     
@@ -490,7 +491,7 @@ struct TutorialView: View {
                                         Text("Penalty")
                                             .font(.system(size: 20, weight: .medium, design: .rounded))
                                         Text("-\(min(demoStreak, 10))")
-                                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                                            .font(.system(size: 36, weight: .bold))
                                             .foregroundStyle(
                                                 .linearGradient(
                                                     colors: [.red, .purple],
@@ -517,11 +518,15 @@ struct TutorialView: View {
                                 MainCircle(isGazingAtTarget: !showPenaltyIndicator,
                                           position: CGPoint(x: geometry.size.width / 2,
                                            y: geometry.size.height / 5))
-                                    .onAppear {
-                                        startPenaltyDemo()
-                                    }
                             }
-                            .id("penalty\(currentStep)")
+                            .id("penalty\(currentStep)_\(penaltyScreenAppearCount)")
+                            .onAppear {
+                                penaltyScreenAppearCount += 1
+                                showPenaltyIndicator = false
+                                demoScore = 30
+                                demoStreak = 8
+                                startPenaltyDemo()
+                            }
                             .onDisappear {
                                 cleanupCurrentDemo()
                             }
@@ -697,6 +702,7 @@ struct TutorialView: View {
     }
     
     private func startBaseScoring() {
+        // Reset states
         demoScore = 0
         showNextButton = false
         nextButtonScale = 1.0
@@ -711,9 +717,8 @@ struct TutorialView: View {
                 demoScore += 1
                 showScoreIncrementIndicator = true
                 
+                // Start bounce when score reaches exactly 10
                 if demoScore == 10 {
-                    demoScore = 0 // Reset to zero at exactly 100
-                    // Start next button bounce animation
                     showNextButton = true
                     withAnimation(
                         .easeInOut(duration: 0.5)
@@ -733,6 +738,7 @@ struct TutorialView: View {
     }
     
     private func startMultiplierDemo() {
+        // Initialize values
         demoScore = 0
         demoMultiplier = 1
         elapsedTime = 0
@@ -746,43 +752,32 @@ struct TutorialView: View {
                 return
             }
             
-            withAnimation {
+            withAnimation(.easeInOut(duration: 0.5)) {
                 elapsedTime += 1
-                demoScore += demoMultiplier
                 
-                // Update multiplier every 5 seconds, cap at 3
                 if elapsedTime % 5 == 0 && demoMultiplier < 3 {
                     demoMultiplier += 1
-                }
-                
-                // Reset at 60 seconds and start bounce
-                if elapsedTime >= 60 && !hasStartedBounce {
-                    hasStartedBounce = true
-                    demoScore = 0
-                    demoMultiplier = 1
-                    elapsedTime = 0
                     
-                    // Start next button bounce
-                    showNextButton = true
-                    withAnimation(
-                        .easeInOut(duration: 0.5)
-                        .repeatForever(autoreverses: true)
-                    ) {
-                        nextButtonScale = 1.1
+                    // Start bounce when multiplier reaches x3
+                    if demoMultiplier == 3 && !hasStartedBounce {
+                        hasStartedBounce = true
+                        showNextButton = true
+                        withAnimation(
+                            .easeInOut(duration: 0.5)
+                            .repeatForever(autoreverses: true)
+                        ) {
+                            nextButtonScale = 1.1
+                        }
                     }
                 }
                 
-                // Reset values at 60 seconds
-                if elapsedTime >= 60 {
-                    demoScore = 0
-                    demoMultiplier = 1
-                    elapsedTime = 0
-                }
+                demoScore += demoMultiplier
             }
         }
     }
     
     private func startStreakBonusDemo() {
+        // Initialize values
         demoScore = 0
         demoStreak = 0
         streakTime = 0
@@ -801,6 +796,18 @@ struct TutorialView: View {
             demoStreak += 1
             demoScore += 1
             
+            // Start bounce when streak reaches 10 seconds
+            if demoStreak == 10 && !hasStartedBounce {
+                hasStartedBounce = true
+                showNextButton = true
+                withAnimation(
+                    .easeInOut(duration: 0.5)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    nextButtonScale = 1.1
+                }
+            }
+            
             if demoStreak % 10 == 0 {
                 withAnimation(.spring(duration: 0.5)) {
                     showBonusIndicator = true
@@ -813,32 +820,6 @@ struct TutorialView: View {
                     }
                 }
             }
-            
-            // Reset at 60 seconds and start bounce
-            if streakTime >= 60 && !hasStartedBounce {
-                hasStartedBounce = true
-                withAnimation {
-                    demoScore = 0
-                    demoStreak = 0
-                    streakTime = 0
-                    
-                    // Start next button bounce
-                    showNextButton = true
-                    withAnimation(
-                        .easeInOut(duration: 0.5)
-                        .repeatForever(autoreverses: true)
-                    ) {
-                        nextButtonScale = 1.1
-                    }
-                }
-            }
-            
-            // Continue resetting values at 60 seconds
-            if streakTime >= 60 {
-                demoScore = 0
-                demoStreak = 0
-                streakTime = 0
-            }
         }
     }
 
@@ -849,7 +830,7 @@ struct TutorialView: View {
         showNextButton = false
         nextButtonScale = 1.0
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             withAnimation(.easeInOut(duration: 0.5)) {
                 showPenaltyIndicator = true
                 demoScore = max(0, demoScore - min(demoStreak, 10))
@@ -864,8 +845,8 @@ struct TutorialView: View {
                 }
             }
             
-            // Reset score after 2 seconds (original behavior)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            // Reset score after 1.5 seconds (reduced from 2 seconds)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 demoScore = 30
                 demoStreak = 8
                 withAnimation {
@@ -967,7 +948,46 @@ struct TutorialView: View {
     }
     
     private func resetStateForStep(_ step: Int) {
-        // Implement state reset logic here
+        // Reset navigation button animation state
+        showNextButton = false
+        nextButtonScale = 1.0
+        
+        // Reset base states
+        showScoreIncrementIndicator = false
+        showBonusIndicator = false
+        showPenaltyIndicator = false
+        showDemoDistraction = false
+        
+        // Initialize step-specific values
+        switch tutorialSteps[step].scoringType {
+        case .penalty:
+            demoScore = 30
+            demoStreak = 8
+        case .baseScoring:
+            demoScore = 0
+            demoStreak = 0
+        case .multiplier:
+            demoScore = 0
+            demoStreak = 0
+            demoMultiplier = 1
+            elapsedTime = 0
+        case .streakBonus:
+            demoScore = 0
+            demoStreak = 0
+            streakTime = 0
+        default:
+            demoScore = 0
+            demoStreak = 0
+        }
+        
+        // Reset ball position for specific steps
+        if step == 0 || step == 1 {
+            customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
+                                   y: UIScreen.main.bounds.height * 0.15)
+        }
+        
+        // Stop any ongoing animations
+        isMovingBall = false
     }
 }
 
