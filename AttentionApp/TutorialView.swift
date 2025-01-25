@@ -73,14 +73,9 @@ struct CustomAlertView: View {
     
     var body: some View {
         ZStack {
-            // Blur background
+            // Keep original blur background
             Color.black.opacity(0.5)
                 .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    withAnimation(.easeOut) {
-                        isPresented = false
-                    }
-                }
             
             // Alert content
             VStack(spacing: 25) {
@@ -154,7 +149,9 @@ struct CustomAlertView: View {
             )
             .padding(30)
         }
-        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+        .presentationBackground(.clear)
+        .presentationCornerRadius(35)
+        .interactiveDismissDisabled()
     }
 }
 
