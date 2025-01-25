@@ -362,17 +362,23 @@ struct TutorialView: View {
                                             DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
                                                 withAnimation(.easeInOut(duration: 0.5)) {
                                                     isMovingBall = false
-                                                    hasDemonstratedFollowing = true
-                                                    // Reset ball position
+                                                    // Reset ball position with animation
                                                     customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
                                                                             y: UIScreen.main.bounds.height * 0.15)
-                                                    // Show next button guidance and start bounce animation
-                                                    showNextButton = true
-                                                    withAnimation(
-                                                        .easeInOut(duration: 0.5)
-                                                        .repeatForever(autoreverses: true)
-                                                    ) {
-                                                        nextButtonScale = 1.1
+                                                    
+                                                    // Wait for ball animation to complete before changing text
+                                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                                        withAnimation(.easeInOut) {
+                                                            hasDemonstratedFollowing = true
+                                                            // Show next button guidance and start bounce animation
+                                                            showNextButton = true
+                                                            withAnimation(
+                                                                .easeInOut(duration: 0.5)
+                                                                .repeatForever(autoreverses: true)
+                                                            ) {
+                                                                nextButtonScale = 1.1
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -412,7 +418,17 @@ struct TutorialView: View {
                                 // Bottom instructions
                                 
                             }
-                            .id("introduction\(currentStep)")
+                            .id("introduction\(currentStep)_\(penaltyScreenAppearCount)")
+                            .onAppear {
+                                // Reset all states when returning to introduction screen
+                                demoIsGazing = false
+                                isMovingBall = false
+                                hasDemonstratedFollowing = false
+                                showNextButton = false
+                                nextButtonScale = 1.0
+                                customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
+                                                       y: UIScreen.main.bounds.height * 0.15)
+                            }
                             .onDisappear {
                                 cleanupCurrentDemo()
                             }
