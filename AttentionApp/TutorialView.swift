@@ -63,6 +63,101 @@ struct FloatingScoreModifier: ViewModifier {
     }
 }
 
+// Add this custom alert view structure at the top of the file
+struct CustomAlertView: View {
+    let title: String
+    let message: String
+    let primaryAction: () -> Void
+    let secondaryAction: () -> Void
+    @Binding var isPresented: Bool
+    
+    var body: some View {
+        ZStack {
+            // Blur background
+            Color.black.opacity(0.5)
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    withAnimation(.easeOut) {
+                        isPresented = false
+                    }
+                }
+            
+            // Alert content
+            VStack(spacing: 25) {
+                Text(title)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                
+                Text(message)
+                    .font(.system(size: 18, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.9))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                HStack(spacing: 15) {
+                    // Secondary button
+                    Button(action: {
+                        withAnimation(.easeOut) {
+                            isPresented = false
+                            secondaryAction()
+                        }
+                    }) {
+                        Text("Continue")
+                            .font(.system(size: 17, weight: .medium, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 25)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.2))
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    
+                    // Primary button
+                    Button(action: {
+                        withAnimation(.easeOut) {
+                            isPresented = false
+                            primaryAction()
+                        }
+                    }) {
+                        Text("Skip")
+                            .font(.system(size: 17, weight: .medium, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 35)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [.red.opacity(0.8), .orange.opacity(0.8)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                            )
+                    }
+                }
+            }
+            .padding(30)
+            .background(
+                RoundedRectangle(cornerRadius: 25)
+                    .fill(Color.black.opacity(0.5))
+                    .background(
+                        RoundedRectangle(cornerRadius: 25)
+                            .fill(Material.ultraThinMaterial)
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 15)
+            )
+            .padding(30)
+        }
+        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+    }
+}
+
 struct TutorialView: View {
     @State private var currentStep = 0
     @State private var showContentView = false
@@ -680,7 +775,21 @@ struct TutorialView: View {
                             }
                         }
                 )
+                
+                // Add this overlay for the custom alert
+                if showSkipAlert {
+                    CustomAlertView(
+                        title: "Skip Tutorial?",
+                        message: "You are about to skip the tutorial. You will be taken directly to the game.",
+                        primaryAction: {
+                            showContentView = true
+                        },
+                        secondaryAction: {},
+                        isPresented: $showSkipAlert
+                    )
+                }
             }
+            .animation(.easeInOut, value: showSkipAlert)
         }
         .onChange(of: currentStep) { oldValue, newValue in
             cleanupCurrentDemo()
@@ -691,14 +800,6 @@ struct TutorialView: View {
             ContentView()
         }
         .animation(.spring(response: 0.6, dampingFraction: 0.7), value: currentStep)
-        .alert("Skip Tutorial?", isPresented: $showSkipAlert) {
-            Button("Skip", role: .destructive) {
-                showContentView = true
-            }
-            Button("Continue Tutorial", role: .cancel) {}
-        } message: {
-            Text("You are about to skip the tutorial, You will be taken directly to the game.")
-        }
     }
     
     private func startBaseScoring() {
