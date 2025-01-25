@@ -16,8 +16,11 @@ struct ConclusionView: View {
     @State private var scoreScale: CGFloat = 0.5
     @State private var isAnimating = false
     
-    // Gradient colors remain the same
-    private let gradientColors: [Color] = [.black.opacity(0.8), .blue.opacity(0.25)]
+    // Update gradient colors to match flow
+    private let gradientColors: [Color] = [
+        .black.opacity(0.8),     // Start color remains constant
+        .purple.opacity(0.25)    // Matches ContentView end color
+    ]
     
     // Updated focus improvement tips based on score
     private var focusTips: String {

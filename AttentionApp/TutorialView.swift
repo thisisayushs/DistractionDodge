@@ -192,6 +192,16 @@ struct TutorialView: View {
     @State private var showSkipAlert = false  // Add this line
     @State private var penaltyScreenAppearCount = 0
 
+    // Add gradient colors array to match progression
+    private let gradientColors: [(start: Color, end: Color)] = [
+        (.black.opacity(0.8), .indigo.opacity(0.2)),  // Matches last IntroductionView screen
+        (.black.opacity(0.8), .purple.opacity(0.2)),  // Transitions to purple
+        (.black.opacity(0.8), .cyan.opacity(0.2)),    // Moves to cyan
+        (.black.opacity(0.8), .blue.opacity(0.2)),    // Back to blue
+        (.black.opacity(0.8), .indigo.opacity(0.2)),  // To indigo
+        (.black.opacity(0.8), .purple.opacity(0.2))   // Ends with purple
+    ]
+
     let tutorialSteps = [
         TutorialStep(
             title: "Prepare to Train Your Focus",
@@ -269,9 +279,12 @@ struct TutorialView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background gradient with animation
+                // Update background gradient to use array
                 LinearGradient(
-                    gradient: Gradient(colors: [.black.opacity(0.8), .blue.opacity(0.2)]),
+                    gradient: Gradient(colors: [
+                        gradientColors[currentStep].start,
+                        gradientColors[currentStep].end
+                    ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )

@@ -18,12 +18,19 @@ struct ContentView: View {
     @State private var videoPosition = CGPoint(x: UIScreen.main.bounds.width * 0.6,
                                               y: UIScreen.main.bounds.height * 0.6)
     
+    private let gradientColors: [Color] = [
+        .black.opacity(0.8),
+        .purple.opacity(0.2)
+    ]
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                LinearGradient(gradient: Gradient(colors: viewModel.backgroundGradient),
-                               startPoint: .topLeading,
-                               endPoint: .bottomTrailing)
+                LinearGradient(
+                    gradient: Gradient(colors: gradientColors),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
                     .edgesIgnoringSafeArea(.all)
                     .animation(.easeInOut(duration: 2.0), value: viewModel.backgroundGradient)
                 

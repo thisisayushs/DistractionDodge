@@ -9,7 +9,7 @@ struct PauseMenuView: View {
         ZStack {
             // Background gradient matching app style
             LinearGradient(
-                gradient: Gradient(colors: [.black.opacity(0.9), .cyan.opacity(0.3)]),
+                gradient: Gradient(colors: [.black.opacity(0.8), .purple.opacity(0.2)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
