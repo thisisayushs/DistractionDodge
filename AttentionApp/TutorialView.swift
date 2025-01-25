@@ -149,6 +149,13 @@ struct TutorialView: View {
     private func navigate(forward: Bool) {
         if !isNavigating {
             isNavigating = true
+            
+            // Explicitly stop bounce animation before transitioning
+            withAnimation(.easeOut) {
+                showNextButton = false
+                nextButtonScale = 1.0
+            }
+            
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 if forward && currentStep < tutorialSteps.count - 1 {
                     currentStep += 1
@@ -156,6 +163,7 @@ struct TutorialView: View {
                     currentStep -= 1
                 }
             }
+            
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isNavigating = false
             }
@@ -282,7 +290,7 @@ struct TutorialView: View {
                                         Image(systemName: "eye")
                                             .font(.system(size: 24))
                                         Text(isMovingBall ? "Keep following the circle" : "Gaze Detected")
-                                            .font(.system(size: 18, weight: .medium))
+                                            .font(.system(size: 18, weight: .medium, design: .rounded))
                                     }
                                     .foregroundColor(demoIsGazing ? .green : .white.opacity(0.5))
                                     .padding(.vertical, 8)
@@ -356,27 +364,27 @@ struct TutorialView: View {
                                     // Score display
                                     VStack(alignment: .center) {
                                         Text("Score")
-                                            .font(.system(size: 20, weight: .medium))
+                                            .font(.system(size: 20, weight: .medium, design: .rounded))
                                         Text("\(demoScore)")
-                                            .font(.system(size: 36, weight: .bold))
+                                            .font(.system(size: 36, weight: .bold, design: .rounded))
                                             .foregroundStyle(.white)
                                     }
                                     
                                     // Added timer display
                                     VStack(alignment: .center) {
                                         Text("Time")
-                                            .font(.system(size: 20, weight: .medium))
+                                            .font(.system(size: 20, weight: .medium, design: .rounded))
                                         Text("\(elapsedTime)s")
-                                            .font(.system(size: 36, weight: .bold))
+                                            .font(.system(size: 36, weight: .bold, design: .rounded))
                                             .foregroundStyle(.white)
                                     }
                                     
                                     // Multiplier display
                                     VStack(alignment: .center) {
                                         Text("Multiplier")
-                                            .font(.system(size: 20, weight: .medium))
+                                            .font(.system(size: 20, weight: .medium, design: .rounded))
                                         Text("×\(demoMultiplier)")
-                                            .font(.system(size: 36, weight: .bold))
+                                            .font(.system(size: 36, weight: .bold, design: .rounded))
                                             .foregroundStyle(
                                                 .linearGradient(
                                                     colors: [.orange, .red],
@@ -411,18 +419,18 @@ struct TutorialView: View {
                                     // Score display
                                     VStack(alignment: .center) {
                                         Text("Score")
-                                            .font(.system(size: 20, weight: .medium))
+                                            .font(.system(size: 20, weight: .medium, design: .rounded))
                                         Text("\(demoScore)")
-                                            .font(.system(size: 36, weight: .bold))
+                                            .font(.system(size: 36, weight: .bold, design: .rounded))
                                             .foregroundStyle(.white)
                                     }
                                     
                                     // Streak display
                                     VStack(alignment: .center) {
                                         Text("Streak")
-                                            .font(.system(size: 20, weight: .medium))
+                                            .font(.system(size: 20, weight: .medium, design: .rounded))
                                         Text("\(demoStreak)s")
-                                            .font(.system(size: 36, weight: .bold))
+                                            .font(.system(size: 36, weight: .bold, design: .rounded))
                                             .foregroundStyle(
                                                 .linearGradient(
                                                     colors: [.yellow, .orange],
@@ -441,7 +449,7 @@ struct TutorialView: View {
                                 
                                 if showBonusIndicator {
                                     Text("+5 BONUS!")
-                                        .font(.system(size: 32, weight: .heavy))
+                                        .font(.system(size: 32, weight: .heavy, design: .rounded))
                                         .foregroundStyle(
                                             .linearGradient(
                                                 colors: [.yellow, .orange],
@@ -471,18 +479,18 @@ struct TutorialView: View {
                                     // Score display with potentially reset value
                                     VStack(alignment: .center) {
                                         Text("Score")
-                                            .font(.system(size: 20, weight: .medium))
+                                            .font(.system(size: 20, weight: .medium, design: .rounded))
                                         Text("\(demoScore)")
-                                            .font(.system(size: 36, weight: .bold))
+                                            .font(.system(size: 36, weight: .bold, design: .rounded))
                                             .foregroundStyle(.white)
                                     }
                                     
                                     // Penalty display remains the same
                                     VStack(alignment: .center) {
                                         Text("Penalty")
-                                            .font(.system(size: 20, weight: .medium))
+                                            .font(.system(size: 20, weight: .medium, design: .rounded))
                                         Text("-\(min(demoStreak, 10))")
-                                            .font(.system(size: 36, weight: .bold))
+                                            .font(.system(size: 36, weight: .bold, design: .rounded))
                                             .foregroundStyle(
                                                 .linearGradient(
                                                     colors: [.red, .purple],
@@ -501,7 +509,7 @@ struct TutorialView: View {
                                 
                                 if showPenaltyIndicator {
                                     Text("Focus Lost!")
-                                        .font(.system(size: 32, weight: .heavy))
+                                        .font(.system(size: 32, weight: .heavy, design: .rounded))
                                         .foregroundColor(.red)
                                         .transition(.scale.combined(with: .opacity))
                                 }
@@ -537,7 +545,7 @@ struct TutorialView: View {
                                         Image(systemName: "eye")
                                             .font(.system(size: 24))
                                         Text("Keep Following")
-                                            .font(.system(size: 18, weight: .medium))
+                                            .font(.system(size: 18, weight: .medium, design: .rounded))
                                     }
                                     .foregroundColor(demoIsGazing ? .green : .white.opacity(0.5))
                                     .padding(.vertical, 8)
@@ -614,6 +622,7 @@ struct TutorialView: View {
                                 HStack {
                                     Image(systemName: "chevron.left")
                                     Text("Previous")
+                                        .font(.system(size: 17, weight: .medium, design: .rounded))
                                 }
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 20)
@@ -633,6 +642,7 @@ struct TutorialView: View {
                         }) {
                             HStack {
                                 Text(currentStep == tutorialSteps.count - 1 ? "Start Game" : "Next")
+                                    .font(.system(size: 17, weight: .medium, design: .rounded))
                                 if currentStep < tutorialSteps.count - 1 {
                                     Image(systemName: "chevron.right")
                                 }

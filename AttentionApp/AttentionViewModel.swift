@@ -126,16 +126,6 @@ class AttentionViewModel: ObservableObject {
         stopGame()
     }
     
-    func calculateStars() -> Int {
-        let maxScore = 100
-        let percentage = Double(score) / Double(maxScore)
-        
-        if percentage >= 0.8 { return 3 }
-        if percentage >= 0.5 { return 2 }
-        if percentage >= 0.2 { return 1 }
-        return 0
-    }
-    
     func pauseGame() {
         isPaused = true
         timer?.invalidate()
