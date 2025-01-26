@@ -65,6 +65,7 @@ struct FloatingScoreModifier: ViewModifier {
 
 // Add this custom alert view structure at the top of the file
 struct CustomAlertView: View {
+    // Properties remain the same
     let title: String
     let message: String
     let primaryAction: () -> Void
@@ -72,84 +73,81 @@ struct CustomAlertView: View {
     @Binding var isPresented: Bool
     
     var body: some View {
-        ZStack {
-            // Keep original blur background
-            Color.black.opacity(0.5)
-                .edgesIgnoringSafeArea(.all)
-            
-            // Alert content
-            VStack(spacing: 25) {
-                Text(title)
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                
-                Text(message)
-                    .font(.system(size: 18, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.9))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                HStack(spacing: 15) {
-                    // Secondary button
-                    Button(action: {
-                        withAnimation(.easeOut) {
-                            isPresented = false
-                            secondaryAction()
-                        }
-                    }) {
-                        Text("Continue")
-                            .font(.system(size: 17, weight: .medium, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 25)
-                            .padding(.vertical, 12)
-                            .background(
-                                Capsule()
-                                    .fill(Color.white.opacity(0.2))
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                    }
+        // Keep original blur background, remove solid black background
+        Color.black.opacity(0.5)
+            .edgesIgnoringSafeArea(.all)
+            .overlay(
+                // Alert content
+                VStack(spacing: 25) {
+                    Text(title)
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
                     
-                    // Primary button
-                    Button(action: {
-                        withAnimation(.easeOut) {
-                            isPresented = false
-                            primaryAction()
-                        }
-                    }) {
-                        Text("Skip")
-                            .font(.system(size: 17, weight: .medium, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 35)
-                            .padding(.vertical, 12)
-                            .background(
-                                Capsule()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [.red.opacity(0.8), .orange.opacity(0.8)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
+                    Text(message)
+                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    HStack(spacing: 15) {
+                        Button(action: {
+                            withAnimation(.easeOut) {
+                                isPresented = false
+                                secondaryAction()
+                            }
+                        }) {
+                            Text("Continue")
+                                .font(.system(size: 17, weight: .medium, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 25)
+                                .padding(.vertical, 12)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.white.opacity(0.2))
+                                        .overlay(
+                                            Capsule()
+                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                         )
-                                    )
-                            )
+                                )
+                        }
+                        
+                        Button(action: {
+                            withAnimation(.easeOut) {
+                                isPresented = false
+                                primaryAction()
+                            }
+                        }) {
+                            Text("Skip")
+                                .font(.system(size: 17, weight: .medium, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 35)
+                                .padding(.vertical, 12)
+                                .background(
+                                    Capsule()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [.red.opacity(0.8), .orange.opacity(0.8)],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                )
+                        }
                     }
                 }
-            }
-            .padding(30)
-            .background(
-                RoundedRectangle(cornerRadius: 25)
-                    .fill(Color.black.opacity(0.5))
-                    .background(
-                        RoundedRectangle(cornerRadius: 25)
-                            .fill(Material.ultraThinMaterial)
-                    )
-                    .shadow(color: .black.opacity(0.2), radius: 15)
+                .padding(30)
+                .background(
+                    RoundedRectangle(cornerRadius: 25)
+                        .fill(Color.black.opacity(0.5))
+                        .background(
+                            RoundedRectangle(cornerRadius: 25)
+                                .fill(Material.ultraThinMaterial)
+                        )
+                        .shadow(color: .black.opacity(0.2), radius: 15)
+                )
+                .padding(30)
             )
-            .padding(30)
-        }
-        .presentationBackground(.clear)
+        .presentationBackground(.clear) // Keep background clear
         .presentationCornerRadius(35)
         .interactiveDismissDisabled()
     }
@@ -188,7 +186,8 @@ struct TutorialView: View {
     @GestureState private var dragOffset: CGFloat = 0
     @State private var showSkipAlert = false  // Add this line
     @State private var penaltyScreenAppearCount = 0
-
+    @State private var isPaused = false
+    
     // Add gradient colors array to match progression
     private let gradientColors: [(start: Color, end: Color)] = [
         (.black.opacity(0.8), .indigo.opacity(0.2)),  // Matches last IntroductionView screen
@@ -809,10 +808,41 @@ struct TutorialView: View {
                         message: "You are about to skip the tutorial. You will be taken directly to the game.",
                         primaryAction: {
                             showContentView = true
+                            isPaused = false  // Reset pause state
                         },
-                        secondaryAction: {},
+                        secondaryAction: {
+                            isPaused = false  // Reset pause state
+                        },
                         isPresented: $showSkipAlert
                     )
+                }
+            }
+            .onChange(of: showSkipAlert) { _, newValue in
+                withAnimation {
+                    isPaused = newValue
+                    if isPaused {
+                        // Immediately pause all active timers
+                        cleanupCurrentDemo()
+                    } else {
+                        // Restart the current demo when alert is dismissed
+                        resetStateForStep(currentStep)
+                        
+                        // Start appropriate demo based on current step
+                        switch tutorialSteps[currentStep].scoringType {
+                        case .baseScoring:
+                            startBaseScoring()
+                        case .multiplier:
+                            startMultiplierDemo()
+                        case .streakBonus:
+                            startStreakBonusDemo()
+                        case .penalty:
+                            startPenaltyDemo()
+                        case .distractions:
+                            startDistractionDemo()
+                        default:
+                            break
+                        }
+                    }
                 }
             }
             .animation(.easeInOut, value: showSkipAlert)
@@ -1071,7 +1101,17 @@ struct TutorialView: View {
     }
     
     private func cleanupCurrentDemo() {
-        // Implement cleanup logic here
+        // Stop all animations and timers
+        isMovingBall = false
+        showNextButton = false
+        showScoreIncrementIndicator = false
+        showBonusIndicator = false
+        showPenaltyIndicator = false
+        showDemoDistraction = false
+        nextButtonScale = 1.0
+        
+        // Reset any scheduled animations
+        NSObject.cancelPreviousPerformRequests(withTarget: self)
     }
     
     private func resetStateForStep(_ step: Int) {
