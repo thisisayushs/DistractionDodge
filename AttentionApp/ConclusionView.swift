@@ -16,10 +16,6 @@ struct ConclusionView: View {
     @State private var scoreScale: CGFloat = 0.5
     @State private var isAnimating = false
     
-    // Add button animation state
-    @State private var buttonScale: CGFloat = 1.0
-    @State private var shouldAnimateButton = false
-    
     // Update gradient colors to match flow
     private let gradientColors: [Color] = [
         .black.opacity(0.8),     // Start color remains constant
@@ -66,17 +62,17 @@ struct ConclusionView: View {
                         .scaleEffect(scoreScale)
                         .animation(.interpolatingSpring(stiffness: 170, damping: 15).delay(0.1), value: scoreScale)
                         .onAppear {
-                            // Reset initial states
+                            // Reset initial state
                             displayedScore = 0
                             scoreScale = 0.5
                             isAnimating = false
-                            shouldAnimateButton = false
                             
                             // Animate scale first
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.5)) {
                                 scoreScale = 1.0
                             }
                             
+                            // Then start counting up
                             let finalScore = viewModel.score
                             let animationDuration: TimeInterval = 1.5
                             
@@ -98,8 +94,6 @@ struct ConclusionView: View {
                                     }
                                 } else {
                                     timer.invalidate()
-                                    // Start button animation after score completes
-                                    shouldAnimateButton = true
                                 }
                             }
                             
@@ -134,7 +128,7 @@ struct ConclusionView: View {
                 
                 Spacer()
                 
-                // Action buttons with consistent app styling and animation
+                // Action buttons with consistent app styling
                 VStack(spacing: 20) {
                     Button {
                         viewModel.startGame()
@@ -156,17 +150,6 @@ struct ConclusionView: View {
                                 )
                                 .shadow(color: .white.opacity(0.3), radius: 5, x: 0, y: 2)
                         )
-                    }
-                    .scaleEffect(buttonScale)
-                    .onChange(of: shouldAnimateButton) { _, newValue in
-                        if newValue {
-                            withAnimation(
-                                .easeInOut(duration: 0.5)
-                                .repeatForever(autoreverses: true)
-                            ) {
-                                buttonScale = 1.1
-                            }
-                        }
                     }
                     
                     Button {
