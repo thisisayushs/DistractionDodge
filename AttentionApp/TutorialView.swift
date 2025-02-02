@@ -980,30 +980,47 @@ struct TutorialView: View {
         showPenaltyIndicator = false
         showNextButton = false
         nextButtonScale = 1.0
+        var cycleCount = 0
+        var hasStartedBounce = false
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        func runPenaltyCycle() {
             withAnimation(.easeInOut(duration: 0.5)) {
                 showPenaltyIndicator = true
                 demoScore = max(0, demoScore - min(demoStreak, 10))
                 
-                // Start button bounce when focus is lost
-                showNextButton = true
-                withAnimation(
-                    .easeInOut(duration: 0.5)
-                    .repeatForever(autoreverses: true)
-                ) {
-                    nextButtonScale = 1.1
+                // Start button bounce after first complete cycle
+                if !hasStartedBounce && cycleCount > 0 {
+                    hasStartedBounce = true
+                    showNextButton = true
+                    withAnimation(
+                        .easeInOut(duration: 0.5)
+                        .repeatForever(autoreverses: true)
+                    ) {
+                        nextButtonScale = 1.1
+                    }
                 }
             }
             
-            // Reset score after 1.5 seconds (reduced from 2 seconds)
+            // Reset values after 1.5 seconds and start next cycle
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                cycleCount += 1
                 demoScore = 30
                 demoStreak = 8
                 withAnimation {
                     showPenaltyIndicator = false
                 }
+                
+                // Start next cycle after a brief pause
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    guard tutorialSteps[currentStep].scoringType == .penalty else { return }
+                    runPenaltyCycle()
+                }
             }
+        }
+        
+        // Start the first cycle after a delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            runPenaltyCycle()
         }
     }
 
