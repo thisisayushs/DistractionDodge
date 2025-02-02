@@ -836,6 +836,7 @@ struct TutorialView: View {
         demoScore = 0
         showNextButton = false
         nextButtonScale = 1.0
+        var hasStartedBounce = false
         
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             guard tutorialSteps[currentStep].scoringType == .baseScoring else {
@@ -847,8 +848,14 @@ struct TutorialView: View {
                 demoScore += 1
                 showScoreIncrementIndicator = true
                 
-                // Start bounce when score reaches exactly 10
-                if demoScore == 10 {
+                // Reset score back to 0 when it reaches 10
+                if demoScore > 10 {
+                    demoScore = 0
+                }
+                
+                // Start bounce after completing first cycle
+                if demoScore == 0 && !hasStartedBounce {
+                    hasStartedBounce = true
                     showNextButton = true
                     withAnimation(
                         .easeInOut(duration: 0.5)
@@ -885,11 +892,18 @@ struct TutorialView: View {
             withAnimation(.easeInOut(duration: 0.5)) {
                 elapsedTime += 1
                 
+                // Reset everything when timer hits 60 seconds
+                if elapsedTime >= 60 {
+                    elapsedTime = 0
+                    demoScore = 0
+                    demoMultiplier = 1
+                }
+                
                 if elapsedTime % 5 == 0 && demoMultiplier < 3 {
                     demoMultiplier += 1
                     
-                    // Start bounce when multiplier reaches x3
-                    if demoMultiplier == 3 && !hasStartedBounce {
+                    // Start bounce after first complete cycle (60s)
+                    if !hasStartedBounce {
                         hasStartedBounce = true
                         showNextButton = true
                         withAnimation(
@@ -926,8 +940,15 @@ struct TutorialView: View {
             demoStreak += 1
             demoScore += 1
             
-            // Start bounce when streak reaches 10 seconds
-            if demoStreak == 10 && !hasStartedBounce {
+            // Reset when timer hits 60 seconds
+            if streakTime >= 60 {
+                streakTime = 0
+                demoScore = 0
+                demoStreak = 0
+            }
+            
+            // Start bounce after first complete cycle (60s)
+            if !hasStartedBounce && streakTime == 0 {
                 hasStartedBounce = true
                 showNextButton = true
                 withAnimation(
