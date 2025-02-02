@@ -223,7 +223,7 @@ struct TutorialView: View {
             scoringType: .distractions
         ),
         TutorialStep(
-            title: "Base Scoring",
+            title: "Scoring",
             description: [
                 "Every second of focus counts! Watch your score grow as you maintain your gaze."
             ],
@@ -232,7 +232,7 @@ struct TutorialView: View {
         TutorialStep(
             title: "Score Multipliers",
             description: [
-                "Keep focusing to increase your multiplier! Every 5 seconds, your points multiply.",
+                "Keep focusing to increase your multiplier! Every 5 seconds, your score multiply.",
             ],
             scoringType: .multiplier
         ),
@@ -573,7 +573,7 @@ struct TutorialView: View {
                                 )
                                 
                                 if showBonusIndicator {
-                                    Text("+5 BONUS!")
+                                    Text("+5 BONUS")
                                         .font(.system(size: 32, weight: .heavy, design: .rounded))
                                         .foregroundStyle(
                                             .linearGradient(
@@ -633,7 +633,7 @@ struct TutorialView: View {
                                 )
                                 
                                 if showPenaltyIndicator {
-                                    Text("Focus Lost!")
+                                    Text("Focus Lost")
                                         .font(.system(size: 32, weight: .heavy, design: .rounded))
                                         .foregroundColor(.red)
                                         .transition(.scale.combined(with: .opacity))

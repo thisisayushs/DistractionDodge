@@ -63,7 +63,7 @@ struct IntroductionView: View {
             content: [
                 "In today's fast-paced, screen-filled world, our attention is constantly under attack.",
                 "Notifications, social media, and endless multitasking leave us feeling scattered and overwhelmed.",
-                "Research shows that fragmented attention isn't just exhausting—it makes it harder to think deeply, stay productive, and feel at peace."
+                "Research shows that fragmented attention isn't just exhausting, it makes it harder to think deeply, stay productive, and feel at peace."
             ],
             sfSymbol: "brain.head.profile.fill",
             emoji: "🧠",
@@ -83,7 +83,7 @@ struct IntroductionView: View {
         Screen(
             title: "The Good News: You Can Retrain Your Brain",
             content: [
-                "Focus isn't fixed—it's a skill you can strengthen with the right tools and practice.",
+                "Focus isn't fixed, it's a skill you can strengthen with the right tools and practice.",
                 "By training your brain to resist distractions, you can rebuild the deep focus needed to thrive in today's world."
             ],
             sfSymbol: "arrow.triangle.2.circlepath.circle.fill",
@@ -93,7 +93,7 @@ struct IntroductionView: View {
         Screen(
             title: "How Distraction Dodge Helps You",
             content: [
-                "Distraction Dodge is more than just a game—it's a tool to help you:",
+                "Distraction Dodge is more than just a game, it's a tool to help you.",
                 "Strengthen your focus through fun and engaging challenges.",
                 "Learn to ignore digital distractions in a safe, controlled environment."
             ],

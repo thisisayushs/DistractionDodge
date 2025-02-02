@@ -29,9 +29,9 @@ struct ConclusionView: View {
     // Updated focus improvement tips based on score
     private var focusTips: String {
         if viewModel.score < 20 {
-            return "Tip: Try to maintain your gaze on the target consistently. Small improvements in focus can lead to better scores."
+            return "Try to maintain your gaze on the target consistently. Small improvements in focus can lead to better scores."
         } else if viewModel.score < 40 {
-            return "Tip: Your focus is improving! Try to build longer streaks by staying locked on the target."
+            return "Your focus is improving! Try to build longer streaks by staying locked on the target."
         } else {
             return "Excellent focus control! Keep challenging yourself to maintain even longer streaks."
         }
@@ -54,7 +54,7 @@ struct ConclusionView: View {
             VStack(spacing: 45) {
                 // Top section with score
                 VStack(spacing: 30) {
-                    Text("⭐ Focus Score ⭐")
+                    Text("Focus Score")
                         .font(.system(.title2, design: .rounded))
                         .bold()
                         .foregroundColor(.white)
