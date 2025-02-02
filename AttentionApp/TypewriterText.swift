@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 struct TypewriterText: View {
     let text: String
@@ -7,6 +8,9 @@ struct TypewriterText: View {
     @State private var displayedText = ""
     @State private var timer: Timer? = nil
     var onFinished: () -> Void
+    
+    private let typingInterval: TimeInterval = 0.05  
+    private let soundDelay: TimeInterval = 0.02
     
     var body: some View {
         HStack {
@@ -23,6 +27,7 @@ struct TypewriterText: View {
             // Start animation if this is the active index
             if index == activeIndex {
                 startTyping()
+                
             }
         }
         .onChange(of: activeIndex) { _, newValue in
@@ -44,18 +49,25 @@ struct TypewriterText: View {
         timer?.invalidate()
         
         var charIndex = 0
-        timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
+        timer = Timer.scheduledTimer(withTimeInterval: typingInterval, repeats: true) { timer in
             guard charIndex < self.text.count else {
                 timer.invalidate()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     self.onFinished()
                 }
                 return
             }
             
             let textIndex = self.text.index(self.text.startIndex, offsetBy: charIndex)
+            let currentChar = String(self.text[textIndex])
+            
             displayedText = String(self.text[...textIndex])
             charIndex += 1
+            if !["", " ", ".", ",", "!", "?"].contains(currentChar) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + soundDelay) {
+                    AudioServicesPlaySystemSound(1104)
+                }
+            }
         }
     }
 }

@@ -117,6 +117,7 @@ struct IntroductionView: View {
     private func navigate(forward: Bool) {
         if !isNavigating {
             isNavigating = true
+           
             withAnimation {
                 if forward && currentIndex < screens.count - 1 {
                     currentIndex += 1
