@@ -237,7 +237,7 @@ struct TutorialView: View {
             scoringType: .multiplier
         ),
         TutorialStep(
-            title: "Streak Bonuses",
+            title: "Streak Bonus",
             description: [
                 "Maintain focus for 10 seconds to earn bonus points!",
             ],
