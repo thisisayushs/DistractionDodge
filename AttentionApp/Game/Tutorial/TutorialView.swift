@@ -230,7 +230,7 @@ struct TutorialView: View {
                                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                                         withAnimation(.easeInOut) {
                                                             hasDemonstratedFollowing = true
-                                                            // Show next button guidance and start bounce animation
+                                                            
                                                             showNextButton = true
                                                             withAnimation(
                                                                 .easeInOut(duration: 0.5)
@@ -516,7 +516,7 @@ struct TutorialView: View {
                                     
                                     Spacer()
                                     
-                                    // Moving ball continues from previous screen
+                                    
                                     MainCircle(isGazingAtTarget: demoIsGazing,
                                                position: customPosition)
                                     .padding(.bottom, 100)
@@ -539,7 +539,7 @@ struct TutorialView: View {
                                         index: 0
                                     )
                                     .environmentObject(AttentionViewModel())
-                                    .allowsHitTesting(false) // Make entire notification non-interactive
+                                    .allowsHitTesting(false)
                                     .transition(.opacity.combined(with: .scale(scale: 0.9)))
                                 }
                             }
