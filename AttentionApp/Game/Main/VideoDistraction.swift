@@ -56,7 +56,7 @@ struct VideoDistraction: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background gradient animation
+                
                 LinearGradient(
                     gradient: Gradient(colors: videos[currentIndex].gradientColors),
                     startPoint: .topLeading,
@@ -65,7 +65,7 @@ struct VideoDistraction: View {
                 .opacity(0.8)
                 .animation(.easeInOut(duration: 1.0), value: currentIndex)
                 
-                // Floating elements container with improved visibility
+                
                 ZStack {
                     ForEach(floatingElements) { element in
                         if element.content.first?.isEmoji ?? false {
@@ -89,27 +89,27 @@ struct VideoDistraction: View {
                 VStack(alignment: .leading, spacing: 15) {
                     Spacer()
                     
-                    // Video title with padding
+                    
                     Text(videos[currentIndex].title)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .shadow(radius: 2)
                         .padding(.horizontal, 10)
                     
-                    // Username with padding
+                    
                     Text(videos[currentIndex].username)
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.9))
                         .padding(.horizontal, 10)
                     
-                    // Description with padding
+                   
                     Text(videos[currentIndex].description)
                         .font(.system(size: 14, weight: .regular, design: .rounded))
                         .foregroundColor(.white.opacity(0.8))
                         .padding(.horizontal, 10)
                         .padding(.bottom, 10)
                     
-                    // Mock interaction buttons with padding
+                    
                     HStack(spacing: 20) {
                         ForEach(["heart.fill", "message.fill", "arrow.2.squarepath"], id: \.self) { symbolName in
                             Image(systemName: symbolName)
@@ -141,7 +141,7 @@ struct VideoDistraction: View {
                                     (currentIndex + 1) % videos.count
                                 resetFloatingElements(width: geometry.size.width, height: geometry.size.height)
                                 
-                                // Add delay before game over
+                                
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                     viewModel.handleDistractionTap()
                                 }
@@ -154,13 +154,13 @@ struct VideoDistraction: View {
             }
             .onAppear {
                 startAnimations(in: geometry)
-                // Initial elements with delay
+               
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     resetFloatingElements(width: geometry.size.width, height: geometry.size.height)
                 }
             }
             .onDisappear {
-                // Clean up timers
+                
                 invalidateTimers()
             }
         }
@@ -181,7 +181,7 @@ struct VideoDistraction: View {
         let width = geometry.size.width
         let height = geometry.size.height
         
-        // Vertical bouncing animation
+        
         withAnimation(
             Animation
                 .easeInOut(duration: 2.0)
@@ -190,7 +190,7 @@ struct VideoDistraction: View {
             offset = 30
         }
         
-        // Improved content timer
+        
         invalidateTimers()
         contentTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
             withAnimation {
@@ -199,7 +199,7 @@ struct VideoDistraction: View {
             }
         }
         
-        // Improved animation timer
+       
         animationTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
             withAnimation(.easeInOut(duration: 0.016)) {
                 updateFloatingElements(height: height, width: width)
@@ -211,7 +211,7 @@ struct VideoDistraction: View {
         let currentVideo = videos[currentIndex]
         let elements = (currentVideo.emojis + currentVideo.symbols)
         
-        // Increased minimum elements for more content
+       
         let minimumElements = 12
         let repeatedElements = elements.count < minimumElements ? 
             elements + elements + elements : elements
@@ -238,32 +238,32 @@ struct VideoDistraction: View {
         let maxSpeed: CGFloat = 5.0
         
         for i in floatingElements.indices {
-            // Update velocity with some randomization
+            
             floatingElements[i].velocity.x += CGFloat.random(in: -0.5...0.5)
             floatingElements[i].velocity.y += CGFloat.random(in: -0.5...0.3)
             
-            // Apply dampening
+           
             floatingElements[i].velocity.x *= dampening
             floatingElements[i].velocity.y *= dampening
             
-            // Limit maximum speed
+           
             floatingElements[i].velocity.x = floatingElements[i].velocity.x.clamped(to: -maxSpeed...maxSpeed)
             floatingElements[i].velocity.y = floatingElements[i].velocity.y.clamped(to: -maxSpeed...maxSpeed)
             
-            // Update position based on velocity
+            
             floatingElements[i].position.x += floatingElements[i].velocity.x
             floatingElements[i].position.y += floatingElements[i].velocity.y
             
-            // Rotate based on movement direction
+            
             let rotationSpeed = abs(floatingElements[i].velocity.x) + abs(floatingElements[i].velocity.y)
             floatingElements[i].rotation += Double(rotationSpeed * 2.0)
             
-            // Scale breathing effect
+            
             let time = Date().timeIntervalSince1970
             let breathingScale = sin(time * 2 + Double(i)) * 0.2
             floatingElements[i].scale = (1.4 + breathingScale).clamped(to: 0.8...2.0)
             
-            // Screen wrapping with smooth transition
+            
             if floatingElements[i].position.x < -50 {
                 floatingElements[i].position.x = width + 50
             } else if floatingElements[i].position.x > width + 50 {

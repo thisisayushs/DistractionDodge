@@ -7,7 +7,7 @@ struct PauseMenuView: View {
     
     var body: some View {
         ZStack {
-            // Background gradient matching app style
+            
             LinearGradient(
                 gradient: Gradient(colors: [.black.opacity(0.8), .purple.opacity(0.2)]),
                 startPoint: .topLeading,
@@ -51,7 +51,7 @@ struct PauseMenuView: View {
         .presentationCornerRadius(35)
         .interactiveDismissDisabled() 
         .fullScreenCover(isPresented: $showIntroduction) {
-            IntroductionView()
+            OnboardingView()
         }
     }
 }

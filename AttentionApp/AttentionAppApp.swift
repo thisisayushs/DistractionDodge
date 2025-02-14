@@ -11,7 +11,7 @@ import SwiftUI
 struct AttentionAppApp: App {
     var body: some Scene {
         WindowGroup {
-            IntroductionView()
+            OnboardingView()
                 .preferredColorScheme(.dark)
             
         }

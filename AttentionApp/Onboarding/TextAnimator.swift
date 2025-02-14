@@ -1,20 +1,20 @@
 import SwiftUI
 import AVFoundation
 
-struct TypewriterText: View {
+struct TextAnimator: View {
+   
     let text: String
     let index: Int
     @Binding var activeIndex: Int
     @State private var displayedText = ""
     @State private var timer: Timer? = nil
     var onFinished: () -> Void
-    
-    private let typingInterval: TimeInterval = 0.05  
+    private let typingInterval: TimeInterval = 0.05
     private let soundDelay: TimeInterval = 0.02
     
     var body: some View {
         HStack {
-            // Add left-to-right slide in animation
+            
             Text(displayedText)
                 .font(.system(size: 20, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
@@ -24,27 +24,27 @@ struct TypewriterText: View {
         }
         .padding(.horizontal)
         .onAppear {
-            // Start animation if this is the active index
+            
             if index == activeIndex {
                 startTyping()
                 
             }
         }
         .onChange(of: activeIndex) { _, newValue in
-            // Start animation when this becomes the active index
+            
             if index == newValue {
                 startTyping()
             }
         }
         .onDisappear {
-            // Clean up timer when view disappears
+            
             timer?.invalidate()
             timer = nil
         }
     }
     
     private func startTyping() {
-        // Reset state
+      
         displayedText = ""
         timer?.invalidate()
         

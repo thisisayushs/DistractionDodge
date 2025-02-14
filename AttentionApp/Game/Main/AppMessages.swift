@@ -1,6 +1,6 @@
 import Foundation
 
-// Move AppMessages to its own file
+
 struct AppMessages {
     static let messages = [
         "Messages": [
@@ -66,4 +66,4 @@ struct AppMessages {
     }
 }
 
-// End of file
+

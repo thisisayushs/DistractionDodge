@@ -5,13 +5,13 @@ struct GlassBackground: View {
         ZStack {
             Color.white.opacity(0.15)
             
-            // Blur effect
+           
             Rectangle()
                 .fill(Color.white)
                 .opacity(0.05)
                 .blur(radius: 10)
             
-            // Subtle gradient overlay
+            
             LinearGradient(
                 gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
                 startPoint: .topLeading,
@@ -29,7 +29,7 @@ struct NotificationView: View {
     @State private var isDismissing = false
     
     var body: some View {
-        // Content wrapper to handle taps on the entire notification
+        
         Button(action: {
             withAnimation {
                 viewModel.handleDistractionTap()
@@ -83,14 +83,14 @@ struct NotificationView: View {
                 .padding()
             }
         }
-        // Use plain style to keep custom appearance
+        
         .buttonStyle(PlainButtonStyle())
         .background(
             ZStack {
                 GlassBackground()
                     .cornerRadius(14)
                 
-                // Subtle border
+               
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(Color.white.opacity(0.3), lineWidth: 0.5)
             }

@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		2834FF042D20161E004B462C /* AttentionApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AttentionApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		28007A872D5B52AA00668A81 /* AttentionApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AttentionApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -33,16 +33,8 @@
 			isa = PBXGroup;
 			children = (
 				2834FF062D20161E004B462C /* AttentionApp */,
-				2834FF052D20161E004B462C /* Products */,
+				28007A872D5B52AA00668A81 /* AttentionApp.app */,
 			);
-			sourceTree = "<group>";
-		};
-		2834FF052D20161E004B462C /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				2834FF042D20161E004B462C /* AttentionApp.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -67,7 +59,7 @@
 			packageProductDependencies = (
 			);
 			productName = AttentionApp;
-			productReference = 2834FF042D20161E004B462C /* AttentionApp.app */;
+			productReference = 28007A872D5B52AA00668A81 /* AttentionApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -95,7 +87,7 @@
 			mainGroup = 2834FEFB2D20161E004B462C;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 2834FF052D20161E004B462C /* Products */;
+			productRefGroup = 2834FEFB2D20161E004B462C;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (

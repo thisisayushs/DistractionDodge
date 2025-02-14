@@ -1,7 +1,7 @@
 import SwiftUI
 import AVFoundation
 
-// Move Distraction model to its own file
+
 struct Distraction: Identifiable {
     let id = UUID()
     var position: CGPoint
@@ -12,4 +12,4 @@ struct Distraction: Identifiable {
     var soundID: SystemSoundID
 }
 
-// End of file
+

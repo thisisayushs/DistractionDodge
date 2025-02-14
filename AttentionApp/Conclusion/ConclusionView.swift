@@ -123,12 +123,12 @@ struct ConclusionView: View {
                     // Updated to use bestStreak instead of focusStreak
                     HStack(spacing: 20) {
                         StatCard(title: "Total Focus",
-                                value: "\(Int(viewModel.totalFocusTime))s",
-                                icon: "clock.fill")
+                                 value: "\(Int(viewModel.totalFocusTime))s",
+                                 icon: "clock.fill")
                         
                         StatCard(title: "Best Streak",
-                                value: "\(Int(viewModel.bestStreak))s",
-                                icon: "bolt.fill")
+                                 value: "\(Int(viewModel.bestStreak))s",
+                                 icon: "bolt.fill")
                     }
                 }
                 
@@ -196,42 +196,7 @@ struct ConclusionView: View {
             .padding(30)
         }
         .fullScreenCover(isPresented: $showRestartIntroduction) {
-            IntroductionView()
+            OnboardingView()
         }
-    }
-}
-
-// Updated stat card to match app design
-struct StatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    
-    var body: some View {
-        VStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundColor(.white)
-            
-            Text(value)
-                .font(.system(.title2, design: .rounded))
-                .bold()
-                .foregroundColor(.white)
-            
-            Text(title)
-                .font(.system(.subheadline, design: .rounded))
-                .foregroundColor(.white.opacity(0.8))
-        }
-        .frame(width: 150)
-        .padding(.vertical, 20)
-        .background(
-            RoundedRectangle(cornerRadius: 25)
-                .fill(Color.white.opacity(0.15))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 25)
-                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.2), radius: 10)
-        )
     }
 }
