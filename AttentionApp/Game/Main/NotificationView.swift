@@ -1,26 +1,5 @@
 import SwiftUI
 
-struct GlassBackground: View {
-    var body: some View {
-        ZStack {
-            Color.white.opacity(0.15)
-            
-            
-            Rectangle()
-                .fill(Color.white)
-                .opacity(0.05)
-                .blur(radius: 10)
-            
-            
-            LinearGradient(
-                gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
-    }
-}
-
 struct NotificationView: View {
     let distraction: Distraction
     let index: Int
@@ -61,11 +40,10 @@ struct NotificationView: View {
                     
                     Spacer()
                     
-                    // Modified close button with game over trigger
                     Button(action: {
                         withAnimation(.easeInOut) {
                             isDismissing = true
-                            // Add delay to allow animation to complete before game over
+                            
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                 viewModel.handleDistractionTap()
                             }
@@ -75,9 +53,8 @@ struct NotificationView: View {
                             .foregroundColor(.white)
                             .opacity(isHovered ? 1 : 0.7)
                     }
-                    // Prevent the parent tap from triggering
+                    
                     .buttonStyle(PlainButtonStyle())
-                    // Stop tap from propagating to parent
                     .allowsHitTesting(true)
                 }
                 .padding()
@@ -103,55 +80,3 @@ struct NotificationView: View {
         .modifier(NotificationAnimation(index: index))
     }
 }
-
-struct ShakeEffect: GeometryEffect {
-    var amount: CGFloat = 10
-    var shakesPerUnit = 3
-    var animatableData: CGFloat
-    
-    func effectValue(size: CGSize) -> ProjectionTransform {
-        ProjectionTransform(CGAffineTransform(translationX:
-                                                amount * sin(animatableData * .pi * CGFloat(shakesPerUnit)),
-                                              y: 0))
-    }
-}
-
-struct PulseEffect: ViewModifier {
-    @State private var isAnimating = false
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(isAnimating ? 1.1 : 1.0)
-            .opacity(isAnimating ? 0.8 : 1.0)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 1.0).repeatForever()) {
-                    isAnimating = true
-                }
-            }
-    }
-}
-
-struct NotificationAnimation: ViewModifier {
-    let index: Int
-    @State private var shake = false
-    
-    func body(content: Content) -> some View {
-        content
-            .offset(y: -20)
-            .modifier(ShakeEffect(amount: shake ? 5 : 0, animatableData: shake ? 1 : 0))
-            .animation(
-                .spring(response: 0.5, dampingFraction: 0.65)
-                .delay(Double(index) * 0.15),
-                value: index
-            )
-            .onAppear {
-                withAnimation(
-                    .easeInOut(duration: 0.5)
-                    .repeatCount(3, autoreverses: true)
-                ) {
-                    shake = true
-                }
-            }
-    }
-}
-

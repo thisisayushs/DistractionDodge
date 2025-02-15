@@ -8,8 +8,6 @@
 import SwiftUI
 import AVFoundation
 
-
-
 struct ContentView: View {
     @StateObject private var viewModel = AttentionViewModel()
     @State private var showGameSummary = false
@@ -131,6 +129,9 @@ struct ContentView: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
+        .statusBarHidden(true)
+        .persistentSystemOverlays(.hidden)
         .sheet(isPresented: $showGameSummary) {
             GameObstructionView(viewModel: viewModel, isPresented: $showGameSummary)
         }
@@ -140,7 +141,8 @@ struct ContentView: View {
         .sheet(isPresented: $showPauseMenu) {
             PauseMenuView(viewModel: viewModel)
         }
-        .preferredColorScheme(.dark)
+        
+        
     }
         
 }

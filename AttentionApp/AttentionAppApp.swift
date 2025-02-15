@@ -13,7 +13,6 @@ struct AttentionAppApp: App {
         WindowGroup {
             OnboardingView()
                 .preferredColorScheme(.dark)
-            
         }
     }
 }

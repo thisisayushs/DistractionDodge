@@ -2,7 +2,6 @@ import SwiftUI
 import AVFoundation
 
 struct TextAnimator: View {
-    
     let text: String
     let index: Int
     @Binding var activeIndex: Int

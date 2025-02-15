@@ -10,5 +10,3 @@ struct Distraction: Identifiable {
     var iconColors: [Color]
     var soundID: SystemSoundID
 }
-
-

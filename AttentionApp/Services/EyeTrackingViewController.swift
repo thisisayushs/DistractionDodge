@@ -2,7 +2,6 @@ import ARKit
 import SwiftUI
 
 class EyeTrackingViewController: UIViewController, ARSCNViewDelegate {
-    
     var eyeTrackingCallback: ((Bool) -> Void)?
     private var sceneView: ARSCNView!
     var screenCenter: CGPoint = .zero
@@ -13,26 +12,18 @@ class EyeTrackingViewController: UIViewController, ARSCNViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupAR()
-        
         print("ARFaceTracking supported: \(ARFaceTrackingConfiguration.isSupported)")
-        
-        
         screenCenter = view.center
     }
     
     private func setupAR() {
-        
         sceneView = ARSCNView(frame: view.bounds)
         sceneView.delegate = self
         sceneView.session.delegate = self
-        
-        
         sceneView.isOpaque = false
         sceneView.alpha = 0
         
         view.addSubview(sceneView)
-        
-        
         view.sendSubviewToBack(sceneView)
     }
     
@@ -44,12 +35,10 @@ class EyeTrackingViewController: UIViewController, ARSCNViewDelegate {
             let configuration = ARFaceTrackingConfiguration()
             configuration.isLightEstimationEnabled = true
             configuration.maximumNumberOfTrackedFaces = 1
-            
-           
             sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
         } else {
             print("Face tracking is not supported on this device")
-           
+            
             DispatchQueue.main.async {
                 self.eyeTrackingCallback?(true)
             }
@@ -61,22 +50,16 @@ class EyeTrackingViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.pause()
     }
     
-    
     func updateTargetPosition(_ position: CGPoint) {
         screenCenter = position
     }
     
-    
     private func isGazeOnTarget(_ faceAnchor: ARFaceAnchor) -> Bool {
         let lookAtPoint = faceAnchor.lookAtPoint
         let screenSize = UIScreen.main.bounds.size
-        
-        
         let screenX = CGFloat((lookAtPoint.x + 1) / 2) * screenSize.width
         let screenY = CGFloat((-lookAtPoint.y + 1) / 2) * screenSize.height
         let gazePoint = CGPoint(x: screenX, y: screenY)
-        
-        
         let targetRect = CGRect(
             x: screenCenter.x - 80,
             y: screenCenter.y - 80,
@@ -85,19 +68,16 @@ class EyeTrackingViewController: UIViewController, ARSCNViewDelegate {
         )
         
         let isLookingAtTarget = targetRect.contains(gazePoint)
-        
-        
         let leftEyeBlink = faceAnchor.blendShapes[.eyeBlinkLeft]?.floatValue ?? 1.0
         let rightEyeBlink = faceAnchor.blendShapes[.eyeBlinkRight]?.floatValue ?? 1.0
         let leftEyeSquint = faceAnchor.blendShapes[.eyeSquintLeft]?.floatValue ?? 1.0
         let rightEyeSquint = faceAnchor.blendShapes[.eyeSquintRight]?.floatValue ?? 1.0
         
         let eyesWideOpen = leftEyeBlink < 0.2 && rightEyeBlink < 0.2 &&
-                           leftEyeSquint < 0.3 && rightEyeSquint < 0.3
+        leftEyeSquint < 0.3 && rightEyeSquint < 0.3
         
         return isLookingAtTarget && eyesWideOpen
     }
-    
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
         guard let faceAnchor = anchor as? ARFaceAnchor else { return }
@@ -147,6 +127,6 @@ struct EyeTrackingView: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: EyeTrackingViewController, context: Context) {
-       
+        
     }
 }

@@ -8,16 +8,13 @@
 import SwiftUI
 
 struct OnboardingContentView: View {
-    
     let page: Page
-    
+    let currentIndex: Int
     @Binding var activeLineIndex: Int
     @Binding var completedLines: Set<Int>
     @Binding var allLinesComplete: Bool
     @Binding var emojiScale: CGFloat
     @Binding var emojiRotation: CGFloat
-    
-    let currentIndex: Int
     
     var body: some View {
         VStack(spacing: 30) {

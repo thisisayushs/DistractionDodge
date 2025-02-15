@@ -2,7 +2,6 @@ import Foundation
 
 
 struct AppMessages {
-    
     static let messages = [
         "Messages": [
             "Mom: Are you coming for dinner?",
@@ -66,5 +65,3 @@ struct AppMessages {
         return messages[app]?.randomElement() ?? "New Notification"
     }
 }
-
-

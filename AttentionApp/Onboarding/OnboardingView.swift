@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    
     @State private var currentIndex = 0
     @State private var emojiScale: CGFloat = 1
     @State private var emojiRotation: CGFloat = 0
@@ -247,13 +246,12 @@ struct OnboardingView: View {
                     
                     OnboardingContentView(
                         page: self.pages[self.currentIndex],
-                        activeLineIndex: $activeLineIndex,
+                        currentIndex: self.currentIndex, activeLineIndex: $activeLineIndex,
                         completedLines: $completedLines,
                         allLinesComplete: $allLinesComplete,
                         
                         emojiScale: $emojiScale,
-                        emojiRotation: $emojiRotation,
-                        currentIndex: self.currentIndex
+                        emojiRotation: $emojiRotation
                     )
                     
                     Spacer()
@@ -294,6 +292,8 @@ struct OnboardingView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .statusBarHidden(true)
+        .persistentSystemOverlays(.hidden)
         .fullScreenCover(isPresented: $showTutorial) {
             TutorialView()
         }

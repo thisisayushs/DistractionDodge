@@ -15,17 +15,13 @@ struct ConclusionView: View {
     @State private var showRestartIntroduction = false
     @State private var scoreScale: CGFloat = 0.5
     @State private var isAnimating = false
-    
-    
     @State private var buttonScale: CGFloat = 1.0
     @State private var shouldAnimateButton = false
-    
     
     private let gradientColors: [Color] = [
         .black.opacity(0.8),
         .purple.opacity(0.25)
     ]
-    
     
     private var focusTips: String {
         if viewModel.score < 20 {
@@ -72,7 +68,6 @@ struct ConclusionView: View {
                             isAnimating = false
                             shouldAnimateButton = false
                             
-                            
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.5)) {
                                 scoreScale = 1.0
                             }
@@ -80,11 +75,9 @@ struct ConclusionView: View {
                             let finalScore = viewModel.score
                             let animationDuration: TimeInterval = 1.5
                             
-                            
                             let timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
                                 if displayedScore < finalScore {
                                     displayedScore += 1
-                                    
                                     
                                     if displayedScore % 10 == 0 {
                                         withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
@@ -103,7 +96,6 @@ struct ConclusionView: View {
                                 }
                             }
                             
-                            
                             if finalScore > 0 {
                                 timer.tolerance = animationDuration / Double(finalScore)
                             }
@@ -120,7 +112,6 @@ struct ConclusionView: View {
                                 .fill(Color.white.opacity(0.15))
                         )
                     
-                    
                     HStack(spacing: 20) {
                         StatCard(title: "Total Focus",
                                  value: "\(Int(viewModel.totalFocusTime))s",
@@ -133,7 +124,6 @@ struct ConclusionView: View {
                 }
                 
                 Spacer()
-                
                 
                 VStack(spacing: 20) {
                     Button {
@@ -195,6 +185,10 @@ struct ConclusionView: View {
             }
             .padding(30)
         }
+        .preferredColorScheme(.dark)
+        .statusBarHidden(true)
+        .persistentSystemOverlays(.hidden)
+        
         .fullScreenCover(isPresented: $showRestartIntroduction) {
             OnboardingView()
         }
