@@ -7,15 +7,38 @@
 
 import SwiftUI
 
+/// A view modifier that applies animated effects to bonus and penalty text.
+///
+/// StyledTextEffect provides different animation styles for:
+/// - Bonus score announcements (upward motion)
+/// - Penalty notifications (downward motion)
+/// - Scale, rotation, and blur effects
+///
+/// Usage:
+/// ```swift
+/// Text("+5 BONUS")
+///     .modifier(StyledTextEffect(isShowing: true, style: .bonus))
+/// ```
 struct StyledTextEffect: ViewModifier {
+    // MARK: - Properties
+    
+    /// Controls visibility and animation state
     let isShowing: Bool
+    
+    /// Determines the animation style (bonus or penalty)
     let style: TextStyle
     
+    /// Defines different text animation styles
     enum TextStyle {
+        /// Upward, positive animation for bonuses
         case bonus
+        /// Downward, negative animation for penalties
         case penalty
     }
     
+    /// Applies the styled animation to the content
+    /// - Parameter content: The view to be modified
+    /// - Returns: The modified view with animation effects
     func body(content: Content) -> some View {
         content
             .opacity(isShowing ? 1 : 0)

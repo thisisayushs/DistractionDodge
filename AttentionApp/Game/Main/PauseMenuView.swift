@@ -1,9 +1,29 @@
 import SwiftUI
 
+/// A view that displays the pause menu during gameplay.
+///
+/// PauseMenuView provides options to:
+/// - Resume the current game
+/// - Restart the game
+/// - Return to introduction
+///
+/// Usage:
+/// ```swift
+/// PauseMenuView(viewModel: attentionViewModel)
+/// ```
 struct PauseMenuView: View {
+    // MARK: - Properties
+    
+    /// View model containing game state and control methods
     @ObservedObject var viewModel: AttentionViewModel
+    
+    /// Environment dismiss action
     @Environment(\.dismiss) private var dismiss
+    
+    /// Controls navigation to introduction screen
     @State private var showIntroduction = false
+    
+    // MARK: - Body
     
     var body: some View {
         ZStack {
@@ -56,8 +76,19 @@ struct PauseMenuView: View {
     }
 }
 
+/// A styled button view used in the pause menu.
+///
+/// MenuButton provides a consistent style for pause menu options with:
+/// - Icon and text combination
+/// - Translucent background
+/// - Border and shadow effects
 struct MenuButton: View {
+    // MARK: - Properties
+    
+    /// Title text for the button
     let title: String
+    
+    /// SF Symbol name for the button icon
     let icon: String
     
     var body: some View {

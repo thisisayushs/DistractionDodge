@@ -7,10 +7,35 @@
 
 import SwiftUI
 
+/// A view component that displays a single game statistic with an icon.
+///
+/// StatCard provides a consistent visual style for displaying game statistics with:
+/// - Icon representation
+/// - Value display
+/// - Descriptive title
+/// - Glass-like visual effects
+///
+/// Usage:
+/// ```swift
+/// StatCard(
+///     title: "Total Focus",
+///     value: "120s",
+///     icon: "clock.fill"
+/// )
+/// ```
 struct StatCard: View {
+    // MARK: - Properties
+    
+    /// Title describing the statistic
     let title: String
+    
+    /// Value of the statistic to display
     let value: String
+    
+    /// SF Symbol name for the icon
     let icon: String
+    
+    // MARK: - Body
     
     var body: some View {
         VStack(spacing: 10) {

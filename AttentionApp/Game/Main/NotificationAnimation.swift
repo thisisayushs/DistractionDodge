@@ -7,10 +7,28 @@
 
 import SwiftUI
 
+/// A view modifier that adds shake animation to notification distractions.
+///
+/// This modifier creates a spring-based shake effect for notifications to catch
+/// the user's attention, with configurable delay based on notification index.
+///
+/// Usage:
+/// ```swift
+/// Text("Notification")
+///     .modifier(NotificationAnimation(index: 0))
+/// ```
 struct NotificationAnimation: ViewModifier {
+    // MARK: - Properties
+    
+    /// Index of the notification, used for staggered animation timing
     let index: Int
+    
+    /// Controls the shake animation state
     @State private var shake = false
     
+    /// Applies shake animation to the content
+    /// - Parameter content: The view to be modified
+    /// - Returns: The modified view with shake animation
     func body(content: Content) -> some View {
         content
             .offset(y: -20)

@@ -1,5 +1,11 @@
 import SwiftUI
 
+/// A model representing video content for distraction elements.
+///
+/// Each video content includes:
+/// - Title and username
+/// - Description text
+/// - Visual elements (gradients, emojis, symbols)
 struct VideoContent: Identifiable {
     let id = UUID()
     let title: String
@@ -10,6 +16,12 @@ struct VideoContent: Identifiable {
     let symbols: [String]
 }
 
+/// A model representing floating visual elements in video distractions.
+///
+/// Each element includes:
+/// - Position and movement properties
+/// - Visual transformation properties
+/// - Content (emoji or symbol)
 struct FloatingElement: Identifiable {
     let id = UUID()
     var position: CGPoint
@@ -19,13 +31,38 @@ struct FloatingElement: Identifiable {
     var velocity: CGPoint
 }
 
+/// A view that simulates a social media video feed as a distraction element.
+///
+/// VideoDistraction provides an engaging distraction through:
+/// - Scrollable video content
+/// - Floating emojis and symbols
+/// - Interactive animations
+/// - Gradient backgrounds
+///
+/// Usage:
+/// ```swift
+/// VideoDistraction()
+///     .environmentObject(attentionViewModel)
+/// ```
 struct VideoDistraction: View {
+    // MARK: - Properties
+    
+    /// View model for game state and control
     @EnvironmentObject var viewModel: AttentionViewModel
+    
+    /// Vertical offset for floating animation
     @State private var offset: CGFloat = 0
+    
+    /// Current video index
     @State private var currentIndex = 0
+    
+    /// Collection of animated floating elements
     @State private var floatingElements: [FloatingElement] = []
+    
+    /// Gesture translation state
     @GestureState private var translation: CGFloat = 0
     
+    /// Sample video content
     let videos = [
         VideoContent(
             title: "Amazing Dance Moves! 🔥",
@@ -279,6 +316,9 @@ struct VideoDistraction: View {
     }
 }
 
+// MARK: - Helper Extensions
+
+/// Extends Character to check for emoji properties
 extension Character {
     var isEmoji: Bool {
         guard let scalar = UnicodeScalar(String(self)) else { return false }
@@ -286,12 +326,14 @@ extension Character {
     }
 }
 
+/// Extends String to check if it contains only an emoji
 extension String {
     var isEmoji: Bool {
         count == 1 && first?.isEmoji == true
     }
 }
 
+/// Extends Comparable to add value clamping functionality
 extension Comparable {
     func clamped(to limits: ClosedRange<Self>) -> Self {
         min(max(self, limits.lowerBound), limits.upperBound)

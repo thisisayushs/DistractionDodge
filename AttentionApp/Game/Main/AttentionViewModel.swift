@@ -1,19 +1,58 @@
 import SwiftUI
 import AVFoundation
 
+/// The view model responsible for managing the focus training game's state and logic.
+///
+/// AttentionViewModel handles:
+/// - Game state management (start, pause, resume, stop)
+/// - Score tracking and calculations
+/// - Focus streak monitoring
+/// - Distraction generation and management
+/// - Target movement patterns
+/// - Eye gaze status updates
+///
+/// Usage:
+/// ```swift
+/// @StateObject private var viewModel = AttentionViewModel()
+/// ```
 class AttentionViewModel: ObservableObject {
+    // MARK: - Published Properties
+    
+    /// Current position of the focus target
     @Published var position = CGPoint(x: UIScreen.main.bounds.width / 2,
                                       y: UIScreen.main.bounds.height / 2)
+    
+    /// Indicates if the user is currently gazing at the target
     @Published var isGazingAtObject = false
+    
+    /// Collection of active distractions
     @Published var distractions: [Distraction] = []
+    
+    /// Current game score
     @Published var score: Int = 0
+    
+    /// Duration of current focus streak
     @Published var focusStreak: TimeInterval = 0
+    
+    /// Longest focus streak achieved
     @Published var bestStreak: TimeInterval = 0
+    
+    /// Total time spent focused during the game
     @Published var totalFocusTime: TimeInterval = 0
+    
+    /// Remaining game time in seconds
     @Published var gameTime: TimeInterval = 60
+    
+    /// Indicates if the game is currently active
     @Published var gameActive = false
+    
+    /// Current background gradient colors
     @Published var backgroundGradient: [Color] = [.black.opacity(0.8), .cyan.opacity(0.2)]
+    
+    /// Reason for game ending (time up or distraction)
     @Published var endGameReason: EndGameReason = .timeUp
+    
+    /// Indicates if the game is paused
     @Published var isPaused = false
     
     enum EndGameReason {

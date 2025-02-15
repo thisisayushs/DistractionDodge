@@ -1,6 +1,16 @@
 import Foundation
 
 
+/// A utility struct that provides realistic notification content for the game's distractions.
+///
+/// AppMessages maintains a collection of realistic notification messages for different
+/// app categories to create authentic-looking distractions during gameplay.
+///
+/// Usage:
+/// ```swift
+/// let message = AppMessages.randomMessage(for: "Messages")
+/// // Returns a random message like "Mom: Are you coming for dinner?"
+/// ```
 struct AppMessages {
     static let messages = [
         "Messages": [
@@ -61,6 +71,11 @@ struct AppMessages {
         ]
     ]
     
+    // MARK: - Static Methods
+    
+    /// Retrieves a random notification message for the specified app category
+    /// - Parameter app: The app category to get a message for
+    /// - Returns: A random message from the specified category, or a default message if category not found
     static func randomMessage(for app: String) -> String {
         return messages[app]?.randomElement() ?? "New Notification"
     }

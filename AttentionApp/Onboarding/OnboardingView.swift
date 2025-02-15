@@ -7,20 +7,55 @@
 
 import SwiftUI
 
+/// A view that provides an interactive introduction.
+///
+/// The OnboardingView presents a series of educational pages about focus and attention,
+/// incorporating interactive elements and animations to demonstrate key concepts.
+/// It serves as the entry point for the experience, providing context about focus challenges
+/// and introducing the app's training approach.
 struct OnboardingView: View {
+    // MARK: - Properties
+    
+    /// Current page index in the onboarding flow
     @State private var currentIndex = 0
+    
+    /// Scale factor for emoji animations
     @State private var emojiScale: CGFloat = 1
+    
+    /// Rotation angle for emoji animations
     @State private var emojiRotation: CGFloat = 0
+    
+    /// Scale factor for SF symbols
     @State private var symbolScale: CGFloat = 1
+    
+    /// Controls navigation state to prevent rapid transitions
     @State private var isNavigating = false
+    
+    /// Opacity level for background distractions
     @State private var distractionOpacity: Double = 0.3
+    
+    /// Controls the glow effect animation
     @State private var isGlowing = false
+    
+    /// Position of the interactive ball demonstration
     @State private var ballPosition = CGPoint(x: 100, y: UIScreen.main.bounds.height / 2)
+    
+    /// Timer for generating notifications in the demo
     @State private var notificationTimer: Timer?
+    
+    /// Collection of active notification demonstrations
     @State private var notifications: [(type: NotificationCategory, position: CGPoint, id: UUID)] = []
+    
+    /// Direction vector for ball movement
     @State private var moveDirection = CGPoint(x: 1, y: 1)
+    
+    /// Controls navigation to main content
     @State private var showContentView = false
+    
+    /// Controls navigation to tutorial
     @State private var showTutorial = false
+    
+    /// Tracks drag gesture state
     @GestureState private var dragOffset: CGFloat = 0
     
     let gradientColors: [(start: Color, end: Color)] = [

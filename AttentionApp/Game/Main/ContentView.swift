@@ -8,14 +8,33 @@
 import SwiftUI
 import AVFoundation
 
+/// The main game view where users practice maintaining focus while avoiding distractions.
+///
+/// ContentView implements the core game mechanics of the focus training app:
+/// - Eye tracking to detect user's gaze on the target
+/// - Progressive difficulty with timed distractions
+/// - Real-time score tracking and feedback
+/// - Pause functionality and game state management
 struct ContentView: View {
+    // MARK: - Properties
+    
+    /// View model managing game state and logic
     @StateObject private var viewModel = AttentionViewModel()
-    @State private var showGameSummary = false
+    
+    /// Controls the game obstructed overlay.
+    @State private var gameObstructed = false
+    
+    /// Controls navigation to conclusion screen
     @State private var showConclusion = false
+    
+    /// Controls display of pause menu
     @State private var showPauseMenu = false
+    
+    /// Position of video distraction element
     @State private var videoPosition = CGPoint(x: UIScreen.main.bounds.width * 0.6,
                                               y: UIScreen.main.bounds.height * 0.6)
     
+    /// Gradient colors for background effect
     private let gradientColors: [Color] = [
         .black.opacity(0.8),
         .purple.opacity(0.2)
@@ -125,15 +144,15 @@ struct ContentView: View {
                 if viewModel.endGameReason == .timeUp {
                     showConclusion = true
                 } else {
-                    showGameSummary = true
+                    gameObstructed = true
                 }
             }
         }
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
-        .sheet(isPresented: $showGameSummary) {
-            GameObstructionView(viewModel: viewModel, isPresented: $showGameSummary)
+        .sheet(isPresented: $gameObstructed) {
+            GameObstructionView(viewModel: viewModel, isPresented: $gameObstructed)
         }
         .fullScreenCover(isPresented: $showConclusion) {
             ConclusionView(viewModel: viewModel)

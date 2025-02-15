@@ -1,13 +1,35 @@
 import ARKit
 import SwiftUI
 
+/// A view controller that manages eye tracking using ARKit's face tracking capabilities.
+///
+/// EyeTrackingViewController provides:
+/// - Real-time eye gaze detection
+/// - Mapping of 3D gaze coordinates to 2D screen coordinates
+/// - Eye state monitoring (blink, squint)
+/// - Consecutive gaze validation for accuracy
 class EyeTrackingViewController: UIViewController, ARSCNViewDelegate {
+    // MARK: - Properties
+    
+    /// Callback to report gaze status changes
     var eyeTrackingCallback: ((Bool) -> Void)?
+    
+    /// AR scene view for face tracking
     private var sceneView: ARSCNView!
+    
+    /// Current target center position on screen
     var screenCenter: CGPoint = .zero
+    
+    /// Current gaze status
     private var isGazeOnTarget: Bool = false
+    
+    /// Counter for consecutive gaze detections
     private var gazeHistoryCount = 0
-    private let requiredConsecutiveGazes = 2 
+    
+    /// Required number of consecutive gaze detections for validation
+    private let requiredConsecutiveGazes = 2
+    
+    // MARK: - Lifecycle Methods
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -16,6 +38,7 @@ class EyeTrackingViewController: UIViewController, ARSCNViewDelegate {
         screenCenter = view.center
     }
     
+    /// Sets up the AR scene view and configuration
     private func setupAR() {
         sceneView = ARSCNView(frame: view.bounds)
         sceneView.delegate = self
@@ -50,10 +73,15 @@ class EyeTrackingViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.pause()
     }
     
+    /// Updates the target position for gaze detection
+    /// - Parameter position: New target position on screen
     func updateTargetPosition(_ position: CGPoint) {
         screenCenter = position
     }
     
+    /// Determines if the user's gaze is focused on the target
+    /// - Parameter faceAnchor: Current face tracking anchor
+    /// - Returns: Boolean indicating if gaze is on target
     private func isGazeOnTarget(_ faceAnchor: ARFaceAnchor) -> Bool {
         let lookAtPoint = faceAnchor.lookAtPoint
         let screenSize = UIScreen.main.bounds.size
@@ -117,7 +145,11 @@ extension EyeTrackingViewController: ARSessionDelegate {
     }
 }
 
+// MARK: - SwiftUI Bridge
+
+/// A SwiftUI wrapper for the EyeTrackingViewController
 struct EyeTrackingView: UIViewControllerRepresentable {
+    /// Callback for gaze updates
     let onGazeUpdate: (Bool) -> Void
     
     func makeUIViewController(context: Context) -> EyeTrackingViewController {

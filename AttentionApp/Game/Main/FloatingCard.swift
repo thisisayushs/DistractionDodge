@@ -7,12 +7,39 @@
 
 import SwiftUI
 
+/// A view component that displays game statistics in a stylized, floating card format.
+///
+/// FloatingCard provides a consistent way to display game metrics with optional
+/// glow effects for highlighting significant achievements or states during gameplay.
+///
+/// Usage:
+/// ```swift
+/// FloatingCard(
+///     title: "Score",
+///     value: "100",
+///     glowCondition: score >= 100,
+///     glowColor: .yellow
+/// )
+/// ```
 struct FloatingCard: View {
+    // MARK: - Properties
+    
+    /// The title text displayed in the card
     let title: String
+    
+    /// The value text displayed in the card
     let value: String
+    
+    /// Determines if the card should show a glow effect
     let glowCondition: Bool
+    
+    /// The color of the glow effect when active
     let glowColor: Color
+    
+    /// Controls the animation state of the glow effect
     @State private var isGlowing = false
+    
+    // MARK: - Body
     
     var body: some View {
         HStack(spacing: 10) {

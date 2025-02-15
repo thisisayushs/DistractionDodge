@@ -7,11 +7,31 @@
 
 import SwiftUI
 
+/// A view that creates an animated background with floating circles.
+///
+/// DistractionBackground provides:
+/// - Randomly positioned translucent circles
+/// - Gentle floating animation using HoverMotion
+/// - Visual depth and movement to backgrounds
+///
+/// Usage:
+/// ```swift
+/// ZStack {
+///     DistractionBackground()
+///     // Your content
+/// }
+/// ```
 struct DistractionBackground: View {
+    // MARK: - Properties
+    
+    /// Controls the animation state of floating circles
     @State private var isAnimating = false
+    
+    // MARK: - Body
     
     var body: some View {
         ZStack {
+            // Generate multiple floating circles
             ForEach(0..<20) { _ in
                 Circle()
                     .fill(Color.white.opacity(0.1))

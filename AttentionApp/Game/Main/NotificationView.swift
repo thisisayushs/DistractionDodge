@@ -1,11 +1,41 @@
 import SwiftUI
 
+/// A view that displays interactive notification distractions during gameplay.
+///
+/// NotificationView simulates real system notifications with:
+/// - App icon with gradient colors
+/// - Title and message content
+/// - Dismiss button
+/// - Interactive animations
+/// - Glass background effect
+///
+/// Usage:
+/// ```swift
+/// NotificationView(
+///     distraction: distraction,
+///     index: 0
+/// )
+/// .environmentObject(attentionViewModel)
+/// ```
 struct NotificationView: View {
+    // MARK: - Properties
+    
+    /// The distraction model containing notification content
     let distraction: Distraction
+    
+    /// Index for staggered animation timing
     let index: Int
+    
+    /// View model for game state and control
     @EnvironmentObject var viewModel: AttentionViewModel
+    
+    /// Controls hover state for dismiss button
     @State private var isHovered = false
+    
+    /// Controls dismissal animation state
     @State private var isDismissing = false
+    
+    // MARK: - Body
     
     var body: some View {
         

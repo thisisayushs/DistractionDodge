@@ -7,10 +7,23 @@
 
 import SwiftUI
 
+/// A custom navigation button used in the onboarding flow that provides visual feedback based on completion state.
+///
+/// The button's appearance and interactivity changes based on whether all required actions are completed
+/// and whether it's the last screen in the sequence. It features dynamic animations and styling.
 struct NavigationButton: View {
+    /// The text to display on the button
     let buttonText: String
+    
+    /// Indicates whether all required lines are completed
+    ///
+    /// When true, the button becomes fully interactive and displays a pulsing animation
     let allLinesComplete: Bool
+    
+    /// Indicates if this button appears on the last screen of the sequence
     let isLastScreen: Bool
+    
+    /// The action to perform when the button is tapped
     let action: () -> Void
     
     var body: some View {

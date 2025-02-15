@@ -7,11 +7,40 @@
 
 import SwiftUI
 
+/// A custom alert view component used throughout the tutorial.
+///
+/// AlertView provides a styled alert dialog with:
+/// - Title and message
+/// - Primary and secondary actions
+/// - Animated presentation
+/// - Dismissible background
+///
+/// Usage:
+/// ```swift
+/// AlertView(
+///     title: "Skip Tutorial?",
+///     message: "You are about to skip the tutorial.",
+///     primaryAction: { /* handle primary action */ },
+///     secondaryAction: { /* handle secondary action */ },
+///     isPresented: $showAlert
+/// )
+/// ```
 struct AlertView: View {
+    // MARK: - Properties
+    
+    /// Title displayed at the top of the alert
     let title: String
+    
+    /// Message text explaining the alert
     let message: String
+    
+    /// Closure executed when primary action is taken
     let primaryAction: () -> Void
+    
+    /// Closure executed when secondary action is taken
     let secondaryAction: () -> Void
+    
+    /// Binding to control alert presentation
     @Binding var isPresented: Bool
     
     var body: some View {

@@ -7,22 +7,50 @@
 
 import SwiftUI
 
+/// A view that presents the user's performance results and feedback after completing a focus training session.
+///
+/// ConclusionView provides:
+/// - Animated score reveal
+/// - Performance statistics display
+/// - Contextual tips based on performance
+/// - Options to retry or restart training
 struct ConclusionView: View {
+    // MARK: - Properties
+    
+    /// View model containing game results and statistics
     @ObservedObject var viewModel: AttentionViewModel
+    
+    /// Environment dismiss action
     @Environment(\.dismiss) var dismiss
+    
+    /// Tracks completion of introduction for navigation
     @AppStorage("hasCompletedIntroduction") private var hasCompletedIntroduction = false
+    
+    /// Animated score counter
     @State private var displayedScore = 0
+    
+    /// Controls navigation back to introduction
     @State private var showRestartIntroduction = false
+    
+    /// Scale factor for score animation
     @State private var scoreScale: CGFloat = 0.5
+    
+    /// Controls animation states
     @State private var isAnimating = false
+    
+    /// Scale factor for button animations
     @State private var buttonScale: CGFloat = 1.0
+    
+    /// Triggers button animation after score reveal
     @State private var shouldAnimateButton = false
     
+    /// Background gradient colors
     private let gradientColors: [Color] = [
         .black.opacity(0.8),
         .purple.opacity(0.25)
     ]
     
+    /// Provides contextual tips based on the user's score
     private var focusTips: String {
         if viewModel.score < 20 {
             return "Try to maintain your gaze on the target consistently. Small improvements in focus can lead to better scores."

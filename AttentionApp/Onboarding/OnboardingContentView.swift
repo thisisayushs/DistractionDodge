@@ -7,13 +7,33 @@
 
 import SwiftUI
 
+/// A view that presents the content for each onboarding page with animated text and emoji.
+///
+/// This view manages the presentation of onboarding content including:
+/// - An animated emoji header
+/// - A title
+/// - Sequentially animated text lines
+/// - Progress tracking for completed content
 struct OnboardingContentView: View {
+    /// The page data containing emoji, title, and content to display
     let page: Page
+    
+    /// The current page index in the onboarding sequence
     let currentIndex: Int
+    
+    /// The index of the text line currently being animated
     @Binding var activeLineIndex: Int
+    
+    /// Set of indices for completed text lines
     @Binding var completedLines: Set<Int>
+    
+    /// Indicates whether all text lines have been displayed
     @Binding var allLinesComplete: Bool
+    
+    /// The scale factor for the emoji animation
     @Binding var emojiScale: CGFloat
+    
+    /// The rotation angle for the emoji animation
     @Binding var emojiRotation: CGFloat
     
     var body: some View {
@@ -86,8 +106,15 @@ struct OnboardingContentView: View {
 }
 
 
+/// A view that provides a styled back button for navigation.
+///
+/// This button includes an icon and text with a custom background,
+/// and supports disabled state during navigation.
 struct BackButtonView: View {
+    /// Indicates if navigation is currently in progress
     let isNavigating: Bool
+    
+    /// The action to perform when the back button is tapped
     let action: () -> Void
     
     var body: some View {

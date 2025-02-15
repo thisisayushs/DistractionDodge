@@ -1,8 +1,29 @@
 import SwiftUI
 
+/// A view representing the main focus target in the game.
+///
+/// MainCircle provides visual feedback about the player's focus through:
+/// - Color changes based on gaze status
+/// - Scale animations when focused
+/// - Gradient and glow effects
+///
+/// Usage:
+/// ```swift
+/// MainCircle(
+///     isGazingAtTarget: isGazing,
+///     position: targetPosition
+/// )
+/// ```
 struct MainCircle: View {
+    // MARK: - Properties
+    
+    /// Indicates whether the player is currently looking at the target
     let isGazingAtTarget: Bool
+    
+    /// Current position of the circle on screen
     let position: CGPoint
+    
+    // MARK: - Body
     
     var body: some View {
         Circle()

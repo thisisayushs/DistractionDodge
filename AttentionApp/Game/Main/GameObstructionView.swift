@@ -7,6 +7,21 @@
 
 import SwiftUI
 
+/// A view that appears when the player loses focus by interacting with a distraction.
+///
+/// This view provides feedback about the game ending due to distraction and offers
+/// the option to restart the game. It features:
+/// - Visual warning with animated icon
+/// - Explanation of why the game ended
+/// - Option to restart the game
+///
+/// Usage:
+/// ```swift
+/// GameObstructionView(
+///     viewModel: attentionViewModel,
+///     isPresented: $showGameOver
+/// )
+/// ```
 struct GameObstructionView: View {
     @ObservedObject var viewModel: AttentionViewModel
     @Binding var isPresented: Bool
@@ -89,4 +104,3 @@ struct GameObstructionView: View {
         
     }
 }
-

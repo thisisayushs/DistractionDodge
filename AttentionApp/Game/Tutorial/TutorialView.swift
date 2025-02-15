@@ -5,6 +5,20 @@
 
 import SwiftUI
 
+/// A comprehensive tutorial view that guides users through the game mechanics.
+///
+/// TutorialView provides:
+/// - Step-by-step introduction to game features
+/// - Interactive demonstrations
+/// - Practice sessions for core mechanics
+/// - Visual feedback and instructions
+///
+/// The tutorial covers:
+/// - Basic eye tracking and focus
+/// - Dealing with distractions
+/// - Scoring system
+/// - Multipliers and bonuses
+/// - Penalties
 struct TutorialView: View {
     @State private var currentStep = 0
     @State private var showContentView = false
