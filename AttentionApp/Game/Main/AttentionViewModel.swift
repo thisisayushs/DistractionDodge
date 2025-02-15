@@ -2,6 +2,7 @@ import SwiftUI
 import AVFoundation
 
 class AttentionViewModel: ObservableObject {
+    
     @Published var position = CGPoint(x: UIScreen.main.bounds.width / 2,
                                       y: UIScreen.main.bounds.height / 2)
     @Published var isGazingAtObject = false
@@ -102,7 +103,7 @@ class AttentionViewModel: ObservableObject {
         scoreMultiplier = 1
         lastFocusState = false
         position = CGPoint(x: UIScreen.main.bounds.width / 2,
-                          y: UIScreen.main.bounds.height / 2)
+                           y: UIScreen.main.bounds.height / 2)
         
         startRandomMovement()
         startDistractions()

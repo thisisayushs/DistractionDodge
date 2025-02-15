@@ -49,7 +49,7 @@ struct PauseMenuView: View {
         }
         .presentationBackground(.clear)
         .presentationCornerRadius(35)
-        .interactiveDismissDisabled() 
+        .interactiveDismissDisabled()
         .fullScreenCover(isPresented: $showIntroduction) {
             OnboardingView()
         }

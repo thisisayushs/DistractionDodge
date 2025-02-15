@@ -9,7 +9,7 @@ struct MainCircle: View {
             .fill(
                 LinearGradient(
                     gradient: Gradient(colors: isGazingAtTarget ?
-                                     [.green, .mint] : [.blue, .purple]),
+                                       [.green, .mint] : [.blue, .purple]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )

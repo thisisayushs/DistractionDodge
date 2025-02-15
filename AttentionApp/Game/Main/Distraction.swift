@@ -1,7 +1,6 @@
 import SwiftUI
 import AVFoundation
 
-
 struct Distraction: Identifiable {
     let id = UUID()
     var position: CGPoint

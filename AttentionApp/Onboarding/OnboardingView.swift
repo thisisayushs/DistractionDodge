@@ -168,12 +168,7 @@ struct OnboardingView: View {
         }
     }
     
-   
-    
     private func resetAndStartAnimations() {
-        
-       
-        
         
         isGlowing = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -229,7 +224,6 @@ struct OnboardingView: View {
                 DistractionBackground()
                     .blur(radius: 20)
                 
-                
                 if self.currentIndex == 3 {
                     MainCircle(isGazingAtTarget: self.isGlowing, position: self.ballPosition)
                         .onAppear {
@@ -256,7 +250,7 @@ struct OnboardingView: View {
                         activeLineIndex: $activeLineIndex,
                         completedLines: $completedLines,
                         allLinesComplete: $allLinesComplete,
-                       
+                        
                         emojiScale: $emojiScale,
                         emojiRotation: $emojiRotation,
                         currentIndex: self.currentIndex

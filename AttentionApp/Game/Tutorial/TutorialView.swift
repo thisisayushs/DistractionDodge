@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct TutorialView: View {
-   
+    
     @State private var currentStep = 0
     @State private var showContentView = false
     @State private var demoPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
@@ -544,7 +544,7 @@ struct TutorialView: View {
                                 }
                             }
                             .sheet(isPresented: $showTutorialGameSummary) {
-                                GameSummaryView(
+                                GameObstructionView(
                                     viewModel: AttentionViewModel(),
                                     isPresented: $showTutorialGameSummary
                                 )

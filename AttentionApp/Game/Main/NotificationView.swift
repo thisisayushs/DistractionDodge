@@ -5,7 +5,7 @@ struct GlassBackground: View {
         ZStack {
             Color.white.opacity(0.15)
             
-           
+            
             Rectangle()
                 .fill(Color.white)
                 .opacity(0.05)
@@ -90,7 +90,7 @@ struct NotificationView: View {
                 GlassBackground()
                     .cornerRadius(14)
                 
-               
+                
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(Color.white.opacity(0.3), lineWidth: 0.5)
             }
@@ -108,11 +108,11 @@ struct ShakeEffect: GeometryEffect {
     var amount: CGFloat = 10
     var shakesPerUnit = 3
     var animatableData: CGFloat
-
+    
     func effectValue(size: CGSize) -> ProjectionTransform {
         ProjectionTransform(CGAffineTransform(translationX:
-            amount * sin(animatableData * .pi * CGFloat(shakesPerUnit)),
-            y: 0))
+                                                amount * sin(animatableData * .pi * CGFloat(shakesPerUnit)),
+                                              y: 0))
     }
 }
 
@@ -155,21 +155,3 @@ struct NotificationAnimation: ViewModifier {
     }
 }
 
-struct NotificationView_Previews: PreviewProvider {
-    static var previews: some View {
-        ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
-            NotificationView(
-                distraction: Distraction(
-                    position: .zero,
-                    title: "Message",
-                    message: "New message from John",
-                    appIcon: "message.fill",
-                    iconColors: [.green, .blue],
-                    soundID: 1007
-                ),
-                index: 0
-            )
-        }
-    }
-}

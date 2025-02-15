@@ -2,6 +2,7 @@ import Foundation
 
 
 struct AppMessages {
+    
     static let messages = [
         "Messages": [
             "Mom: Are you coming for dinner?",

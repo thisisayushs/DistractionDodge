@@ -20,7 +20,7 @@ struct ConclusionView: View {
     @State private var buttonScale: CGFloat = 1.0
     @State private var shouldAnimateButton = false
     
-   
+    
     private let gradientColors: [Color] = [
         .black.opacity(0.8),
         .purple.opacity(0.25)
@@ -52,7 +52,7 @@ struct ConclusionView: View {
                 .blur(radius: 20)
             
             VStack(spacing: 45) {
-               
+                
                 VStack(spacing: 30) {
                     Text("Focus Score")
                         .font(.system(.title2, design: .rounded))
@@ -72,7 +72,7 @@ struct ConclusionView: View {
                             isAnimating = false
                             shouldAnimateButton = false
                             
-                          
+                            
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.5)) {
                                 scoreScale = 1.0
                             }
@@ -80,7 +80,7 @@ struct ConclusionView: View {
                             let finalScore = viewModel.score
                             let animationDuration: TimeInterval = 1.5
                             
-                           
+                            
                             let timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
                                 if displayedScore < finalScore {
                                     displayedScore += 1
@@ -103,7 +103,7 @@ struct ConclusionView: View {
                                 }
                             }
                             
-                          
+                            
                             if finalScore > 0 {
                                 timer.tolerance = animationDuration / Double(finalScore)
                             }

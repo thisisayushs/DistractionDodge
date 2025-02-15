@@ -2,12 +2,11 @@ import ARKit
 import SwiftUI
 
 class EyeTrackingViewController: UIViewController, ARSCNViewDelegate {
+    
     var eyeTrackingCallback: ((Bool) -> Void)?
     private var sceneView: ARSCNView!
     var screenCenter: CGPoint = .zero
     private var isGazeOnTarget: Bool = false
-    
-    
     private var gazeHistoryCount = 0
     private let requiredConsecutiveGazes = 2 
     

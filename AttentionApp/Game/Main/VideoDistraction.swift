@@ -16,7 +16,7 @@ struct FloatingElement: Identifiable {
     var scale: CGFloat
     var rotation: Double
     let content: String
-    var velocity: CGPoint 
+    var velocity: CGPoint
 }
 
 struct VideoDistraction: View {
@@ -102,7 +102,7 @@ struct VideoDistraction: View {
                         .foregroundColor(.white.opacity(0.9))
                         .padding(.horizontal, 10)
                     
-                   
+                    
                     Text(videos[currentIndex].description)
                         .font(.system(size: 14, weight: .regular, design: .rounded))
                         .foregroundColor(.white.opacity(0.8))
@@ -137,8 +137,8 @@ struct VideoDistraction: View {
                         if abs(value.translation.height) > threshold {
                             withAnimation {
                                 currentIndex = value.translation.height > 0 ?
-                                    (currentIndex - 1 + videos.count) % videos.count :
-                                    (currentIndex + 1) % videos.count
+                                (currentIndex - 1 + videos.count) % videos.count :
+                                (currentIndex + 1) % videos.count
                                 resetFloatingElements(width: geometry.size.width, height: geometry.size.height)
                                 
                                 
@@ -154,7 +154,7 @@ struct VideoDistraction: View {
             }
             .onAppear {
                 startAnimations(in: geometry)
-               
+                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     resetFloatingElements(width: geometry.size.width, height: geometry.size.height)
                 }
@@ -199,7 +199,7 @@ struct VideoDistraction: View {
             }
         }
         
-       
+        
         animationTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
             withAnimation(.easeInOut(duration: 0.016)) {
                 updateFloatingElements(height: height, width: width)
@@ -211,10 +211,10 @@ struct VideoDistraction: View {
         let currentVideo = videos[currentIndex]
         let elements = (currentVideo.emojis + currentVideo.symbols)
         
-       
+        
         let minimumElements = 12
-        let repeatedElements = elements.count < minimumElements ? 
-            elements + elements + elements : elements
+        let repeatedElements = elements.count < minimumElements ?
+        elements + elements + elements : elements
         
         floatingElements = repeatedElements.map { content in
             FloatingElement(
@@ -222,10 +222,10 @@ struct VideoDistraction: View {
                     x: CGFloat.random(in: 0...width),
                     y: CGFloat.random(in: 0...height)
                 ),
-                scale: CGFloat.random(in: 1.0...1.8), 
+                scale: CGFloat.random(in: 1.0...1.8),
                 rotation: Double.random(in: 0...360),
                 content: content,
-                velocity: CGPoint( 
+                velocity: CGPoint(
                     x: CGFloat.random(in: -2...2),
                     y: CGFloat.random(in: -3...0)
                 )
@@ -234,7 +234,7 @@ struct VideoDistraction: View {
     }
     
     private func updateFloatingElements(height: CGFloat, width: CGFloat) {
-        let dampening: CGFloat = 0.98 
+        let dampening: CGFloat = 0.98
         let maxSpeed: CGFloat = 5.0
         
         for i in floatingElements.indices {
@@ -242,11 +242,11 @@ struct VideoDistraction: View {
             floatingElements[i].velocity.x += CGFloat.random(in: -0.5...0.5)
             floatingElements[i].velocity.y += CGFloat.random(in: -0.5...0.3)
             
-           
+            
             floatingElements[i].velocity.x *= dampening
             floatingElements[i].velocity.y *= dampening
             
-           
+            
             floatingElements[i].velocity.x = floatingElements[i].velocity.x.clamped(to: -maxSpeed...maxSpeed)
             floatingElements[i].velocity.y = floatingElements[i].velocity.y.clamped(to: -maxSpeed...maxSpeed)
             

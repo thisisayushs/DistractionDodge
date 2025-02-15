@@ -2,7 +2,7 @@ import SwiftUI
 import AVFoundation
 
 struct TextAnimator: View {
-   
+    
     let text: String
     let index: Int
     @Binding var activeIndex: Int
@@ -44,7 +44,7 @@ struct TextAnimator: View {
     }
     
     private func startTyping() {
-      
+        
         displayedText = ""
         timer?.invalidate()
         
