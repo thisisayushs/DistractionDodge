@@ -1,6 +1,6 @@
 //
 //  FloatingElement.swift
-//  AttentionApp
+//  DistractionDodge
 //
 //  Created by Ayush Kumar Singh on 22/01/25.
 //

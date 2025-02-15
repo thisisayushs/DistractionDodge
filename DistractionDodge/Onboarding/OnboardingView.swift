@@ -1,6 +1,6 @@
 //
 //  InroductionView.swift
-//  AttentionApp
+//  DistractionDodge
 //
 //  Created by Ayush Kumar Singh on 21/01/25.
 //

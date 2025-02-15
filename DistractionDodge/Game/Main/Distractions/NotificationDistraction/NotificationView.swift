@@ -1,6 +1,6 @@
 //
 //  NotificationView.swift
-//  AttentionApp
+//  DistractionDodge
 //
 //  Created by Ayush Kumar Singh on 28/12/24.
 //

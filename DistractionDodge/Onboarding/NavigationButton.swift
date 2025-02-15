@@ -1,6 +1,6 @@
 //
 //  NavigationButton.swift
-//  AttentionApp
+//  DistractionDodge
 //
 //  Created by Ayush Kumar Singh on 10/02/25.
 //
