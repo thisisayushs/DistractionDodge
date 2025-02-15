@@ -46,8 +46,6 @@ struct TutorialView: View {
     @State private var customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
                                                 y: UIScreen.main.bounds.height * 0.15)
     @State private var nextButtonScale: CGFloat = 1.0
-    
-    @State private var showTutorialGameSummary = false
     @State private var isNavigating = false
     @GestureState private var dragOffset: CGFloat = 0
     @State private var showSkipAlert = false
@@ -556,12 +554,7 @@ struct TutorialView: View {
                                     .transition(.opacity.combined(with: .scale(scale: 0.9)))
                                 }
                             }
-                            .sheet(isPresented: $showTutorialGameSummary) {
-                                GameObstructionView(
-                                    viewModel: AttentionViewModel(),
-                                    isPresented: $showTutorialGameSummary
-                                )
-                            }
+                           
                             .onAppear {
                                 
                                 if !isMovingBall {
