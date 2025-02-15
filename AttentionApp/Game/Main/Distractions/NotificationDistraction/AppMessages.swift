@@ -1,5 +1,11 @@
-import Foundation
+//
+//  AppMessages.swift
+//  AttentionApp
+//
+//  Created by Ayush Kumar Singh on 28/12/24.
+//
 
+import Foundation
 
 /// A utility struct that provides realistic notification content for the game's distractions.
 ///

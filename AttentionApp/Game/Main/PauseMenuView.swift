@@ -1,3 +1,10 @@
+//
+//  ConclusionView.swift
+//  AttentionApp
+//
+//  Created by Ayush Kumar Singh on 22/01/25.
+//
+
 import SwiftUI
 
 /// A view that displays the pause menu during gameplay.

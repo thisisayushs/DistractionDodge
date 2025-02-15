@@ -1,3 +1,10 @@
+//
+//  VideoDistraction.swift
+//  AttentionApp
+//
+//  Created by Ayush Kumar Singh on 22/01/25.
+//
+
 import SwiftUI
 
 /// A view that simulates a social media video feed as a distraction element.

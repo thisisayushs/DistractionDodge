@@ -1,3 +1,10 @@
+//
+//  ConclusionView.swift
+//  AttentionApp
+//
+//  Created by Ayush Kumar Singh on 28/12/24.
+//
+
 import SwiftUI
 
 /// A view representing the main focus target in the game.

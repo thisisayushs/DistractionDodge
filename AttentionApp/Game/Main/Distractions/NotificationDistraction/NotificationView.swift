@@ -1,3 +1,10 @@
+//
+//  NotificationView.swift
+//  AttentionApp
+//
+//  Created by Ayush Kumar Singh on 28/12/24.
+//
+
 import SwiftUI
 
 /// A view that displays interactive notification distractions during gameplay.

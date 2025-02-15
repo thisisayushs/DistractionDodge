@@ -1,6 +1,8 @@
 //
-//  TutorialView.swift
+//  TutorialStep.swift
 //  AttentionApp
+//
+//  Created by Ayush Kumar Singh on 11/02/25.
 //
 
 import SwiftUI
