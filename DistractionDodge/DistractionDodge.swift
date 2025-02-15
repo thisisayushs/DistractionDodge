@@ -14,7 +14,7 @@ import SwiftUI
 /// - Enables dark appearance for the entire application
 /// - Manages the primary window group
 @main
-struct AttentionAppApp: App {
+struct DistractionDodge: App {
     var body: some Scene {
         WindowGroup {
             OnboardingView()
