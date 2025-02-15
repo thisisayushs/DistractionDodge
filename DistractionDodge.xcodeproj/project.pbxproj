@@ -249,7 +249,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Distraction Dodge";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Distraction Dodge uses the camera to track your eyes and detect where you are focusing, helping you improve attention.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Distraction Dodge uses the camera to track your eye movements and determine your focus area, helping you improve attention.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -287,7 +287,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Distraction Dodge";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Distraction Dodge uses the camera to track your eyes and detect where you are focusing, helping you improve attention.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Distraction Dodge uses the camera to track your eye movements and determine your focus area, helping you improve attention.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
