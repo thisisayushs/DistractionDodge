@@ -1,5 +1,5 @@
 //
-//  Content.swift
+//  OnboardingContentView.swift
 //  DistractionDodge
 //
 //  Created by Ayush Kumar Singh on 10/02/25.

@@ -1,5 +1,5 @@
 //
-//  InroductionView.swift
+//  OnboardingView.swift
 //  DistractionDodge
 //
 //  Created by Ayush Kumar Singh on 21/01/25.

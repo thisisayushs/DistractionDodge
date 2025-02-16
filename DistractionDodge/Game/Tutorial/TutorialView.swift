@@ -1,5 +1,5 @@
 //
-//  TutorialStep.swift
+//  TutorialView.swift
 //  DistractionDodge
 //
 //  Created by Ayush Kumar Singh on 11/02/25.
