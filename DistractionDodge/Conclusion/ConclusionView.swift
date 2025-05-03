@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 /// A view that presents the user's performance results and feedback after completing a focus training session.
 ///
@@ -61,6 +62,8 @@ struct ConclusionView: View {
         }
     }
     
+    @Query(sort: \GameSession.score, order: .reverse) private var sessions: [GameSession]
+
     var body: some View {
         ZStack {
             
@@ -141,13 +144,23 @@ struct ConclusionView: View {
                         )
                     
                     HStack(spacing: 20) {
-                        StatCard(title: "Total Focus",
-                                 value: "\(Int(viewModel.totalFocusTime))s",
-                                 icon: "clock.fill")
+                        StatCard(
+                            title: "High Score",
+                            value: "\(viewModel.allTimeHighScore)",
+                            icon: "trophy.fill"
+                        )
                         
-                        StatCard(title: "Best Streak",
-                                 value: "\(Int(viewModel.bestStreak))s",
-                                 icon: "bolt.fill")
+                        StatCard(
+                            title: "Best Streak",
+                            value: "\(Int(viewModel.allTimeLongestStreak))s",
+                            icon: "bolt.fill"
+                        )
+                        
+                        StatCard(
+                            title: "Total Games",
+                            value: "\(viewModel.totalGameSessions)",
+                            icon: "gamecontroller.fill"
+                        )
                     }
                 }
                 

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVFoundation
+import SwiftData
 
 /// The view model responsible for managing the focus training game's state and logic.
 ///
@@ -66,6 +67,10 @@ class AttentionViewModel: ObservableObject {
         case timeUp
         case distractionTap
     }
+    
+    @Environment(\.modelContext) private var modelContext
+    @Query private var userProgress: [UserProgress]
+    @Query(sort: \GameSession.date, order: .reverse) private var sessions: [GameSession]
     
     private var timer: Timer?
     private var distractionTimer: Timer?
@@ -169,6 +174,28 @@ class AttentionViewModel: ObservableObject {
     
     private func endGame() {
         gameActive = false
+        
+        // Save the game session
+        let session = GameSession(
+            score: score,
+            focusStreak: focusStreak,
+            bestStreak: bestStreak,
+            totalFocusTime: totalFocusTime,
+            distractionResistCount: distractions.count
+        )
+        modelContext.insert(session)
+        
+        // Update user progress
+        if let progress = userProgress.first {
+            if score > progress.highScore {
+                progress.highScore = score
+            }
+            if bestStreak > progress.longestStreak {
+                progress.longestStreak = bestStreak
+            }
+            progress.totalSessions += 1
+        }
+        
         stopGame()
     }
     
@@ -316,5 +343,21 @@ class AttentionViewModel: ObservableObject {
         endGameReason = .distractionTap
         gameActive = false
         stopGame()
+    }
+    
+    var allTimeHighScore: Int {
+        userProgress.first?.highScore ?? 0
+    }
+
+    var allTimeLongestStreak: TimeInterval {
+        userProgress.first?.longestStreak ?? 0
+    }
+
+    var totalGameSessions: Int {
+        userProgress.first?.totalSessions ?? 0
+    }
+
+    var recentSessions: [GameSession] {
+        Array(sessions.prefix(10))
     }
 }

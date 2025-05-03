@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 /// A view that provides an interactive introduction.
 ///
@@ -121,6 +122,18 @@ struct OnboardingView: View {
             buttonText: "Start Training"
         )
     ]
+    
+    @Query private var userProgress: [UserProgress]
+    
+    private var hasCompletedIntroduction: Bool {
+        userProgress.first?.hasCompletedIntroduction ?? false
+    }
+    
+    private func completeIntroduction() {
+        if let progress = userProgress.first {
+            progress.hasCompletedIntroduction = true
+        }
+    }
     
     private func navigate(forward: Bool) {
         if !isNavigating {
@@ -297,6 +310,7 @@ struct OnboardingView: View {
                         isLastScreen: self.currentIndex == self.pages.count - 1
                     ) {
                         if self.currentIndex == self.pages.count - 1 {
+                            completeIntroduction()
                             self.showTutorial = true
                         } else {
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
