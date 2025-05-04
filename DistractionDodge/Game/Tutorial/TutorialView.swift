@@ -551,7 +551,6 @@ struct TutorialView: View {
                                         ),
                                         index: 0
                                     )
-                                    .environmentObject(AttentionViewModel())
                                     .allowsHitTesting(false)
                                     .transition(.opacity.combined(with: .scale(scale: 0.9)))
                                 }

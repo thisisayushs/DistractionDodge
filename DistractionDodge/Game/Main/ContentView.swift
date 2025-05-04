@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVFoundation
+import SwiftData
 
 /// The main game view where users practice maintaining focus while avoiding distractions.
 ///
@@ -18,8 +19,8 @@ import AVFoundation
 struct ContentView: View {
     // MARK: - Properties
     
-    /// View model managing game state and logic
-    @StateObject private var viewModel = AttentionViewModel()
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var viewModel: AttentionViewModel
     
     /// Controls the game obstructed overlay.
     @State private var gameObstructed = false
@@ -39,6 +40,11 @@ struct ContentView: View {
         .black.opacity(0.8),
         .purple.opacity(0.2)
     ]
+    
+    init() {
+        let viewModel = AttentionViewModel(modelContext: ModelContext(try! ModelContainer(for: GameSession.self, UserProgress.self)))
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -134,6 +140,8 @@ struct ContentView: View {
         }
         
         .onAppear {
+            // Replace the temporary ModelContext with the actual one from the environment
+            viewModel.updateModelContext(modelContext)
             viewModel.startGame()
         }
         .onDisappear {

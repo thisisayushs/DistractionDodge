@@ -21,7 +21,7 @@ import SwiftData
 ///
 /// Usage:
 /// ```swift
-/// @StateObject private var viewModel = AttentionViewModel()
+/// @StateObject private var viewModel = AttentionViewModel(modelContext: ModelContext())
 /// ```
 class AttentionViewModel: ObservableObject {
     // MARK: - Published Properties
@@ -68,21 +68,7 @@ class AttentionViewModel: ObservableObject {
         case distractionTap
     }
     
-    @Environment(\.modelContext) private var modelContext
-    @Query private var userProgress: [UserProgress]
-    @Query(sort: \GameSession.date, order: .reverse) private var sessions: [GameSession]
-    
-    private var timer: Timer?
-    private var distractionTimer: Timer?
-    private var focusStreakTimer: Timer?
-    private var gameTimer: Timer?
-    private var wasActiveBeforeBackground = false
-    private var isInBackground = false
-    private var moveDirection = CGPoint(x: 1, y: 1)
-    private var currentNotificationInterval: TimeInterval = 2.0
-    private var distractionProbability: Double = 0.2
-    private var scoreMultiplier: Int = 1
-    private var lastFocusState: Bool = false
+    private var modelContext: ModelContext
     
     let notificationData: [(title: String, icon: String, colors: [Color], sound: SystemSoundID)] = [
         ("Messages", "message.fill",
@@ -111,7 +97,20 @@ class AttentionViewModel: ObservableObject {
          1005)
     ]
     
-    init() {
+    private var timer: Timer?
+    private var distractionTimer: Timer?
+    private var focusStreakTimer: Timer?
+    private var gameTimer: Timer?
+    private var wasActiveBeforeBackground = false
+    private var isInBackground = false
+    private var moveDirection = CGPoint(x: 1, y: 1)
+    private var currentNotificationInterval: TimeInterval = 2.0
+    private var distractionProbability: Double = 0.2
+    private var scoreMultiplier: Int = 1
+    private var lastFocusState: Bool = false
+    
+    init(modelContext: ModelContext) {
+        self.modelContext = modelContext
         setupNotificationObservers()
     }
     
@@ -186,7 +185,8 @@ class AttentionViewModel: ObservableObject {
         modelContext.insert(session)
         
         // Update user progress
-        if let progress = userProgress.first {
+        let progressFetch = FetchDescriptor<UserProgress>()
+        if let progress = try? modelContext.fetch(progressFetch).first {
             if score > progress.highScore {
                 progress.highScore = score
             }
@@ -346,18 +346,41 @@ class AttentionViewModel: ObservableObject {
     }
     
     var allTimeHighScore: Int {
-        userProgress.first?.highScore ?? 0
+        let progressFetch = FetchDescriptor<UserProgress>()
+        return (try? modelContext.fetch(progressFetch).first)?.highScore ?? 0
     }
-
+    
     var allTimeLongestStreak: TimeInterval {
-        userProgress.first?.longestStreak ?? 0
+        let progressFetch = FetchDescriptor<UserProgress>()
+        return (try? modelContext.fetch(progressFetch).first)?.longestStreak ?? 0
     }
-
+    
     var totalGameSessions: Int {
-        userProgress.first?.totalSessions ?? 0
+        let progressFetch = FetchDescriptor<UserProgress>()
+        return (try? modelContext.fetch(progressFetch).first)?.totalSessions ?? 0
     }
-
+    
     var recentSessions: [GameSession] {
-        Array(sessions.prefix(10))
+        var sessionsFetch = FetchDescriptor<GameSession>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        sessionsFetch.fetchLimit = 10
+        return (try? modelContext.fetch(sessionsFetch)) ?? []
+    }
+    
+    func updateModelContext(_ newContext: ModelContext) {
+        // Only update if this isn't the same context
+        if !isEqual(newContext) {
+            self.modelContext = newContext
+        }
+    }
+    
+    private func isEqual(_ other: ModelContext) -> Bool {
+        // Compare the underlying store URLs to determine if contexts are the same
+        guard let thisURL = modelContext.container.configurations.first?.url,
+              let otherURL = other.container.configurations.first?.url else {
+            return false
+        }
+        return thisURL == otherURL
     }
 }
