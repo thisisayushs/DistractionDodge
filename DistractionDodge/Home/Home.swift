@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import Charts
+import SwiftData
 
 struct Home: View {
     @State private var currentPage = 0
@@ -66,21 +68,23 @@ struct Home: View {
                 BackgroundView(currentPage: currentPage, colors: gradientColors)
                 
                 TabView(selection: $currentPage) {
-                    FirstPageView(
-                        selectedDuration: $selectedDuration,
-                        isDragging: $isDragging,
-                        startButtonScale: $startButtonScale,
-                        hasInteractedWithSlider: $hasInteractedWithSlider,
-                        message: randomMotivationalMessage,
-                        formatDuration: formatDuration,
-                        angleForDuration: angleForDuration,
-                        updateDuration: updateDurationFromLocation
-                    )
-                    .tag(0)
-                    
-                    ForEach(1...2, id: \.self) { index in
-                        OtherPageView(pageNumber: index)
-                            .tag(index)
+                    ForEach(0...1, id: \.self) { index in
+                        if index == 0 {
+                            FirstPageView(
+                                selectedDuration: $selectedDuration,
+                                isDragging: $isDragging,
+                                startButtonScale: $startButtonScale,
+                                hasInteractedWithSlider: $hasInteractedWithSlider,
+                                message: randomMotivationalMessage,
+                                formatDuration: formatDuration,
+                                angleForDuration: angleForDuration,
+                                updateDuration: updateDurationFromLocation
+                            )
+                            .tag(0)
+                        } else {
+                            StatsView()
+                                .tag(1)
+                        }
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .automatic))
@@ -396,15 +400,287 @@ private struct StartButton: View {
     }
 }
 
-private struct OtherPageView: View {
-    let pageNumber: Int
+private struct StatsView: View {
+    @Query private var sessions: [GameSession]
+    @State private var timeRange: TimeRange = .week
+    
+    enum TimeRange {
+        case week, month
+    }
+    
+    private var filteredSessions: [GameSession] {
+        let calendar = Calendar.current
+        let filterDate = timeRange == .week ?
+            calendar.date(byAdding: .day, value: -7, to: Date())! :
+            calendar.date(byAdding: .month, value: -1, to: Date())!
+        
+        return sessions.filter { $0.date >= filterDate }
+    }
+    
+    private var focusTimeData: [(date: Date, minutes: Double)] {
+        Dictionary(grouping: filteredSessions) { session in
+            Calendar.current.startOfDay(for: session.date)
+        }
+        .map { date, sessions in
+            (date, sessions.reduce(0) { $0 + $1.totalFocusTime } / 60)
+        }
+        .sorted { $0.date < $1.date }
+    }
+    
+    private var streakData: [(date: Date, streak: TimeInterval)] {
+        Dictionary(grouping: filteredSessions) { session in
+            Calendar.current.startOfDay(for: session.date)
+        }
+        .map { date, sessions in
+            (date, sessions.map { $0.bestStreak }.max() ?? 0)
+        }
+        .sorted { $0.date < $1.date }
+    }
     
     var body: some View {
-        VStack {
-            Text("Page \(pageNumber + 1)")
-                .font(.system(size: 42, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
+        ZStack {
+            if sessions.isEmpty {
+                EmptyStateView()
+            } else {
+                HStack(alignment: .top, spacing: 30) {
+                    // Left Column - Charts
+                    VStack(spacing: 30) {
+                        HStack(spacing: 15) {
+                            TimeRangeButton(
+                                title: "Week",
+                                isSelected: timeRange == .week,
+                                action: { timeRange = .week }
+                            )
+                            
+                            TimeRangeButton(
+                                title: "Month",
+                                isSelected: timeRange == .month,
+                                action: { timeRange = .month }
+                            )
+                        }
+                        .padding(.top, 60)
+                        
+                        VStack(spacing: 25) {
+                            ChartContainer(title: "Daily Focus Time") {
+                                Chart(focusTimeData, id: \.date) { item in
+                                    AreaMark(
+                                        x: .value("Date", item.date),
+                                        y: .value("Minutes", item.minutes)
+                                    )
+                                    .foregroundStyle(
+                                        .linearGradient(
+                                            colors: [.cyan.opacity(0.3), .clear],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                    
+                                    LineMark(
+                                        x: .value("Date", item.date),
+                                        y: .value("Minutes", item.minutes)
+                                    )
+                                    .foregroundStyle(
+                                        .linearGradient(
+                                            colors: [.white, .cyan],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .shadow(color: .cyan.opacity(0.5), radius: 4)
+                                }
+                                .chartXAxis {
+                                    AxisMarks(values: .stride(by: .day, count: timeRange == .week ? 1 : 3)) { value in
+                                        AxisValueLabel(format: .dateTime.weekday())
+                                            .foregroundStyle(.white.opacity(0.7))
+                                    }
+                                }
+                                .chartYAxis {
+                                    AxisMarks(position: .leading) { value in
+                                        AxisValueLabel()
+                                            .foregroundStyle(.white.opacity(0.7))
+                                    }
+                                }
+                            }
+                            
+                            ChartContainer(title: "Best Daily Streaks") {
+                                Chart(streakData, id: \.date) { item in
+                                    PointMark(
+                                        x: .value("Date", item.date),
+                                        y: .value("Streak", item.streak)
+                                    )
+                                    .foregroundStyle(
+                                        .linearGradient(
+                                            colors: [.yellow, .orange],
+                                            startPoint: .bottom,
+                                            endPoint: .top
+                                        )
+                                    )
+                                    .shadow(color: .orange.opacity(0.5), radius: 4)
+                                }
+                                .chartXAxis {
+                                    AxisMarks(values: .stride(by: .day, count: timeRange == .week ? 1 : 3)) { value in
+                                        AxisValueLabel(format: .dateTime.weekday())
+                                            .foregroundStyle(.white.opacity(0.7))
+                                    }
+                                }
+                                .chartYAxis {
+                                    AxisMarks(position: .leading) { value in
+                                        AxisValueLabel()
+                                            .foregroundStyle(.white.opacity(0.7))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .frame(width: 500)
+                    
+                    // Right Column - Stats Cards
+                    VStack(alignment: .center, spacing: 20) {
+                        Spacer()
+                            .frame(height: 100)
+                            
+                        StatCard(
+                            title: "Games Played",
+                            value: "\(sessions.count)",
+                            icon: "gamecontroller.fill"
+                        )
+                        
+                        StatCard(
+                            title: "Best Score",
+                            value: "\(sessions.map { $0.score }.max() ?? 0)",
+                            icon: "trophy.fill"
+                        )
+                        
+                        StatCard(
+                            title: "Best Streak",
+                            value: formatTime(sessions.map { $0.bestStreak }.max() ?? 0),
+                            icon: "bolt.fill"
+                        )
+                        
+                        Spacer()
+                    }
+                }
+                .padding(.horizontal, 30)
+            }
         }
+        
+        .animation(.easeInOut, value: timeRange)
+    }
+    
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds) / 60
+        let remainingSeconds = Int(seconds) % 60
+        return seconds < 60 ? "\(Int(seconds))s" :
+               "\(minutes)m \(remainingSeconds)s"
+    }
+}
+
+private struct TimeRangeButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundColor(isSelected ? .black : .white)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? .white : .white.opacity(0.15))
+                        .shadow(color: isSelected ? .white.opacity(0.3) : .clear, radius: 5)
+                )
+                .overlay(
+                    Capsule()
+                        .stroke(Color.white.opacity(isSelected ? 0 : 0.3), lineWidth: 1)
+                )
+        }
+    }
+}
+
+private struct ChartContainer<Content: View>: View {
+    let title: String
+    let content: Content
+    
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text(title)
+                .font(.system(.title3, design: .rounded))
+                .bold()
+                .foregroundStyle(
+                    .linearGradient(
+                        colors: [.white, .white.opacity(0.7)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            
+            content
+                .frame(height: 180)
+                .padding(.horizontal, 5)
+        }
+        .padding(20)
+        .frame(maxWidth: 500)
+        .background(
+            RoundedRectangle(cornerRadius: 25)
+                .fill(Color.white.opacity(0.15))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 25)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.2), radius: 15)
+        )
+    }
+}
+
+private struct EmptyStateView: View {
+    var body: some View {
+        VStack(spacing: 25) {
+            Image(systemName: "chart.line.uptrend.xyaxis")
+                .font(.system(size: 70))
+                .foregroundStyle(
+                    .linearGradient(
+                        colors: [.white, .cyan],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .shadow(color: .cyan.opacity(0.5), radius: 10)
+            
+            Text("No Stats Yet")
+                .font(.system(.title2, design: .rounded))
+                .bold()
+                .foregroundStyle(
+                    .linearGradient(
+                        colors: [.white, .white.opacity(0.7)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            
+            Text("Complete your first focus training session\nto see your progress here!")
+                .font(.system(.body, design: .rounded))
+                .multilineTextAlignment(.center)
+                .foregroundColor(.white.opacity(0.8))
+                .padding(.horizontal, 40)
+        }
+        .padding(30)
+        .background(
+            RoundedRectangle(cornerRadius: 25)
+                .fill(Color.white.opacity(0.15))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 25)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 30)
     }
 }
 
