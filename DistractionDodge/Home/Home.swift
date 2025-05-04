@@ -408,9 +408,11 @@ private struct StatsView: View {
     @State private var isSynced = false
     @State private var isAuthorizing = false
     @State private var showError = false
+    @State private var showSettings = false
     @State private var authTrigger = false
     @State private var isAuthenticated = false
     @Environment(\.healthStore) private var healthStore
+    @Environment(\.scenePhase) private var scenePhase
     
     enum TimeRange {
         case week, month
@@ -449,12 +451,10 @@ private struct StatsView: View {
     
     private func checkAuthorizationStatus() {
         let status = healthStore.authorizationStatus(for: mindfulType)
-        if case .sharingAuthorized = status {
-            withAnimation {
-                isSynced = true
-            }
+        withAnimation {
+            isSynced = status == .sharingAuthorized
+            isAuthenticated = status == .sharingAuthorized
         }
-        print("HealthKit Auth Status: \(status.rawValue)")
     }
     
     private func syncToHealth() {
@@ -463,10 +463,30 @@ private struct StatsView: View {
             return
         }
         
-        if isAuthenticated {
-            isSynced = true
-        } else {
-            authTrigger.toggle()
+        let status = healthStore.authorizationStatus(for: mindfulType)
+        
+        // Only proceed if we're not already synced
+        if !isSynced {
+            if status == .notDetermined {
+                // First time permission request
+                isSynced = false
+                isAuthenticated = false
+                isAuthorizing = true
+                
+                healthStore.requestAuthorization(toShare: [mindfulType], read: []) { success, error in
+                    DispatchQueue.main.async {
+                        isAuthorizing = false
+                        if success {
+                            checkAuthorizationStatus()
+                        } else {
+                            showError = true
+                        }
+                    }
+                }
+            } else {
+                // Permission previously granted but might be revoked
+                showSettings = true
+            }
         }
     }
 
@@ -649,32 +669,22 @@ private struct StatsView: View {
                                     )
                             )
                         }
-                        .disabled(isAuthorizing || isSynced)
-                        .padding(.top, 10)
-                        .healthDataAccessRequest(
-                            store: healthStore,
-                            shareTypes: [mindfulType],
-                            readTypes: [],
-                            trigger: authTrigger
-                        ) { result in
-                             print("healthDataAccessRequest completion: \(result)")
-                            switch result {
-                            case .success:
-                                self.isAuthenticated = true
-                                self.isSynced = true
-                            case .failure(let error):
-                                print("HealthKit Authorization Error: \(error.localizedDescription)")
-                                self.isAuthenticated = false
-                                showError = true
+                        .disabled(isAuthorizing)
+                        .alert("Health Access Required", isPresented: $showSettings) {
+                            Button("Open Health", role: .none) {
+                                if let url = URL(string: "x-apple-health://") {
+                                    UIApplication.shared.open(url)
+                                }
                             }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text("Please enable Health access in the Health app to sync your mindful minutes.")
                         }
                         .alert("Could not sync with Health", isPresented: $showError) {
                             Button("OK", role: .cancel) {}
                         } message: {
                             Text("Please make sure Health access is enabled for the app in Settings.")
                         }
-                        
-                        Spacer()
                     }
                 }
                 .padding(.horizontal, 30)
@@ -683,6 +693,11 @@ private struct StatsView: View {
         .animation(.easeInOut, value: timeRange)
         .onAppear {
              checkAuthorizationStatus()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                checkAuthorizationStatus()
+            }
         }
     }
 
