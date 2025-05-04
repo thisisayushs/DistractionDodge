@@ -579,8 +579,10 @@ private struct StatsView: View {
                             showHealthSync = true
                         }) {
                             HStack(spacing: 12) {
-                                Image(systemName: "heart.fill")
-                                    .font(.system(size: 16))
+                                Image("Icon - Apple Health")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 16, height: 16)
                                 Text("Sync to Apple Health")
                                     .font(.system(.body, design: .rounded))
                                     .fontWeight(.medium)
