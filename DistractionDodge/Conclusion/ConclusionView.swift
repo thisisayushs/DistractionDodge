@@ -190,91 +190,67 @@ struct ConclusionView: View {
                             icon: "timer"
                         )
                     }
+                    .padding(.bottom, 40)
                     
-                    Divider()
-                        .background(.white.opacity(0.2))
-                        .padding(.vertical)
-                    
-                    HStack(spacing: 20) {
-                        StatCard(
-                            title: "All-Time High",
-                            value: "\(viewModel.allTimeHighScore)",
-                            icon: "trophy.fill"
-                        )
+                    VStack(spacing: 20) {
+                        Button {
+                            viewModel.startGame()
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Text("Play Again")
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 35)
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.2))
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(Color.white, lineWidth: 1.5)
+                                    )
+                                    .shadow(color: .white.opacity(0.3), radius: 5, x: 0, y: 2)
+                            )
+                        }
+                        .scaleEffect(buttonScale)
+                        .onChange(of: shouldAnimateButton) { _, newValue in
+                            if newValue {
+                                withAnimation(
+                                    .easeInOut(duration: 0.5)
+                                    .repeatForever(autoreverses: true)
+                                ) {
+                                    buttonScale = 1.1
+                                }
+                            }
+                        }
                         
-                        StatCard(
-                            title: "Best Streak",
-                            value: formatTime(viewModel.allTimeLongestStreak),
-                            icon: "star.fill"
-                        )
-                        
-                        StatCard(
-                            title: "Total Games",
-                            value: "\(viewModel.totalGameSessions)",
-                            icon: "gamecontroller.fill"
-                        )
+                        Button {
+                            hasCompletedIntroduction = false
+                            showHome = true
+                        } label: {
+                            HStack {
+                                Text("Go Home")
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                            }
+                            .foregroundColor(.white.opacity(0.8))
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 35)
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.15))
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
+                                    )
+                                    .shadow(color: .white.opacity(0.2), radius: 5, x: 0, y: 2)
+                            )
+                        }
                     }
                 }
                 
                 Spacer()
-                
-                VStack(spacing: 20) {
-                    Button {
-                        viewModel.startGame()
-                        dismiss()
-                    } label: {
-                        HStack {
-                            Text("Play Again")
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.vertical, 16)
-                        .padding(.horizontal, 35)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.2))
-                                .overlay(
-                                    Capsule()
-                                        .stroke(Color.white, lineWidth: 1.5)
-                                )
-                                .shadow(color: .white.opacity(0.3), radius: 5, x: 0, y: 2)
-                        )
-                    }
-                    .scaleEffect(buttonScale)
-                    .onChange(of: shouldAnimateButton) { _, newValue in
-                        if newValue {
-                            withAnimation(
-                                .easeInOut(duration: 0.5)
-                                .repeatForever(autoreverses: true)
-                            ) {
-                                buttonScale = 1.1
-                            }
-                        }
-                    }
-                    
-                    Button {
-                        hasCompletedIntroduction = false
-                        showHome = true
-                    } label: {
-                        HStack {
-                            Text("Go Home")
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                        }
-                        .foregroundColor(.white.opacity(0.8))
-                        .padding(.vertical, 16)
-                        .padding(.horizontal, 35)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.15))
-                                .overlay(
-                                    Capsule()
-                                        .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
-                                )
-                                .shadow(color: .white.opacity(0.2), radius: 5, x: 0, y: 2)
-                        )
-                    }
-                }
-                .padding(.bottom, 40)
             }
             .padding(30)
         }
