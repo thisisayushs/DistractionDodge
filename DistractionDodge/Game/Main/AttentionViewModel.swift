@@ -63,6 +63,8 @@ class AttentionViewModel: ObservableObject {
     /// Indicates if the game is paused
     @Published var isPaused = false
     
+    @Published var sessionStartTime: Date = Date()
+    
     enum EndGameReason {
         case timeUp
         case distractionTap
@@ -150,6 +152,7 @@ class AttentionViewModel: ObservableObject {
     }
     
     func startGame() {
+        sessionStartTime = Date()
         endGameReason = .timeUp
         gameActive = true
         currentNotificationInterval = 2.0

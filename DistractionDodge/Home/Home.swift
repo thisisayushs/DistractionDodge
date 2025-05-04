@@ -8,6 +8,8 @@
 import SwiftUI
 import Charts
 import SwiftData
+import HealthKit
+import HealthKitUI
 
 struct Home: View {
     @State private var currentPage = 0
@@ -403,11 +405,18 @@ private struct StartButton: View {
 private struct StatsView: View {
     @Query private var sessions: [GameSession]
     @State private var timeRange: TimeRange = .week
-    @State private var showHealthSync = false
+    @State private var isSynced = false
+    @State private var isAuthorizing = false
+    @State private var showError = false
+    @State private var authTrigger = false
+    @State private var isAuthenticated = false
+    @Environment(\.healthStore) private var healthStore
     
     enum TimeRange {
         case week, month
     }
+    
+    private let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
     
     private var filteredSessions: [GameSession] {
         let calendar = Calendar.current
@@ -438,13 +447,35 @@ private struct StatsView: View {
         .sorted { $0.date < $1.date }
     }
     
+    private func checkAuthorizationStatus() {
+        let status = healthStore.authorizationStatus(for: mindfulType)
+        if case .sharingAuthorized = status {
+            withAnimation {
+                isSynced = true
+            }
+        }
+        print("HealthKit Auth Status: \(status.rawValue)")
+    }
+    
+    private func syncToHealth() {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            showError = true
+            return
+        }
+        
+        if isAuthenticated {
+            isSynced = true
+        } else {
+            authTrigger.toggle()
+        }
+    }
+
     var body: some View {
         ZStack {
             if sessions.isEmpty {
                 EmptyStateView()
             } else {
                 HStack(alignment: .top, spacing: 30) {
-                    // Left Column - Charts
                     VStack(spacing: 30) {
                         HStack(spacing: 15) {
                             TimeRangeButton(
@@ -552,7 +583,6 @@ private struct StatsView: View {
                     }
                     .frame(width: 500)
                     
-                    // Right Column - Stats Cards
                     VStack(alignment: .center, spacing: 20) {
                         Spacer()
                             .frame(height: 100)
@@ -574,16 +604,30 @@ private struct StatsView: View {
                             value: formatTime(sessions.map { $0.bestStreak }.max() ?? 0),
                             icon: "bolt.fill"
                         )
-                        
+
                         Button(action: {
-                            showHealthSync = true
+                            syncToHealth()
                         }) {
                             HStack(spacing: 12) {
-                                Image("Icon - Apple Health")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 16, height: 16)
-                                Text("Sync to Apple Health")
+                                if isAuthorizing {
+                                    ProgressView()
+                                        .tint(.white)
+                                        .frame(width: 16, height: 16)
+                                } else if isSynced {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 16, height: 16)
+                                        .foregroundStyle(.green)
+                                        .shadow(color: .green.opacity(0.5), radius: 4)
+                                } else {
+                                    Image("Icon - Apple Health")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 16, height: 16)
+                                }
+                                
+                                Text(isSynced ? "Synced to Apple Health" : "Sync to Apple Health")
                                     .font(.system(.body, design: .rounded))
                                     .fontWeight(.medium)
                             }
@@ -605,7 +649,30 @@ private struct StatsView: View {
                                     )
                             )
                         }
+                        .disabled(isAuthorizing || isSynced)
                         .padding(.top, 10)
+                        .healthDataAccessRequest(
+                            store: healthStore,
+                            shareTypes: [mindfulType],
+                            readTypes: [],
+                            trigger: authTrigger
+                        ) { result in
+                             print("healthDataAccessRequest completion: \(result)")
+                            switch result {
+                            case .success:
+                                self.isAuthenticated = true
+                                self.isSynced = true
+                            case .failure(let error):
+                                print("HealthKit Authorization Error: \(error.localizedDescription)")
+                                self.isAuthenticated = false
+                                showError = true
+                            }
+                        }
+                        .alert("Could not sync with Health", isPresented: $showError) {
+                            Button("OK", role: .cancel) {}
+                        } message: {
+                            Text("Please make sure Health access is enabled for the app in Settings.")
+                        }
                         
                         Spacer()
                     }
@@ -614,8 +681,11 @@ private struct StatsView: View {
             }
         }
         .animation(.easeInOut, value: timeRange)
+        .onAppear {
+             checkAuthorizationStatus()
+        }
     }
-    
+
     private func formatTime(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds) / 60
         let remainingSeconds = Int(seconds) % 60

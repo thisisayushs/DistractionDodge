@@ -7,6 +7,8 @@
 
 import SwiftUI
 import SwiftData
+import HealthKit
+import HealthKitUI
 
 /// The main entry point for the Attention App.
 ///
@@ -17,6 +19,7 @@ import SwiftData
 @main
 struct DistractionDodge: App {
     let container: ModelContainer
+    let healthStore = HKHealthStore()
     
     init() {
         do {
@@ -42,7 +45,19 @@ struct DistractionDodge: App {
         WindowGroup {
             RootView()
                 .preferredColorScheme(.dark)
+                .environment(\.healthStore, healthStore)
         }
         .modelContainer(container)
+    }
+}
+
+private struct HealthStoreKey: EnvironmentKey {
+    static let defaultValue: HKHealthStore = HKHealthStore()
+}
+
+extension EnvironmentValues {
+    var healthStore: HKHealthStore {
+        get { self[HealthStoreKey.self] }
+        set { self[HealthStoreKey.self] = newValue }
     }
 }

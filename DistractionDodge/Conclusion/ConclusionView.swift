@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import HealthKit
 
 /// A view that presents the user's performance results and feedback after completing a focus training session.
 ///
@@ -23,6 +24,9 @@ struct ConclusionView: View {
     
     /// Environment dismiss action
     @Environment(\.dismiss) var dismiss
+    
+    /// Environment health store
+    @Environment(\.healthStore) private var healthStore
     
     /// Tracks completion of introduction for navigation
     @AppStorage("hasCompletedIntroduction") private var hasCompletedIntroduction = false
@@ -69,6 +73,29 @@ struct ConclusionView: View {
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+    
+    private func saveMindfulMinutes() {
+        let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
+        
+        // Check if we have permission before attempting to save
+        if case .sharingAuthorized = healthStore.authorizationStatus(for: mindfulType) {
+            let endDate = Date()
+            let startDate = endDate.addingTimeInterval(-viewModel.totalFocusTime)
+            
+            let sample = HKCategorySample(
+                type: mindfulType,
+                value: HKCategoryValue.notApplicable.rawValue,
+                start: startDate,
+                end: endDate
+            )
+            
+            healthStore.save(sample) { success, error in
+                if let error = error {
+                    print("Error saving mindful minutes: \(error.localizedDescription)")
+                }
+            }
+        }
     }
     
     var body: some View {
@@ -254,7 +281,45 @@ struct ConclusionView: View {
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
-        
+        .onAppear {
+            displayedScore = 0
+            scoreScale = 0.5
+            isAnimating = false
+            shouldAnimateButton = false
+            
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.5)) {
+                scoreScale = 1.0
+            }
+            
+            let finalScore = viewModel.score
+            let animationDuration: TimeInterval = 1.5
+            
+            let timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
+                if displayedScore < finalScore {
+                    displayedScore += 1
+                    
+                    if displayedScore % 10 == 0 {
+                        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                            scoreScale = 1.1
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                                scoreScale = 1.0
+                            }
+                        }
+                    }
+                } else {
+                    timer.invalidate()
+                    
+                    shouldAnimateButton = true
+                }
+            }
+            
+            if finalScore > 0 {
+                timer.tolerance = animationDuration / Double(finalScore)
+            }
+            saveMindfulMinutes()
+        }
         .fullScreenCover(isPresented: $showHome) {
             Home()
         }

@@ -10,9 +10,22 @@
 		28007A872D5B52AA00668A81 /* DistractionDodge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DistractionDodge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		82EFE7D92DC7ADF300FE35C2 /* Exceptions for "DistractionDodge" folder in "DistractionDodge" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2834FF032D20161E004B462C /* DistractionDodge */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2834FF062D20161E004B462C /* DistractionDodge */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				82EFE7D92DC7ADF300FE35C2 /* Exceptions for "DistractionDodge" folder in "DistractionDodge" target */,
+			);
 			path = DistractionDodge;
 			sourceTree = "<group>";
 		};
@@ -243,14 +256,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DistractionDodge/DistractionDodge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"DistractionDodge/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DistractionDodge/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Distraction Dodge";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Distraction Dodge uses the camera to track your eye movements and determine your focus area, helping you improve attention.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "DistractionDodge needs permission to save your focus sessions as mindful minutes in Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -280,14 +296,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DistractionDodge/DistractionDodge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"DistractionDodge/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DistractionDodge/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Distraction Dodge";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Distraction Dodge uses the camera to track your eye movements and determine your focus area, helping you improve attention.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "DistractionDodge needs permission to save your focus sessions as mindful minutes in Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
