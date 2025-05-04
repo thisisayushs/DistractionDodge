@@ -463,41 +463,43 @@ private struct StatsView: View {
                         VStack(spacing: 25) {
                             ChartContainer(title: "Daily Focus Time") {
                                 Chart(focusTimeData, id: \.date) { item in
-                                    AreaMark(
-                                        x: .value("Date", item.date),
-                                        y: .value("Minutes", item.minutes)
-                                    )
-                                    .foregroundStyle(
-                                        .linearGradient(
-                                            colors: [.cyan.opacity(0.3), .clear],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
-                                    )
-                                    
-                                    LineMark(
+                                    PointMark(
                                         x: .value("Date", item.date),
                                         y: .value("Minutes", item.minutes)
                                     )
                                     .foregroundStyle(
                                         .linearGradient(
                                             colors: [.white, .cyan],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
+                                            startPoint: .bottom,
+                                            endPoint: .top
                                         )
                                     )
                                     .shadow(color: .cyan.opacity(0.5), radius: 4)
                                 }
+                                .chartYScale(domain: 0...30)
                                 .chartXAxis {
-                                    AxisMarks(values: .stride(by: .day, count: timeRange == .week ? 1 : 3)) { value in
-                                        AxisValueLabel(format: .dateTime.weekday())
+                                    AxisMarks(values: .stride(
+                                        by: timeRange == .week ? .day : .day,
+                                        count: timeRange == .week ? 1 : 7
+                                    )) { value in
+                                        if let date = value.as(Date.self) {
+                                            AxisValueLabel {
+                                                if timeRange == .week {
+                                                    Text(date.formatted(.dateTime.weekday(.abbreviated)))
+                                                } else {
+                                                    Text("\(Calendar.current.component(.day, from: date))")
+                                                }
+                                            }
                                             .foregroundStyle(.white.opacity(0.7))
+                                        }
                                     }
                                 }
                                 .chartYAxis {
-                                    AxisMarks(position: .leading) { value in
-                                        AxisValueLabel()
-                                            .foregroundStyle(.white.opacity(0.7))
+                                    AxisMarks(position: .leading, values: [0, 10, 20, 30]) { value in
+                                        AxisValueLabel {
+                                            Text("\(value.index * 10)m")
+                                        }
+                                        .foregroundStyle(.white.opacity(0.7))
                                     }
                                 }
                             }
@@ -506,7 +508,7 @@ private struct StatsView: View {
                                 Chart(streakData, id: \.date) { item in
                                     PointMark(
                                         x: .value("Date", item.date),
-                                        y: .value("Streak", item.streak)
+                                        y: .value("Minutes", item.streak)
                                     )
                                     .foregroundStyle(
                                         .linearGradient(
@@ -517,16 +519,31 @@ private struct StatsView: View {
                                     )
                                     .shadow(color: .orange.opacity(0.5), radius: 4)
                                 }
+                                .chartYScale(domain: 30...300)
                                 .chartXAxis {
-                                    AxisMarks(values: .stride(by: .day, count: timeRange == .week ? 1 : 3)) { value in
-                                        AxisValueLabel(format: .dateTime.weekday())
+                                    AxisMarks(values: .stride(
+                                        by: timeRange == .week ? .day : .day,
+                                        count: timeRange == .week ? 1 : 7
+                                    )) { value in
+                                        if let date = value.as(Date.self) {
+                                            AxisValueLabel {
+                                                if timeRange == .week {
+                                                    Text(date.formatted(.dateTime.weekday(.abbreviated)))
+                                                } else {
+                                                    Text("\(Calendar.current.component(.day, from: date))")
+                                                }
+                                            }
                                             .foregroundStyle(.white.opacity(0.7))
+                                        }
                                     }
                                 }
                                 .chartYAxis {
-                                    AxisMarks(position: .leading) { value in
-                                        AxisValueLabel()
-                                            .foregroundStyle(.white.opacity(0.7))
+                                    AxisMarks(position: .leading, values: [30, 120, 180, 240, 300]) { value in
+                                        AxisValueLabel {
+                                            let seconds = Double(value.index * 60 + 30)
+                                            Text(String(format: "%.1fm", seconds / 60))
+                                        }
+                                        .foregroundStyle(.white.opacity(0.7))
                                     }
                                 }
                             }
