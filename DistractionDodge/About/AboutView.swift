@@ -7,12 +7,25 @@
 
 import SwiftUI
 
-
-
+/// A view that provides educational resources and app information.
+///
+/// Features:
+/// - Curated list of research papers, documentaries, and books
+/// - Grouped resources by type for easy navigation
+/// - Interactive links to external content
+/// - Options to replay tutorial or introduction
+/// - Custom styling with blur effects and gradients
+///
+/// The view serves as an educational hub, helping users understand
+/// the science behind attention and focus training.
 struct AboutView: View {
+    /// Controls visibility of the tutorial replay
     @State private var replayTutorial = false
+    
+    /// Controls visibility of the introduction replay
     @State private var replayIntroduction = false
     
+    /// Collection of educational resources
     private let resources: [Resource] = [
         Resource(title: "Myth and Mystery of Shrinking Attention Span",
                 author: "Dr. K.R. Sundaramanian, Credait",
@@ -40,7 +53,7 @@ struct AboutView: View {
                 type: ResourceType.documentary),
         Resource(title: "Screened Out",
                 author: "Jon Hyatt",
-                url: URL(string: "https://www.imdb.com/title/tt12258286/")!,
+                url: URL(string: "https://www.imdb.com/title/tt6809010/")!,
                 type: ResourceType.documentary),
         Resource(title: "In the Age of AI",
                 author: "Neil Docherty & David Fanning",
@@ -56,6 +69,7 @@ struct AboutView: View {
                 type: ResourceType.book)
     ]
     
+    /// Resources grouped by their type for sectioned display
     private var groupedResources: [ResourceType: [Resource]] {
         Dictionary(grouping: resources) { $0.type }
     }

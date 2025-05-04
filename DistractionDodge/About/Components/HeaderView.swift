@@ -1,5 +1,9 @@
 import SwiftUI
 
+/// A view component displaying the app's header information.
+/// - Shows app icon with consistent styling
+/// - Displays location and credibility information
+/// - Applies consistent spacing and shadow effects
 struct HeaderView: View {
     var body: some View {
         VStack {
@@ -10,7 +14,7 @@ struct HeaderView: View {
                 .shadow(color: .white.opacity(0.3), radius: 10)
             
             VStack(spacing: 15) {
-                Text("Made with love in Naples, Italy 🇮🇹")
+                Text("Made with love in Naples, Italy ")
                 Text("Science Backed")
             }
             .padding()
@@ -22,4 +26,3 @@ struct HeaderView: View {
         .padding(.top, 80)
     }
 }
-

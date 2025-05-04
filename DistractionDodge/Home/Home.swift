@@ -11,6 +11,14 @@ import SwiftData
 import HealthKit
 import HealthKitUI
 
+/// A view that serves as the main landing page of DistractionDodge, featuring focus duration selection and stats.
+///
+/// The Home view consists of two main pages:
+/// 1. A duration selection page with an interactive circular slider
+/// 2. A statistics page showing the user's progress and performance
+///
+/// The view uses SwiftData for persistent storage and provides a fluid,
+/// engaging interface for starting focus training sessions.
 struct Home: View {
     @Query private var sessions: [GameSession]
     @State private var currentPage = 0
@@ -116,6 +124,13 @@ struct Home: View {
 }
 
 // MARK: - Subviews
+/// A view representing the first page of the home screen with duration selection controls.
+///
+/// Features:
+/// - Interactive circular slider for session duration selection
+/// - Motivational messages
+/// - Dynamic visual feedback
+/// - Start button with animations
 private struct FirstPageView: View {
     @Binding var selectedDuration: Double
     @Binding var isDragging: Bool
@@ -158,6 +173,7 @@ private struct FirstPageView: View {
     }
 }
 
+/// Displays an animated motivational message with gradient styling.
 private struct MessageView: View {
     let text: String
     
@@ -178,6 +194,7 @@ private struct MessageView: View {
     }
 }
 
+/// A custom duration selection interface with a circular slider and time display.
 private struct DurationSelectionView: View {
     @Binding var selectedDuration: Double
     @Binding var isDragging: Bool
@@ -213,6 +230,13 @@ private struct DurationSelectionView: View {
     }
 }
 
+/// An interactive circular slider for selecting focus session duration.
+///
+/// Features:
+/// - Smooth drag gesture handling
+/// - Visual feedback during interaction
+/// - Animated progress indicator
+/// - Glowing thumb control
 private struct CircularSliderView: View {
     @Binding var selectedDuration: Double
     @Binding var isDragging: Bool
@@ -255,6 +279,7 @@ private struct CircularSliderView: View {
     }
 }
 
+/// A decorative circle providing the base layer for the circular slider.
 private struct BackgroundCircle: View {
     var body: some View {
         Circle()
@@ -270,6 +295,7 @@ private struct BackgroundCircle: View {
     }
 }
 
+/// A circular progress indicator showing the selected duration.
 private struct ProgressCircle: View {
     let selectedDuration: Double
     
@@ -294,6 +320,7 @@ private struct ProgressCircle: View {
     }
 }
 
+/// An interactive thumb control for the circular slider with glow effects.
 private struct GlowingSliderThumb: View {
     let isDragging: Bool
     let selectedDuration: Double
@@ -319,6 +346,7 @@ private struct GlowingSliderThumb: View {
     }
 }
 
+/// A transparent touch area for handling drag gestures on the circular slider.
 private struct DragGestureArea: View {
     let proxy: GeometryProxy
     @Binding var isDragging: Bool
@@ -357,6 +385,7 @@ private struct DragGestureArea: View {
     }
 }
 
+/// An animated start button that begins the focus training session.
 private struct StartButton: View {
     let scale: CGFloat
     let duration: Double

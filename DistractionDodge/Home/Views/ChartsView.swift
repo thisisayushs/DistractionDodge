@@ -1,9 +1,16 @@
 import SwiftUI
 import Charts
 
+/// Container view for focus and streak charts.
+/// - Manages time range selection
+/// - Layouts charts vertically
+/// - Provides consistent spacing
 struct ChartsView: View {
+    /// Currently selected time range
     @Binding var timeRange: StatsView.TimeRange
+    /// Focus time data points for chart
     let focusTimeData: [(date: Date, minutes: Double)]
+    /// Streak data points for chart
     let streakData: [(date: Date, streak: TimeInterval)]
     
     var body: some View {

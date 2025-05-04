@@ -3,8 +3,20 @@ import Charts
 import HealthKit
 import HealthKitUI
 
+/// Root view for statistics and progress tracking.
+/// - Manages time range selection
+/// - Handles HealthKit authorization state
+/// - Provides empty state handling
 struct StatsView: View {
+    /// Array of completed game sessions
     let sessions: [GameSession]
+    
+    /// Time range options for data filtering
+    enum TimeRange {
+        case week, month
+    }
+    
+    // State properties
     @State private var timeRange: TimeRange = .week
     @State private var isSynced = false
     @State private var isAuthorizing = false
@@ -15,11 +27,16 @@ struct StatsView: View {
     @Environment(\.healthStore) private var healthStore
     @Environment(\.scenePhase) private var scenePhase
     
-    enum TimeRange {
-        case week, month
-    }
-    
     private let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
+    
+    /// Updates HealthKit authorization status
+    private func checkAuthorizationStatus() {
+        let status = healthStore.authorizationStatus(for: mindfulType)
+        withAnimation {
+            isSynced = status == .sharingAuthorized
+            isAuthenticated = status == .sharingAuthorized
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -44,14 +61,6 @@ struct StatsView: View {
             if newPhase == .active {
                 checkAuthorizationStatus()
             }
-        }
-    }
-    
-    private func checkAuthorizationStatus() {
-        let status = healthStore.authorizationStatus(for: mindfulType)
-        withAnimation {
-            isSynced = status == .sharingAuthorized
-            isAuthenticated = status == .sharingAuthorized
         }
     }
 }

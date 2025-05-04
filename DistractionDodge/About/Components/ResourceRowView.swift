@@ -1,7 +1,13 @@
 import SwiftUI
 
+/// A row view for displaying educational resources.
+/// - Supports both documentary and text-based resources
+/// - Provides consistent styling and tap interaction
+/// - Shows author information based on resource type
 struct ResourceRowView: View {
+    /// Resource item to display
     let resource: Resource
+    /// Action to perform when row is tapped
     let onTap: () -> Void
     
     var body: some View {

@@ -1,14 +1,26 @@
 import SwiftUI
 import HealthKit
 
+/// Sidebar view displaying session statistics and HealthKit integration.
+/// - Shows game count, best score, and best streak
+/// - Manages HealthKit authorization and sync
+/// - Handles error states and settings
 struct StatsSidebarView: View {
+    /// Array of completed game sessions
     let sessions: [GameSession]
+    /// HealthKit sync status
     @Binding var isSynced: Bool
+    /// HealthKit authorization status
     @Binding var isAuthorizing: Bool
+    /// Error alert presentation flag
     @Binding var showError: Bool
+    /// Settings sheet presentation flag
     @Binding var showSettings: Bool
     @Environment(\.healthStore) private var healthStore
     
+    /// Formats time interval into human-readable string
+    /// - Parameter seconds: Duration in seconds
+    /// - Returns: Formatted string (e.g. "2m 30s")
     private func formatTime(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds) / 60
         let remainingSeconds = Int(seconds) % 60
@@ -16,6 +28,7 @@ struct StatsSidebarView: View {
                "\(minutes)m \(remainingSeconds)s"
     }
     
+    /// Initiates HealthKit authorization and sync process
     private func syncToHealth() {
         guard HKHealthStore.isHealthDataAvailable() else {
             showError = true

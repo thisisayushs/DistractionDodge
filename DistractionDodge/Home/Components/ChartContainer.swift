@@ -1,9 +1,19 @@
 import SwiftUI
 
+/// A reusable container view for charts with consistent styling.
+/// - Provides title and content area
+/// - Applies glass-like background effect
+/// - Adds consistent padding and shadows
 struct ChartContainer<Content: View>: View {
+    /// Title displayed above chart content
     let title: String
+    /// Chart content view
     let content: Content
     
+    /// Creates a new chart container.
+    /// - Parameters:
+    ///   - title: Title text displayed above content
+    ///   - content: Chart view builder closure
     init(title: String, @ViewBuilder content: () -> Content) {
         self.title = title
         self.content = content()

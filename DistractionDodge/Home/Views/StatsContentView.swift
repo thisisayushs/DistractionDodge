@@ -1,15 +1,26 @@
 import SwiftUI
 import Charts
 
+/// Main content view for statistics display.
+/// - Manages data filtering and transformation
+/// - Handles layout of charts and sidebar
+/// - Processes HealthKit integration
 struct StatsContentView: View {
+    /// Array of completed game sessions
     let sessions: [GameSession]
+    /// Currently selected time range
     @Binding var timeRange: StatsView.TimeRange
+    /// HealthKit sync status
     @Binding var isSynced: Bool
+    /// HealthKit authorization status
     @Binding var isAuthorizing: Bool
+    /// Error alert presentation flag
     @Binding var showError: Bool
+    /// Settings sheet presentation flag
     @Binding var showSettings: Bool
     @Environment(\.healthStore) private var healthStore
     
+    /// Filtered focus time data based on selected range
     private var focusTimeData: [(date: Date, minutes: Double)] {
         Dictionary(grouping: filteredSessions) { session in
             Calendar.current.startOfDay(for: session.date)
@@ -20,6 +31,7 @@ struct StatsContentView: View {
         .sorted { $0.date < $1.date }
     }
     
+    /// Filtered streak data based on selected range
     private var streakData: [(date: Date, streak: TimeInterval)] {
         Dictionary(grouping: filteredSessions) { session in
             Calendar.current.startOfDay(for: session.date)
@@ -30,6 +42,7 @@ struct StatsContentView: View {
         .sorted { $0.date < $1.date }
     }
     
+    /// Sessions filtered by current time range
     private var filteredSessions: [GameSession] {
         let calendar = Calendar.current
         let filterDate = timeRange == .week ?

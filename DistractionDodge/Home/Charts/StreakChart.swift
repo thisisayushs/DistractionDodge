@@ -1,8 +1,14 @@
 import SwiftUI
 import Charts
 
+/// A chart component that visualizes daily focus streaks over time.
+/// - Displays streak duration in minutes using point marks
+/// - Supports weekly and monthly time ranges
+/// - Uses gradient styling for data points
 struct StreakChart: View {
+    /// Data points containing dates and streak durations
     let streakData: [(date: Date, streak: TimeInterval)]
+    /// Selected time range (week/month) affecting x-axis display
     let timeRange: StatsView.TimeRange
     
     var body: some View {

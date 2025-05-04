@@ -1,8 +1,15 @@
 import SwiftUI
 
+/// A styled button for time range selection.
+/// - Supports selected/unselected states
+/// - Provides consistent styling with capsule shape
+/// - Includes hover and pressed states
 struct TimeRangeButton: View {
+    /// Button text
     let title: String
+    /// Whether button represents currently selected time range
     let isSelected: Bool
+    /// Action to perform when tapped
     let action: () -> Void
     
     var body: some View {
