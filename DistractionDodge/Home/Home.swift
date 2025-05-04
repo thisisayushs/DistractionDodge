@@ -433,4 +433,4 @@ private struct StartButton: View {
 // MARK: - Preview
 #Preview {
         Home()
-    }
+}
