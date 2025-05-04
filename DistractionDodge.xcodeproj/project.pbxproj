@@ -6,13 +6,8 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		82B0D85C2DC6F688000061E4 /* Home.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B0D85B2DC6F688000061E4 /* Home.swift */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		28007A872D5B52AA00668A81 /* DistractionDodge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DistractionDodge.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		82B0D85B2DC6F688000061E4 /* Home.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -37,18 +32,9 @@
 		2834FEFB2D20161E004B462C = {
 			isa = PBXGroup;
 			children = (
-				82B0D85D2DC6F693000061E4 /* Home */,
 				2834FF062D20161E004B462C /* DistractionDodge */,
 				28007A872D5B52AA00668A81 /* DistractionDodge.app */,
 			);
-			sourceTree = "<group>";
-		};
-		82B0D85D2DC6F693000061E4 /* Home */ = {
-			isa = PBXGroup;
-			children = (
-				82B0D85B2DC6F688000061E4 /* Home.swift */,
-			);
-			path = Home;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -125,7 +111,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				82B0D85C2DC6F688000061E4 /* Home.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
