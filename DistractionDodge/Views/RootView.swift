@@ -7,7 +7,7 @@ struct RootView: View {
     var body: some View {
         if let progress = userProgress.first {
             if progress.hasCompletedOnboarding {
-                ContentView()
+                Home()
             } else {
                 OnboardingView()
             }

@@ -25,7 +25,7 @@ import SwiftData
 struct TutorialView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var currentStep = 0
-    @State private var showContentView = false
+    @State private var showHomeView = false
     @State private var demoPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
                                               y: UIScreen.main.bounds.height * 0.15)
     @State private var demoIsGazing = false
@@ -605,7 +605,7 @@ struct TutorialView: View {
                                     withAnimation {
                                         progress.hasCompletedOnboarding = true
                                         try? modelContext.save()
-                                        showContentView = true
+                                        showHomeView = true
                                     }
                                 }
                             }
@@ -656,7 +656,7 @@ struct TutorialView: View {
                                 progress.hasCompletedOnboarding = true
                                 try? modelContext.save()
                             }
-                            showContentView = true
+                            showHomeView = true
                         },
                         secondaryAction: {},
                         isPresented: $showSkipAlert
@@ -672,8 +672,8 @@ struct TutorialView: View {
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
-        .fullScreenCover(isPresented: $showContentView) {
-            ContentView()
+        .fullScreenCover(isPresented: $showHomeView) {
+            Home()
         }
         .animation(.spring(response: 0.6, dampingFraction: 0.7), value: currentStep)
     }

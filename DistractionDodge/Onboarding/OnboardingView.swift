@@ -386,7 +386,7 @@ struct OnboardingView: View {
             }
         }
         .fullScreenCover(isPresented: $showContentView) {
-            ContentView()
+            Home()
         }
         .fullScreenCover(isPresented: $showTutorial) {
             TutorialView()
