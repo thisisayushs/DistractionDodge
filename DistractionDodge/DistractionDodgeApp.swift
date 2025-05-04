@@ -29,7 +29,9 @@ struct DistractionDodge: App {
             let context = container.mainContext
             let progressFetch = try context.fetch(FetchDescriptor<UserProgress>())
             if progressFetch.isEmpty {
-                context.insert(UserProgress())
+                let progress = UserProgress(hasCompletedOnboarding: false)
+                context.insert(progress)
+                try context.save()
             }
         } catch {
             fatalError("Could not initialize ModelContainer: \(error.localizedDescription)")
@@ -38,7 +40,7 @@ struct DistractionDodge: App {
     
     var body: some Scene {
         WindowGroup {
-            OnboardingView()
+            RootView()
                 .preferredColorScheme(.dark)
         }
         .modelContainer(container)

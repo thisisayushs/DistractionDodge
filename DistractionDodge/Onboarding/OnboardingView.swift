@@ -126,13 +126,11 @@ struct OnboardingView: View {
     @Query private var userProgress: [UserProgress]
     
     private var hasCompletedIntroduction: Bool {
-        userProgress.first?.hasCompletedIntroduction ?? false
+        userProgress.first?.hasCompletedOnboarding ?? false
     }
     
     private func completeIntroduction() {
-        if let progress = userProgress.first {
-            progress.hasCompletedIntroduction = true
-        }
+        showTutorial = true
     }
     
     private func navigate(forward: Bool) {
@@ -234,6 +232,8 @@ struct OnboardingView: View {
     @State private var completedLines: Set<Int> = []
     @State private var allLinesComplete = false
     
+    @State private var showSkipAlert = false
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -283,7 +283,28 @@ struct OnboardingView: View {
                 }
                 
                 VStack {
-                    
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            showSkipAlert = true
+                        }) {
+                            Text("Skip")
+                                .font(.system(size: 17, weight: .medium, design: .rounded))
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.white.opacity(0.15))
+                                        .overlay(
+                                            Capsule()
+                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .padding(.top, 50)
+                        .padding(.trailing, 20)
+                    }
                     if self.currentIndex > 0 {
                         BackButtonView(isNavigating: self.isNavigating) {
                             self.navigate(forward: false)
@@ -311,7 +332,6 @@ struct OnboardingView: View {
                     ) {
                         if self.currentIndex == self.pages.count - 1 {
                             completeIntroduction()
-                            self.showTutorial = true
                         } else {
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                                 self.navigate(forward: true)
@@ -338,23 +358,45 @@ struct OnboardingView: View {
                             }
                         }
                 )
+                
+                if showSkipAlert {
+                    AlertView(
+                        title: "Skip Introduction?",
+                        message: "You are about to skip the introduction. You will be taken to the tutorial.",
+                        primaryAction: {
+                            showTutorial = true
+                        },
+                        secondaryAction: {},
+                        isPresented: $showSkipAlert
+                    )
+                }
             }
+        }
+        .onChange(of: currentIndex) { oldValue, newValue in
+            self.activeLineIndex = 0
+            self.completedLines.removeAll()
+            self.allLinesComplete = false
+            
+            // Auto-navigate to tutorial when swiped to last page
+            if newValue == pages.count - 1 {
+                // Give time for the last page to appear
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showTutorial = true
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showContentView) {
+            ContentView()
+        }
+        .fullScreenCover(isPresented: $showTutorial) {
+            TutorialView()
         }
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
-        .fullScreenCover(isPresented: $showTutorial) {
-            TutorialView()
-        }
         .onDisappear {
             
             self.notifications.removeAll()
-        }
-        .onChange(of: self.currentIndex) { _, _ in
-            
-            self.activeLineIndex = 0
-            self.completedLines.removeAll()
-            self.allLinesComplete = false
         }
     }
 }

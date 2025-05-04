@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 /// A comprehensive tutorial view that guides users through the game mechanics.
 ///
@@ -22,6 +23,7 @@ import SwiftUI
 /// - Multipliers and bonuses
 /// - Penalties
 struct TutorialView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var currentStep = 0
     @State private var showContentView = false
     @State private var demoPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
@@ -599,7 +601,13 @@ struct TutorialView: View {
                             if currentStep < tutorialSteps.count - 1 {
                                 navigate(forward: true)
                             } else {
-                                showContentView = true
+                                if let progress = try? modelContext.fetch(FetchDescriptor<UserProgress>()).first {
+                                    withAnimation {
+                                        progress.hasCompletedOnboarding = true
+                                        try? modelContext.save()
+                                        showContentView = true
+                                    }
+                                }
                             }
                         }) {
                             HStack {
@@ -644,6 +652,10 @@ struct TutorialView: View {
                         title: "Skip Tutorial?",
                         message: "You are about to skip the tutorial. You will be taken directly to the game.",
                         primaryAction: {
+                            if let progress = try? modelContext.fetch(FetchDescriptor<UserProgress>()).first {
+                                progress.hasCompletedOnboarding = true
+                                try? modelContext.save()
+                            }
                             showContentView = true
                         },
                         secondaryAction: {},
