@@ -79,6 +79,7 @@ struct AboutView: View {
                         .resizable()
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         .frame(width: 100, height: 100)
+                        .shadow(color: .white.opacity(0.3), radius: 15, x: 0, y: 0)
                     
                     Text("Made with love in Naples, Italy 🇮🇹")
                         .italic()
