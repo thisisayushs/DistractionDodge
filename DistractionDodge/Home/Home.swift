@@ -403,6 +403,7 @@ private struct StartButton: View {
 private struct StatsView: View {
     @Query private var sessions: [GameSession]
     @State private var timeRange: TimeRange = .week
+    @State private var showHealthSync = false
     
     enum TimeRange {
         case week, month
@@ -574,13 +575,42 @@ private struct StatsView: View {
                             icon: "bolt.fill"
                         )
                         
+                        Button(action: {
+                            showHealthSync = true
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "heart.fill")
+                                    .font(.system(size: 16))
+                                Text("Sync to Apple Health")
+                                    .font(.system(.body, design: .rounded))
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundStyle(
+                                .linearGradient(
+                                    colors: [.white, .white.opacity(0.7)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.white.opacity(0.15))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                        }
+                        .padding(.top, 10)
+                        
                         Spacer()
                     }
                 }
                 .padding(.horizontal, 30)
             }
         }
-        
         .animation(.easeInOut, value: timeRange)
     }
     
