@@ -24,7 +24,8 @@ struct Book {
 }
 
 struct AboutView: View {
-    @State private var showDismissButton = true
+   @State private var replayTutorial = false
+    @State private var replayIntroduction = false
     
     let researchPapers: [String: ResearchPaper] = [
         "Myth and Mystery of Shrinking Attention Span":
@@ -168,6 +169,52 @@ struct AboutView: View {
                                 }
                             }
                             .listRowBackground(Color.black)
+                        }
+                    }
+                    
+                    Section(header: Text("More Options").padding(.vertical).foregroundStyle(.white)) {
+                        Button {
+                            
+                            replayTutorial = true
+                        } label: {
+                            HStack {
+                                Text("Replay Tutorial")
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "arrow.counterclockwise")
+                                    .foregroundStyle(.gray)
+                                    .font(.system(size: 14))
+                            }
+                            .padding(.vertical, 8)
+                        }
+                        .listRowBackground(Color.black)
+                        .fullScreenCover(isPresented: $replayTutorial) {
+                            TutorialView()
+                        }
+                        
+                        Button {
+                            replayIntroduction = true
+                            
+                        } label: {
+                            HStack {
+                                Text("Re-watch Introduction")
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "play.circle")
+                                    .foregroundStyle(.gray)
+                                    .font(.system(size: 14))
+                            }
+                            .padding(.vertical, 8)
+                        }
+                        .listRowBackground(Color.black)
+                        .fullScreenCover(isPresented: $replayIntroduction) {
+                            OnboardingView()
                         }
                     }
                 }
