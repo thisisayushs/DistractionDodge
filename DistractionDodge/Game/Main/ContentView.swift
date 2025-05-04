@@ -41,9 +41,17 @@ struct ContentView: View {
         .purple.opacity(0.2)
     ]
     
-    init() {
+    init(duration: Double = 60) {
         let viewModel = AttentionViewModel(modelContext: ModelContext(try! ModelContainer(for: GameSession.self, UserProgress.self)))
+        viewModel.setGameDuration(duration)
         _viewModel = StateObject(wrappedValue: viewModel)
+    }
+    
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let totalSeconds = Int(seconds)
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        return String(format: "%02d:%02d", minutes, seconds)
     }
     
     var body: some View {
@@ -93,7 +101,7 @@ struct ContentView: View {
                     HStack(spacing: 20) {
                         FloatingCard(
                             title: "Time",
-                            value: "\(Int(viewModel.gameTime))s",
+                            value: formatTime(viewModel.gameTime),
                             glowCondition: viewModel.gameTime <= 10,
                             glowColor: .red
                         )

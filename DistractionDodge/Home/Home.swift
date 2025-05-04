@@ -22,7 +22,7 @@ struct Home: View {
     
     private let motivationalMessages = [
         "Ready to sharpen your focus?",
-        "Train your mind, one session at a time",
+        "Train your mind!",
         "Strengthen your attention span today",
         "Your focus is your superpower",
         "Small steps, big improvements",
@@ -121,6 +121,8 @@ private struct FirstPageView: View {
     let angleForDuration: (Double) -> Double
     let updateDuration: (CGPoint, CGSize) -> Void
     
+    @State private var showGame = false
+    
     var body: some View {
         VStack {
             Spacer()
@@ -139,7 +141,12 @@ private struct FirstPageView: View {
             
             Spacer()
             
-            StartButton(scale: startButtonScale)
+            StartButton(
+                scale: startButtonScale,
+                duration: selectedDuration,
+                showGame: $showGame,
+                hasInteracted: $hasInteractedWithSlider
+            )
             
             Spacer()
         }
@@ -152,6 +159,7 @@ private struct MessageView: View {
     var body: some View {
         Text(text)
             .font(.system(size: 42, weight: .bold, design: .rounded))
+            
             .foregroundStyle(
                 .linearGradient(
                     colors: [.white, .white.opacity(0.7)],
@@ -161,7 +169,7 @@ private struct MessageView: View {
             )
             .multilineTextAlignment(.center)
             .padding(.horizontal, 30)
-            .padding(.bottom, 60)
+            .padding(.bottom, 50)
     }
 }
 
@@ -346,16 +354,22 @@ private struct DragGestureArea: View {
 
 private struct StartButton: View {
     let scale: CGFloat
+    let duration: Double
+    @Binding var showGame: Bool
+    @Binding var hasInteracted: Bool
+    
+    @State private var buttonScale: CGFloat = 1.0
     
     var body: some View {
         Button(action: {
-            // Start game with selectedDuration
+            showGame = true
         }) {
             Text("Begin Training")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .frame(width: 280, height: 60)
                 .background(.ultraThinMaterial)
+               
                 .clipShape(Capsule())
                 .overlay(
                     Capsule()
@@ -363,8 +377,22 @@ private struct StartButton: View {
                 )
                 .shadow(color: .white.opacity(0.2), radius: 15)
         }
-        .scaleEffect(scale)
+       
+        .scaleEffect(hasInteracted ? buttonScale : 1.0)
+        .onChange(of: hasInteracted) { _, newValue in
+            if newValue {
+                withAnimation(
+                    .easeInOut(duration: 0.5)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    buttonScale = 1.1
+                }
+            }
+        }
         .transition(.scale.combined(with: .opacity))
+        .fullScreenCover(isPresented: $showGame) {
+            ContentView(duration: duration)
+        }
     }
 }
 

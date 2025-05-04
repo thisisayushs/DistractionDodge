@@ -108,6 +108,14 @@ class AttentionViewModel: ObservableObject {
     private var distractionProbability: Double = 0.2
     private var scoreMultiplier: Int = 1
     private var lastFocusState: Bool = false
+    private var gameDuration: TimeInterval = 60
+    
+    var totalGameDuration: TimeInterval {
+        gameDuration
+    }
+    
+    private let baseDistractionProbability = 0.3
+    private let baseDistractionInterval: TimeInterval = 2.5
     
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -137,6 +145,10 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    func setGameDuration(_ duration: TimeInterval) {
+        gameDuration = duration
+    }
+    
     func startGame() {
         endGameReason = .timeUp
         gameActive = true
@@ -144,7 +156,7 @@ class AttentionViewModel: ObservableObject {
         distractionProbability = 0.2
         
         stopGame()
-        gameTime = 60
+        gameTime = gameDuration
         score = 0
         focusStreak = 0
         bestStreak = 0
@@ -276,14 +288,12 @@ class AttentionViewModel: ObservableObject {
     }
     
     private func startDistractions() {
-        distractionTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
+        let scaledInterval = baseDistractionInterval * sqrt(gameDuration / 60)
+        
+        distractionTimer = Timer.scheduledTimer(withTimeInterval: scaledInterval, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             
-            let baseProb = 0.15
-            let timeBonus = (60.0 - self.gameTime) * 0.003
-            let probability = min(baseProb + timeBonus, 0.4)
-            
-            if Double.random(in: 0...1) < probability {
+            if Double.random(in: 0...1) < self.baseDistractionProbability {
                 let screenWidth = UIScreen.main.bounds.width
                 let screenHeight = UIScreen.main.bounds.height
                 

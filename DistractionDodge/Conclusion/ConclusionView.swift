@@ -31,7 +31,7 @@ struct ConclusionView: View {
     @State private var displayedScore = 0
     
     /// Controls navigation back to introduction
-    @State private var showRestartIntroduction = false
+    @State private var showHome = false
     
     /// Scale factor for score animation
     @State private var scoreScale: CGFloat = 0.5
@@ -64,6 +64,13 @@ struct ConclusionView: View {
     
     @Query(sort: \GameSession.score, order: .reverse) private var sessions: [GameSession]
 
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let totalSeconds = Int(seconds)
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+    
     var body: some View {
         ZStack {
             
@@ -145,15 +152,33 @@ struct ConclusionView: View {
                     
                     HStack(spacing: 20) {
                         StatCard(
-                            title: "High Score",
+                            title: "Session Streak",
+                            value: formatTime(viewModel.bestStreak),
+                            icon: "bolt.fill"
+                        )
+                        
+                        StatCard(
+                            title: "Focus Time",
+                            value: formatTime(viewModel.totalFocusTime),
+                            icon: "timer"
+                        )
+                    }
+                    
+                    Divider()
+                        .background(.white.opacity(0.2))
+                        .padding(.vertical)
+                    
+                    HStack(spacing: 20) {
+                        StatCard(
+                            title: "All-Time High",
                             value: "\(viewModel.allTimeHighScore)",
                             icon: "trophy.fill"
                         )
                         
                         StatCard(
                             title: "Best Streak",
-                            value: "\(Int(viewModel.allTimeLongestStreak))s",
-                            icon: "bolt.fill"
+                            value: formatTime(viewModel.allTimeLongestStreak),
+                            icon: "star.fill"
                         )
                         
                         StatCard(
@@ -172,7 +197,7 @@ struct ConclusionView: View {
                         dismiss()
                     } label: {
                         HStack {
-                            Text("Try Again")
+                            Text("Play Again")
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
                         }
                         .foregroundColor(.white)
@@ -202,10 +227,10 @@ struct ConclusionView: View {
                     
                     Button {
                         hasCompletedIntroduction = false
-                        showRestartIntroduction = true
+                        showHome = true
                     } label: {
                         HStack {
-                            Text("Start Over")
+                            Text("Go Home")
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
                         }
                         .foregroundColor(.white.opacity(0.8))
@@ -230,8 +255,8 @@ struct ConclusionView: View {
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
         
-        .fullScreenCover(isPresented: $showRestartIntroduction) {
-            OnboardingView()
+        .fullScreenCover(isPresented: $showHome) {
+            Home()
         }
     }
 }

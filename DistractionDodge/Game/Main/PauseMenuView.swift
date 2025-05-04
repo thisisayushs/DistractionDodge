@@ -28,7 +28,7 @@ struct PauseMenuView: View {
     @Environment(\.dismiss) private var dismiss
     
     /// Controls navigation to introduction screen
-    @State private var showIntroduction = false
+    @State private var showHome = false
     
     // MARK: - Body
     
@@ -66,9 +66,9 @@ struct PauseMenuView: View {
                     }
                     
                     Button {
-                        showIntroduction = true
+                        showHome = true
                     } label: {
-                        MenuButton(title: "Start Over", icon: "arrow.left")
+                        MenuButton(title: "Go Home", icon: "arrow.left")
                     }
                 }
             }
@@ -77,8 +77,8 @@ struct PauseMenuView: View {
         .presentationBackground(.clear)
         .presentationCornerRadius(35)
         .interactiveDismissDisabled()
-        .fullScreenCover(isPresented: $showIntroduction) {
-            OnboardingView()
+        .fullScreenCover(isPresented: $showHome) {
+            Home()
         }
     }
 }
