@@ -20,6 +20,8 @@ struct TextAnimator: View {
     let index: Int
     /// Binding to track which text block should currently be animating
     @Binding var activeIndex: Int
+    /// Binding to control whether the animation should stop
+    @Binding var shouldStopAnimation: Bool
     /// The text that is currently being displayed during animation
     @State private var displayedText = ""
     /// Timer that controls the typing animation
@@ -33,7 +35,6 @@ struct TextAnimator: View {
     
     var body: some View {
         HStack {
-            
             Text(displayedText)
                 .font(.system(size: 20, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
@@ -43,20 +44,22 @@ struct TextAnimator: View {
         }
         .padding(.horizontal)
         .onAppear {
-            
             if index == activeIndex {
                 startTyping()
-                
             }
         }
         .onChange(of: activeIndex) { _, newValue in
-            
             if index == newValue {
                 startTyping()
             }
         }
+        .onChange(of: shouldStopAnimation) { _, shouldStop in
+            if shouldStop {
+                timer?.invalidate()
+                timer = nil
+            }
+        }
         .onDisappear {
-            
             timer?.invalidate()
             timer = nil
         }
@@ -68,12 +71,16 @@ struct TextAnimator: View {
     /// playing sound effects for each character except punctuation and spaces.
     /// When animation completes, it triggers the onFinished callback.
     private func startTyping() {
-        
         displayedText = ""
         timer?.invalidate()
         
         var charIndex = 0
         timer = Timer.scheduledTimer(withTimeInterval: typingInterval, repeats: true) { timer in
+            guard !self.shouldStopAnimation else {
+                timer.invalidate()
+                return
+            }
+            
             guard charIndex < self.text.count else {
                 timer.invalidate()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -88,7 +95,7 @@ struct TextAnimator: View {
             displayedText = String(self.text[...textIndex])
             charIndex += 1
             if !["", " ", ".", ",", "!", "?"].contains(currentChar) {
-                DispatchQueue.main.asyncAfter(deadline: .now() + soundDelay) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + self.soundDelay) {
                     AudioServicesPlaySystemSound(1104)
                 }
             }

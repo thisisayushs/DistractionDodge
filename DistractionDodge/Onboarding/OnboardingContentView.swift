@@ -36,6 +36,9 @@ struct OnboardingContentView: View {
     /// The rotation angle for the emoji animation
     @Binding var emojiRotation: CGFloat
     
+    /// Indicates whether text animation should stop
+    @Binding var shouldStopTextAnimation: Bool
+    
     var body: some View {
         VStack(spacing: 30) {
             
@@ -81,7 +84,8 @@ struct OnboardingContentView: View {
                 TextAnimator(
                     text: page.content[index],
                     index: index,
-                    activeIndex: $activeLineIndex
+                    activeIndex: $activeLineIndex,
+                    shouldStopAnimation: $shouldStopTextAnimation
                 ) {
                     withAnimation {
                         completedLines.insert(index)

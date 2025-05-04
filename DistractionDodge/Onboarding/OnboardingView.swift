@@ -234,6 +234,8 @@ struct OnboardingView: View {
     
     @State private var showSkipAlert = false
     
+    @State private var shouldStopTextAnimation = false
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -284,7 +286,33 @@ struct OnboardingView: View {
                 
                 VStack {
                     HStack {
+                        if self.currentIndex > 0 {
+                            Button(action: {
+                                self.navigate(forward: false)
+                            }) {
+                                HStack {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 20, weight: .bold))
+                                    Text("Back")
+                                        .font(.system(size: 17, weight: .medium, design: .rounded))
+                                }
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.white.opacity(0.15))
+                                        .overlay(
+                                            Capsule()
+                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
+                            }
+                            .disabled(isNavigating)
+                        }
+                        
                         Spacer()
+                        
                         Button(action: {
                             showSkipAlert = true
                         }) {
@@ -302,25 +330,21 @@ struct OnboardingView: View {
                                         )
                                 )
                         }
-                        .padding(.top, 50)
-                        .padding(.trailing, 20)
                     }
-                    if self.currentIndex > 0 {
-                        BackButtonView(isNavigating: self.isNavigating) {
-                            self.navigate(forward: false)
-                        }
-                    }
+                    .padding(.top, 50)
+                    .padding(.horizontal, 20)
                     
                     Spacer()
                     
                     OnboardingContentView(
                         page: self.pages[self.currentIndex],
-                        currentIndex: self.currentIndex, activeLineIndex: $activeLineIndex,
+                        currentIndex: self.currentIndex,
+                        activeLineIndex: $activeLineIndex,
                         completedLines: $completedLines,
                         allLinesComplete: $allLinesComplete,
-                        
                         emojiScale: $emojiScale,
-                        emojiRotation: $emojiRotation
+                        emojiRotation: $emojiRotation,
+                        shouldStopTextAnimation: $shouldStopTextAnimation
                     )
                     
                     Spacer()
@@ -342,7 +366,7 @@ struct OnboardingView: View {
                         }
                     }
                 }
-                .padding()
+                .padding(.bottom, 50)
                 
                 .gesture(
                     DragGesture()
@@ -383,6 +407,16 @@ struct OnboardingView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showTutorial = true
                 }
+            }
+        }
+        .onChange(of: showTutorial) { _, willShow in
+            if willShow {
+                shouldStopTextAnimation = true
+            }
+        }
+        .onChange(of: showContentView) { _, willShow in
+            if willShow {
+                shouldStopTextAnimation = true
             }
         }
         .fullScreenCover(isPresented: $showContentView) {
