@@ -17,6 +17,7 @@ struct Home: View {
     @State private var isDragging = false
     @State private var startButtonScale: CGFloat = 1.0
     @State private var hasInteractedWithSlider = false
+    @State private var showAbout = false
     
     private let gradientColors: [(start: Color, end: Color)] = [
         (.black.opacity(0.8), .blue.opacity(0.2)),
@@ -91,6 +92,25 @@ struct Home: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .automatic))
             }
+        }
+        .overlay(alignment: .topTrailing) {
+            Button(action: {
+                showAbout = true
+            }) {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(
+                        .linearGradient(
+                            colors: [.white, .white.opacity(0.7)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .padding(20)
+            }
+        }
+        .sheet(isPresented: $showAbout) {
+            AboutView()
         }
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
