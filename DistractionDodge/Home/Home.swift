@@ -431,8 +431,6 @@ private struct StartButton: View {
 }
 
 // MARK: - Preview
-struct Home_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
         Home()
     }
-}
