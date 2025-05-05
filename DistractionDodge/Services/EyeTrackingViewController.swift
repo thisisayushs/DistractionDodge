@@ -8,6 +8,8 @@
 import ARKit
 import SwiftUI
 
+#if os(iOS)
+
 /// A view controller that manages eye tracking using ARKit's face tracking capabilities.
 ///
 /// EyeTrackingViewController provides:
@@ -169,3 +171,5 @@ struct EyeTrackingView: UIViewControllerRepresentable {
         
     }
 }
+
+#endif

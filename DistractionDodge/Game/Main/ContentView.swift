@@ -32,8 +32,8 @@ struct ContentView: View {
     @State private var showPauseMenu = false
     
     /// Position of video distraction element
-    @State private var videoPosition = CGPoint(x: UIScreen.main.bounds.width * 0.6,
-                                              y: UIScreen.main.bounds.height * 0.6)
+    // CHANGE: Initialize to zero, will be set in onAppear using GeometryReader
+    @State private var videoPosition: CGPoint = .zero
     
     /// Gradient colors for background effect
     private let gradientColors: [Color] = [
@@ -62,20 +62,26 @@ struct ContentView: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                    .edgesIgnoringSafeArea(.all)
+                    .edgesIgnoringSafeArea(.all) // This modifier is fine on the gradient
                     .animation(.easeInOut(duration: 2.0), value: viewModel.backgroundGradient)
-                
+
+                // --- Eye Tracking Handling ---
+                #if os(iOS)
+                // Only include EyeTrackingView on iOS where ARKit face tracking is used
                 EyeTrackingView { isGazing in
                     viewModel.updateGazeStatus(isGazing)
                 }
+                // Apply modifier only when the view exists
                 .edgesIgnoringSafeArea(.all)
-                
+                #endif
+
+                // VideoDistraction - placed after geometry is known
                 VideoDistraction()
-                    .position(videoPosition)
-                    .opacity(viewModel.gameTime >= (0.6 * viewModel.totalGameDuration) ? 0 : 1)
+                    .position(videoPosition) // Use the state variable
+                     .opacity(viewModel.gameTime < (viewModel.totalGameDuration * 0.6) ? 1 : 0)
                     .animation(.easeInOut(duration: 1.0), value: viewModel.gameTime)
                     .environmentObject(viewModel)
-                
+
                 ForEach(Array(zip(viewModel.distractions.indices, viewModel.distractions)), id: \.1.id) { index, distraction in
                     NotificationView(distraction: distraction, index: index)
                         .position(distraction.position)
@@ -144,14 +150,30 @@ struct ContentView: View {
                     
                     Spacer()
                 }
+            } // End ZStack
+            .onAppear {
+                // Set initial video position using geometry FIRST
+                videoPosition = CGPoint(x: geometry.size.width * 0.6,
+                                        y: geometry.size.height * 0.6)
+
+                // Pass the view size to the ViewModel
+                viewModel.updateViewSize(geometry.size)
+
+                // ADD: Platform-specific logic INSIDE the correct .onAppear
+                #if !os(iOS)
+                // On visionOS (or other non-iOS), simulate gaze being true for now.
+                 viewModel.updateGazeStatus(true)
+                #endif
+
+                // Start the game logic AFTER size setup and potential gaze simulation
+                viewModel.updateModelContext(modelContext)
+                viewModel.startGame()
             }
-        }
-        
-        .onAppear {
-            // Replace the temporary ModelContext with the actual one from the environment
-            viewModel.updateModelContext(modelContext)
-            viewModel.startGame()
-        }
+            .onChange(of: geometry.size) { oldSize, newSize in
+                 viewModel.updateViewSize(newSize)
+                 videoPosition = CGPoint(x: newSize.width * 0.6, y: newSize.height * 0.6)
+            }
+        } // End GeometryReader
         .onDisappear {
             viewModel.stopGame()
         }
@@ -176,11 +198,8 @@ struct ContentView: View {
         .sheet(isPresented: $showPauseMenu) {
             PauseMenuView(viewModel: viewModel)
         }
-        
-        
-    }
-        
-}
+    } // End body
+} // End struct
 
 #Preview {
     ContentView()

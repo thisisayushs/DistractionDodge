@@ -26,8 +26,7 @@ struct TutorialView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var currentStep = 0
     @State private var showHomeView = false
-    @State private var demoPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
-                                              y: UIScreen.main.bounds.height * 0.15)
+    @State private var demoPosition: CGPoint = .zero
     @State private var demoIsGazing = false
     @State private var demoScore = 0
     @State private var demoStreak = 0
@@ -47,14 +46,13 @@ struct TutorialView: View {
     @State private var moveDirection = CGPoint(x: 1, y: 1)
     @State private var hasDemonstratedFollowing = false
     @State private var showNextButton = false
-    @State private var customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
-                                                y: UIScreen.main.bounds.height * 0.15)
+    @State private var customPosition: CGPoint = .zero
     @State private var nextButtonScale: CGFloat = 1.0
     @State private var isNavigating = false
     @GestureState private var dragOffset: CGFloat = 0
     @State private var showSkipAlert = false
     @State private var penaltyScreenAppearCount = 0
-    
+    @State private var viewSize: CGSize = .zero
     
     private let gradientColors: [(start: Color, end: Color)] = [
         (.black.opacity(0.8), .indigo.opacity(0.2)),
@@ -220,7 +218,7 @@ struct TutorialView: View {
                         switch tutorialSteps[currentStep].scoringType {
                         case .introduction:
                             ZStack {
-                                
+                                #if os(iOS)
                                 EyeTrackingView { isGazing in
                                     if self.demoIsGazing != isGazing {
                                         self.demoIsGazing = isGazing
@@ -229,7 +227,9 @@ struct TutorialView: View {
                                             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                                                 withAnimation {
                                                     isMovingBall = true
-                                                    self.startBallMovement()
+                                                    if self.viewSize != .zero {
+                                                        self.startBallMovement()
+                                                    }
                                                 }
                                             }
                                             
@@ -238,8 +238,10 @@ struct TutorialView: View {
                                                 withAnimation(.easeInOut(duration: 0.5)) {
                                                     isMovingBall = false
                                                     
-                                                    customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
-                                                                             y: UIScreen.main.bounds.height * 0.15)
+                                                    if self.viewSize != .zero {
+                                                        self.customPosition = CGPoint(x: self.viewSize.width / 2,
+                                                                                     y: self.viewSize.height * 0.15)
+                                                    }
                                                     
                                                     
                                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -260,9 +262,41 @@ struct TutorialView: View {
                                         }
                                     }
                                 }
-                                
+                                #else
+                                Color.clear
+                                    .frame(width: 0, height: 0)
+                                    .onAppear {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                            if self.currentStep == 0 && !self.demoIsGazing && !self.isMovingBall && !self.hasDemonstratedFollowing {
+                                                print("Simulating gaze ON for visionOS intro")
+                                                self.demoIsGazing = true
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                                    print("Simulating ball movement START for visionOS intro")
+                                                    withAnimation {
+                                                        isMovingBall = true
+                                                        if self.viewSize != .zero { self.startBallMovement() }
+                                                    }
+                                                }
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
+                                                     print("Simulating ball movement END for visionOS intro")
+                                                     withAnimation(.easeInOut(duration: 0.5)) {
+                                                        isMovingBall = false
+                                                        if self.viewSize != .zero { self.customPosition = CGPoint(x: self.viewSize.width / 2, y: self.viewSize.height * 0.15) }
+                                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                                             print("Simulating show NEXT button for visionOS intro")
+                                                             withAnimation(.easeInOut) {
+                                                                hasDemonstratedFollowing = true
+                                                                showNextButton = true
+                                                                withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { nextButtonScale = 1.1 }
+                                                            }
+                                                        }
+                                                     }
+                                                }
+                                            }
+                                        }
+                                    }
+                                #endif
                                 VStack(spacing: 60) {
-                                    
                                     HStack {
                                         Image(systemName: "eye")
                                             .font(.system(size: 24))
@@ -300,8 +334,10 @@ struct TutorialView: View {
                                 hasDemonstratedFollowing = false
                                 showNextButton = false
                                 nextButtonScale = 1.0
-                                customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
-                                                         y: UIScreen.main.bounds.height * 0.15)
+                                if self.viewSize != .zero {
+                                    customPosition = CGPoint(x: self.viewSize.width / 2,
+                                                             y: self.viewSize.height * 0.15)
+                                }
                             }
                             
                             
@@ -318,8 +354,8 @@ struct TutorialView: View {
                                     )
                                 
                                 MainCircle(isGazingAtTarget: true,
-                                           position: CGPoint(x: UIScreen.main.bounds.width / 2,
-                                                             y: UIScreen.main.bounds.height * 0.22))
+                                           position: CGPoint(x: viewSize.width / 2,
+                                                             y: viewSize.height * 0.22))
                                 .overlay(
                                     Text("+1")
                                         .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -383,8 +419,8 @@ struct TutorialView: View {
                                 )
                                 
                                 MainCircle(isGazingAtTarget: true,
-                                           position: CGPoint(x: UIScreen.main.bounds.width / 2,
-                                                             y: UIScreen.main.bounds.height * 0.20))
+                                           position: CGPoint(x: viewSize.width / 2,
+                                                             y: viewSize.height * 0.20))
                                 .onAppear {
                                     startMultiplierDemo()
                                 }
@@ -439,8 +475,8 @@ struct TutorialView: View {
                                 }
                                 
                                 MainCircle(isGazingAtTarget: true,
-                                           position: CGPoint(x: UIScreen.main.bounds.width / 2,
-                                                             y: UIScreen.main.bounds.height * 0.20))
+                                           position: CGPoint(x: viewSize.width / 2,
+                                                             y: viewSize.height * 0.20))
                                 .scaleEffect(showBonusIndicator ? 1.1 : 1.0)
                                 .onAppear {
                                     startStreakBonusDemo()
@@ -491,8 +527,8 @@ struct TutorialView: View {
                                 }
                                 
                                 MainCircle(isGazingAtTarget: !showPenaltyIndicator,
-                                           position: CGPoint(x: geometry.size.width / 2,
-                                                             y: geometry.size.height / 5))
+                                           position: CGPoint(x: viewSize.width / 2,
+                                                             y: viewSize.height / 5))
                             }
                             .id("penalty\(currentStep)_\(penaltyScreenAppearCount)")
                             .onAppear {
@@ -507,13 +543,21 @@ struct TutorialView: View {
                             
                         case .distractions:
                             ZStack {
-                                
+                                #if os(iOS)
                                 EyeTrackingView { isGazing in
                                     self.demoIsGazing = isGazing
                                 }
-                                
+                                #else
+                                Color.clear
+                                    .frame(width: 0, height: 0)
+                                    .onAppear {
+                                        if self.currentStep == 1 && !self.demoIsGazing {
+                                            print("Simulating gaze ON for visionOS distractions step")
+                                            self.demoIsGazing = true
+                                        }
+                                    }
+                                #endif
                                 VStack(spacing: 60) {
-                                    
                                     HStack {
                                         Image(systemName: "eye")
                                             .font(.system(size: 24))
@@ -543,8 +587,8 @@ struct TutorialView: View {
                                 if showDemoDistraction {
                                     NotificationView(
                                         distraction: Distraction(
-                                            position: CGPoint(x: UIScreen.main.bounds.width * 0.7,
-                                                              y: UIScreen.main.bounds.height * 0.4),
+                                            position: CGPoint(x: viewSize.width * 0.7,
+                                                              y: viewSize.height * 0.4),
                                             title: "Messages",
                                             message: "🎮 Game night tonight?",
                                             appIcon: "message.fill",
@@ -560,7 +604,7 @@ struct TutorialView: View {
                            
                             .onAppear {
                                 
-                                if !isMovingBall {
+                                if !isMovingBall && self.viewSize != .zero {
                                     isMovingBall = true
                                     startBallMovement()
                                 }
@@ -661,6 +705,20 @@ struct TutorialView: View {
                         secondaryAction: {},
                         isPresented: $showSkipAlert
                     )
+                }
+            }
+            .onAppear {
+                if viewSize == .zero {
+                    viewSize = geometry.size
+                    demoPosition = CGPoint(x: viewSize.width / 2, y: viewSize.height * 0.15)
+                    customPosition = CGPoint(x: viewSize.width / 2, y: viewSize.height * 0.15)
+                }
+            }
+            .onChange(of: geometry.size) { oldSize, newSize in
+                if newSize != .zero {
+                    viewSize = newSize
+                    demoPosition = CGPoint(x: viewSize.width / 2, y: viewSize.height * 0.15)
+                    customPosition = CGPoint(x: viewSize.width / 2, y: viewSize.height * 0.15)
                 }
             }
             .animation(.easeInOut, value: showSkipAlert)
@@ -869,30 +927,34 @@ struct TutorialView: View {
     
     private func startDistractionDemo() {
         var distractionCount = 0
-        isMovingBall = true
-        startBallMovement()
+        if !isMovingBall && viewSize != .zero {
+            isMovingBall = true
+            startBallMovement()
+        }
         showDemoDistraction = false
-        
+
         Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { timer in
             guard currentStep == 1 && isMovingBall else {
                 timer.invalidate()
                 return
             }
-            
+
             distractionCount += 1
             if distractionCount >= 3 {
                 timer.invalidate()
                 showDemoDistraction = false
-                
-                
+
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     withAnimation(.easeInOut(duration: 1.0)) {
                         isMovingBall = false
-                        customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
-                                                 y: UIScreen.main.bounds.height * 0.15)
+                        if self.viewSize != .zero {
+                            customPosition = CGPoint(x: self.viewSize.width / 2,
+                                                     y: self.viewSize.height * 0.15)
+                        }
                     }
-                    
-                    
+
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                         showNextButton = true
                         withAnimation(
@@ -905,18 +967,18 @@ struct TutorialView: View {
                 }
                 return
             }
-            
-            
+
+
             withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
                 showDemoDistraction = true
             }
-            
-            
+
+
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 withAnimation(.easeOut) {
                     showDemoDistraction = false
-                    
-                    
+
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
                             showDemoDistraction = true
@@ -928,32 +990,43 @@ struct TutorialView: View {
     }
     
     private func startBallMovement() {
+        guard viewSize != .zero else {
+            print("Cannot start ball movement, view size is zero.")
+            isMovingBall = false
+            return
+        }
+
         let speed: CGFloat = 2.0
         Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
             guard isMovingBall else {
                 timer.invalidate()
                 return
             }
-            
+
             let ballSize: CGFloat = 100
-            let screenSize = UIScreen.main.bounds
-            
+            let currentSize = self.viewSize
+
             var newX = self.customPosition.x + (self.moveDirection.x * speed)
             var newY = self.customPosition.y + (self.moveDirection.y * speed)
-            
-            if newX <= ballSize/2 || newX >= screenSize.width - ballSize/2 {
+
+            let minYBoundary = currentSize.height * 0.15
+            let maxYBoundary = currentSize.height * 0.4
+
+            if newX <= ballSize/2 || newX >= currentSize.width - ballSize/2 {
                 self.moveDirection.x *= -1
                 newX = self.customPosition.x + (self.moveDirection.x * speed)
             }
-            if newY <= screenSize.height * 0.15 || newY >= screenSize.height * 0.4 {
+            if newY <= minYBoundary || newY >= maxYBoundary {
                 self.moveDirection.y *= -1
                 newY = self.customPosition.y + (self.moveDirection.y * speed)
             }
-            
-            self.customPosition = CGPoint(x: newX, y: newY)
+
+            self.customPosition = CGPoint(
+                x: max(ballSize/2, min(newX, currentSize.width - ballSize/2)),
+                y: max(minYBoundary, min(newY, maxYBoundary))
+            )
         }
     }
-    
     
     private func resetStateForStep(_ step: Int) {
         
@@ -989,8 +1062,12 @@ struct TutorialView: View {
         }
         
         if step == 0 || step == 1 {
-            customPosition = CGPoint(x: UIScreen.main.bounds.width / 2,
-                                     y: UIScreen.main.bounds.height * 0.15)
+            if viewSize != .zero {
+                customPosition = CGPoint(x: viewSize.width / 2,
+                                         y: viewSize.height * 0.15)
+            } else {
+                customPosition = .zero
+            }
         }
         
         isMovingBall = false

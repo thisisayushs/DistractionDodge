@@ -27,8 +27,8 @@ class AttentionViewModel: ObservableObject {
     // MARK: - Published Properties
     
     /// Current position of the focus target
-    @Published var position = CGPoint(x: UIScreen.main.bounds.width / 2,
-                                      y: UIScreen.main.bounds.height / 2)
+    // CHANGE: Initialize to zero, will be set based on actual view size later
+    @Published var position = CGPoint.zero
     
     /// Indicates if the user is currently gazing at the target
     @Published var isGazingAtObject = false
@@ -112,6 +112,9 @@ class AttentionViewModel: ObservableObject {
     private var lastFocusState: Bool = false
     private var gameDuration: TimeInterval = 60
     
+    // ADD: Property to store the actual view size
+    private var viewSize: CGSize = .zero
+    
     var totalGameDuration: TimeInterval {
         gameDuration
     }
@@ -151,6 +154,18 @@ class AttentionViewModel: ObservableObject {
         gameDuration = duration
     }
     
+    // ADD: Method to receive and store the view size from the ContentView
+    func updateViewSize(_ size: CGSize) {
+        // Update only if the size is valid and different
+        if size != .zero && self.viewSize != size {
+            self.viewSize = size
+            // Set initial position if it hasn't been set yet or needs centering
+            if self.position == .zero {
+                 self.position = CGPoint(x: size.width / 2, y: size.height / 2)
+            }
+        }
+    }
+    
     func startGame() {
         sessionStartTime = Date()
         endGameReason = .timeUp
@@ -158,7 +173,7 @@ class AttentionViewModel: ObservableObject {
         currentNotificationInterval = 2.0
         distractionProbability = 0.2
         
-        stopGame()
+        stopGame() // Pauses timers, etc.
         gameTime = gameDuration
         score = 0
         focusStreak = 0
@@ -166,8 +181,8 @@ class AttentionViewModel: ObservableObject {
         totalFocusTime = 0
         scoreMultiplier = 1
         lastFocusState = false
-        position = CGPoint(x: UIScreen.main.bounds.width / 2,
-                           y: UIScreen.main.bounds.height / 2)
+        // CHANGE: Reset position based on stored viewSize, default to center if size known
+        position = CGPoint(x: viewSize.width / 2, y: viewSize.height / 2)
         
         startRandomMovement()
         startDistractions()
@@ -267,44 +282,83 @@ class AttentionViewModel: ObservableObject {
     }
     
     private func startRandomMovement() {
+        // ADD: Guard against zero view size
+        guard viewSize != .zero else {
+            print("Warning: Cannot start movement, viewSize is zero.")
+            // Optionally, schedule retry or wait for size update
+            return
+        }
+
         let speed: CGFloat = 3.0
+        timer?.invalidate() // Ensure previous timer is stopped before starting new one
         timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            
-            let screenSize = UIScreen.main.bounds
-            let ballSize: CGFloat = 100
-            
+            guard let self = self, self.viewSize != .zero else { return } // Ensure size is still valid
+
+            // CHANGE: Use stored viewSize
+            let currentViewSize = self.viewSize
+            let ballSize: CGFloat = 100 // Assuming the target visual size
+
             var newX = self.position.x + (self.moveDirection.x * speed)
             var newY = self.position.y + (self.moveDirection.y * speed)
-            
-            if newX <= ballSize/2 || newX >= screenSize.width - ballSize/2 {
+
+            // Check boundaries using currentViewSize
+            if newX <= ballSize / 2 || newX >= currentViewSize.width - ballSize / 2 {
                 self.moveDirection.x *= -1
+                // Recalculate newX after direction change to prevent immediate re-collision
                 newX = self.position.x + (self.moveDirection.x * speed)
             }
-            if newY <= ballSize/2 || newY >= screenSize.height - ballSize/2 {
+            if newY <= ballSize / 2 || newY >= currentViewSize.height - ballSize / 2 {
                 self.moveDirection.y *= -1
+                 // Recalculate newY
                 newY = self.position.y + (self.moveDirection.y * speed)
             }
-            
-            self.position = CGPoint(x: newX, y: newY)
+
+            // Clamp values just in case to prevent going significantly out of bounds
+            self.position = CGPoint(
+                x: max(ballSize/2, min(newX, currentViewSize.width - ballSize/2)),
+                y: max(ballSize/2, min(newY, currentViewSize.height - ballSize/2))
+            )
         }
     }
     
     private func startDistractions() {
+        // ADD: Guard against zero view size
+        guard viewSize != .zero else {
+             print("Warning: Cannot start distractions, viewSize is zero.")
+             // Optionally, schedule retry or wait for size update
+            return
+        }
         let scaledInterval = baseDistractionInterval * sqrt(gameDuration / 60)
-        
+
+        distractionTimer?.invalidate() // Ensure previous timer stopped
         distractionTimer = Timer.scheduledTimer(withTimeInterval: scaledInterval, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            
+             guard let self = self, self.viewSize != .zero else { return } // Ensure size is still valid
+
             if Double.random(in: 0...1) < self.baseDistractionProbability {
-                let screenWidth = UIScreen.main.bounds.width
-                let screenHeight = UIScreen.main.bounds.height
-                
+                // CHANGE: Use stored viewSize
+                let currentViewSize = self.viewSize
+                let screenWidth = currentViewSize.width
+                let screenHeight = currentViewSize.height
+
+                // Define safe insets for distraction placement
+                let insetX: CGFloat = 150
+                let insetY: CGFloat = 100
+                let minX = insetX
+                let maxX = screenWidth - insetX
+                let minY = insetY
+                let maxY = screenHeight - insetY
+
+                // Ensure valid random range
+                guard maxX > minX, maxY > minY else {
+                    print("Warning: View size too small for distraction placement.")
+                    return // Skip adding distraction if view is too small
+                }
+
                 let notificationContent = self.notificationData.randomElement()!
                 let newDistraction = Distraction(
                     position: CGPoint(
-                        x: CGFloat.random(in: 150...(screenWidth-150)),
-                        y: CGFloat.random(in: 100...(screenHeight-100))
+                        x: CGFloat.random(in: minX...maxX),
+                        y: CGFloat.random(in: minY...maxY)
                     ),
                     title: notificationContent.title,
                     message: AppMessages.randomMessage(for: notificationContent.title),
@@ -312,17 +366,25 @@ class AttentionViewModel: ObservableObject {
                     iconColors: notificationContent.colors,
                     soundID: notificationContent.sound
                 )
-                
+
                 withAnimation {
                     self.distractions.append(newDistraction)
+                    // Maintain max 3 distractions
                     if self.distractions.count > 3 {
+                        // Remove the oldest one
                         self.distractions.removeFirst()
                     }
                 }
-                
+
+                // Play sound only if the app is active (check might be needed if backgrounding is handled differently on visionOS)
+                #if os(iOS) // Conditional compilation might be needed if UIApplication state differs
                 if UIApplication.shared.applicationState == .active {
                     AudioServicesPlaySystemSound(notificationContent.sound)
                 }
+                #else
+                // Assume visionOS is always 'active' for sound purposes when game is running, or find equivalent check
+                 AudioServicesPlaySystemSound(notificationContent.sound)
+                #endif
             }
         }
     }

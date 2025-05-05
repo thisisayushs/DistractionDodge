@@ -37,10 +37,11 @@ struct OnboardingView: View {
     
     /// Controls the glow effect animation
     @State private var isGlowing = false
-    
+
     /// Position of the interactive ball demonstration
-    @State private var ballPosition = CGPoint(x: 100, y: UIScreen.main.bounds.height / 2)
-    
+    // CHANGE: Initialize to zero, set later with GeometryReader
+    @State private var ballPosition: CGPoint = .zero
+
     /// Timer for generating notifications in the demo
     @State private var notificationTimer: Timer?
     
@@ -151,52 +152,97 @@ struct OnboardingView: View {
     }
     
     private func moveBallContinuously() {
+        // ADD: Guard against zero view size
+        guard viewSize != .zero else {
+            print("OnboardingView: Cannot move ball, viewSize is zero.")
+            return
+        }
         Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
             guard self.currentIndex == 3 else {
                 timer.invalidate()
                 return
             }
             
+            // ADD: Guard again just in case size becomes zero during timer life
+            guard self.viewSize != .zero else {
+                timer.invalidate()
+                return
+            }
+
             let speed: CGFloat = 3.0
             let ballSize: CGFloat = 100
-            let screenSize = UIScreen.main.bounds
+            // CHANGE: Use stored viewSize
+            let currentSize = self.viewSize
             
             var newX = self.ballPosition.x + (self.moveDirection.x * speed)
             var newY = self.ballPosition.y + (self.moveDirection.y * speed)
             
-            if newX <= ballSize/2 || newX >= screenSize.width - ballSize/2 {
+            // Use currentSize for boundary checks
+            if newX <= ballSize/2 || newX >= currentSize.width - ballSize/2 {
                 self.moveDirection.x *= -1
-                newX = self.ballPosition.x + (self.moveDirection.x * speed)
+                newX = self.ballPosition.x + (self.moveDirection.x * speed) // Recalculate
             }
-            if newY <= ballSize/2 || newY >= screenSize.height - ballSize/2 {
+            if newY <= ballSize/2 || newY >= currentSize.height - ballSize/2 {
                 self.moveDirection.y *= -1
-                newY = self.ballPosition.y + (self.moveDirection.y * speed)
+                newY = self.ballPosition.y + (self.moveDirection.y * speed) // Recalculate
             }
             
-            self.ballPosition = CGPoint(x: newX, y: newY)
+            // Clamp position
+            self.ballPosition = CGPoint(
+                x: max(ballSize/2, min(newX, currentSize.width - ballSize/2)),
+                y: max(ballSize/2, min(newY, currentSize.height - ballSize/2))
+            )
         }
     }
     
     private func generateNotifications() {
+        // ADD: Guard against zero view size
+        guard viewSize != .zero else {
+            print("OnboardingView: Cannot generate notifications, viewSize is zero.")
+            return
+        }
         Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { timer in
             guard self.currentIndex == 3 else {
                 timer.invalidate()
                 return
             }
             
+            // ADD: Guard again just in case size becomes zero during timer life
+            guard self.viewSize != .zero else {
+                timer.invalidate()
+                return
+            }
+
             let topSafeArea: CGFloat = 100
             let bottomSafeArea: CGFloat = 120
             let sideSafeArea: CGFloat = 50
             
+            // CHANGE: Use stored viewSize
+            let currentWidth = self.viewSize.width
+            let currentHeight = self.viewSize.height
+            
+            // Define valid ranges based on current size and safe areas
+            let minX = sideSafeArea
+            let maxX = currentWidth - sideSafeArea
+            let minY = topSafeArea
+            let maxY = currentHeight - bottomSafeArea
+            
+            // Ensure ranges are valid
+            guard maxX > minX, maxY > minY else {
+                print("OnboardingView: View size too small for notification placement.")
+                return // Skip if view is too small
+            }
+
             let newNotification = (
                 type: NotificationCategory.allCases.randomElement()!,
                 position: CGPoint(
-                    x: CGFloat.random(in: sideSafeArea...(UIScreen.main.bounds.width - sideSafeArea)),
-                    y: CGFloat.random(in: topSafeArea...(UIScreen.main.bounds.height - bottomSafeArea))
+                    // Use calculated ranges
+                    x: CGFloat.random(in: minX...maxX),
+                    y: CGFloat.random(in: minY...maxY)
                 ),
                 id: UUID()
             )
-            
+
             withAnimation(.easeInOut(duration: 0.5)) {
                 self.notifications.append(newNotification)
                 if self.notifications.count > 8 {
@@ -214,19 +260,28 @@ struct OnboardingView: View {
     }
     
     private func resetAndStartAnimations() {
-        
+        // ADD: Guard against zero view size before starting animations that depend on it
+        guard viewSize != .zero else {
+            print("OnboardingView: Cannot reset/start animations, viewSize is zero.")
+            return
+        }
+
         isGlowing = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(Animation.easeInOut(duration: 2.0).repeatForever()) {
                 self.isGlowing = true
             }
         }
-        
-        ballPosition = CGPoint(x: 100, y: UIScreen.main.bounds.height / 2)
+
+        // CHANGE: Use stored viewSize to set initial position
+        ballPosition = CGPoint(x: 100, y: viewSize.height / 2) // Keep X fixed, set Y based on size
         moveDirection = CGPoint(x: 1, y: 1)
         moveBallContinuously()
         generateNotifications()
     }
+    
+    // ADD: State variable to hold the view size
+    @State private var viewSize: CGSize = .zero
     
     @State private var activeLineIndex = 0
     @State private var completedLines: Set<Int> = []
@@ -276,11 +331,15 @@ struct OnboardingView: View {
                 if self.currentIndex == 3 {
                     MainCircle(isGazingAtTarget: self.isGlowing, position: self.ballPosition)
                         .onAppear {
-                            withAnimation(Animation.easeInOut(duration: 2.0).repeatForever()) {
-                                self.isGlowing.toggle()
+                            // Start animations only if size is known
+                            if self.viewSize != .zero {
+                                withAnimation(Animation.easeInOut(duration: 2.0).repeatForever()) {
+                                    self.isGlowing.toggle()
+                                }
+                                // Call the functions that now internally check viewSize
+                                self.moveBallContinuously()
+                                self.generateNotifications()
                             }
-                            self.moveBallContinuously()
-                            self.generateNotifications()
                         }
                 }
                 
@@ -394,14 +453,45 @@ struct OnboardingView: View {
                         isPresented: $showSkipAlert
                     )
                 }
+            } // End ZStack
+            .onAppear { 
+                if self.viewSize == .zero { 
+                    self.viewSize = geometry.size
+                    self.ballPosition = CGPoint(x: 100, y: geometry.size.height / 2)
+                    if self.currentIndex == 3 {
+                        resetAndStartAnimations()
+                    }
+                }
             }
-        }
+            .onChange(of: geometry.size) { oldSize, newSize in 
+                if newSize != .zero {
+                    self.viewSize = newSize
+                    self.ballPosition.y = newSize.height / 2
+                    if self.currentIndex == 3 {
+                        // Handle potential restart of animations if needed
+                    }
+                }
+            }
+        } // End GeometryReader
         .onChange(of: currentIndex) { oldValue, newValue in
             self.activeLineIndex = 0
             self.completedLines.removeAll()
             self.allLinesComplete = false
             
-            // Auto-navigate to tutorial when swiped to last page
+            // Start animations specifically when navigating *to* page 3
+            if newValue == 3 {
+                // Ensure size is known before starting animations
+                if self.viewSize != .zero {
+                    resetAndStartAnimations()
+                }
+            } else {
+                // Optionally stop timers/animations if navigating away from page 3
+                notificationTimer?.invalidate()
+                notificationTimer = nil
+                // Need a way to stop the ball movement timer if applicable
+            }
+
+            // Auto-navigate to tutorial logic remains
             if newValue == pages.count - 1 {
                 // Give time for the last page to appear
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -429,8 +519,11 @@ struct OnboardingView: View {
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
         .onDisappear {
-            
+            // Clean up timers when the view disappears entirely
+            notificationTimer?.invalidate()
+            notificationTimer = nil
             self.notifications.removeAll()
+            // Also stop the ball movement timer if applicable
         }
     }
 }

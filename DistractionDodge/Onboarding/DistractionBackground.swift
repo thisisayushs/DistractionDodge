@@ -30,21 +30,41 @@ struct DistractionBackground: View {
     // MARK: - Body
     
     var body: some View {
-        ZStack {
-            // Generate multiple floating circles
-            ForEach(0..<20) { _ in
-                Circle()
-                    .fill(Color.white.opacity(0.1))
-                    .frame(width: CGFloat.random(in: 10...30))
-                    .position(
-                        x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
-                        y: CGFloat.random(in: 0...UIScreen.main.bounds.height)
-                    )
-                    .modifier(HoverMotion(isAnimating: isAnimating))
+        // ADD: GeometryReader to get the available size
+        GeometryReader { geometry in
+            ZStack {
+                // Generate multiple floating circles
+                ForEach(0..<20) { _ in
+                    Circle()
+                        .fill(Color.white.opacity(0.1))
+                        .frame(width: CGFloat.random(in: 10...30))
+                        .position(
+                            // CHANGE: Use geometry proxy for dimensions
+                            x: CGFloat.random(in: 0...geometry.size.width),
+                            y: CGFloat.random(in: 0...geometry.size.height)
+                        )
+                        .modifier(HoverMotion(isAnimating: isAnimating))
+                }
+            }
+            // Move onAppear inside GeometryReader or attach to ZStack
+            .onAppear {
+                // Start animation only if geometry size is valid
+                if geometry.size != .zero {
+                    isAnimating = true
+                }
+            }
+            // Optional: Add onChange to handle potential size changes
+            .onChange(of: geometry.size) { oldSize, newSize in
+                if newSize != .zero && !isAnimating {
+                    // Start animation if size becomes valid and not already animating
+                    isAnimating = true
+                } else if newSize == .zero && isAnimating {
+                    // Optionally stop animation if size becomes zero?
+                    // isAnimating = false
+                }
             }
         }
-        .onAppear {
-            isAnimating = true
-        }
+        // Keep ignoresSafeArea if needed by the parent context, but often better applied by the parent
+        // .ignoresSafeArea() // Example: Can be added here or by the view using DistractionBackground
     }
 }
