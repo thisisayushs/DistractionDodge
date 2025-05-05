@@ -72,7 +72,7 @@ struct ContentView: View {
                 
                 VideoDistraction()
                     .position(videoPosition)
-                    .opacity(viewModel.gameTime >= 45 ? 0 : 1)
+                    .opacity(viewModel.gameTime >= (0.6 * viewModel.totalGameDuration) ? 0 : 1)
                     .animation(.easeInOut(duration: 1.0), value: viewModel.gameTime)
                     .environmentObject(viewModel)
                 

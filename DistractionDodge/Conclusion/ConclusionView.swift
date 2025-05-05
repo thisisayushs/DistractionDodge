@@ -55,7 +55,7 @@ struct ConclusionView: View {
         .purple.opacity(0.25)
     ]
     
-    /// Provides contextual tips based on the user's score
+    /// Provides contextual messages based on the user's score
     private var focusTips: String {
         if viewModel.score < 20 {
             return "Try to maintain your gaze on the target consistently. Small improvements in focus can lead to better scores."
