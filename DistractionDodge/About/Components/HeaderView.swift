@@ -14,7 +14,7 @@ struct HeaderView: View {
                 .shadow(color: .white.opacity(0.3), radius: 10)
             
             VStack(spacing: 15) {
-                Text("Made with love in Naples, Italy ")
+                Text("Made with love in Naples, Italy 🇮🇹")
                 Text("Science Backed")
             }
             .padding()
