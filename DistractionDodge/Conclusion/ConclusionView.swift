@@ -100,7 +100,6 @@ struct ConclusionView: View {
     
     var body: some View {
         ZStack {
-            
             LinearGradient(
                 gradient: Gradient(colors: gradientColors),
                 startPoint: .topLeading,
@@ -108,151 +107,158 @@ struct ConclusionView: View {
             )
             .ignoresSafeArea()
             
-            
             DistractionBackground()
                 .blur(radius: 20)
             
-            VStack(spacing: 45) {
-                
-                VStack(spacing: 30) {
-                    Text("Focus Score")
-                        .font(.system(.title2, design: .rounded))
-                        .bold()
-                        .foregroundColor(.white)
-                        .padding(.top, 20)
-                    
-                    Text("\(displayedScore)")
-                        .font(.system(size: 80, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .scaleEffect(scoreScale)
-                        .animation(.interpolatingSpring(stiffness: 170, damping: 15).delay(0.1), value: scoreScale)
-                        .onAppear {
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack {
+                        Spacer()
+                        
+                        VStack(spacing: 30) {
+                            Text("Focus Score")
+                                .font(.system(.title2, design: .rounded))
+                                .bold()
+                                .foregroundColor(.white)
+                                .padding(.top, 20)
                             
-                            displayedScore = 0
-                            scoreScale = 0.5
-                            isAnimating = false
-                            shouldAnimateButton = false
-                            
-                            withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.5)) {
-                                scoreScale = 1.0
-                            }
-                            
-                            let finalScore = viewModel.score
-                            let animationDuration: TimeInterval = 1.5
-                            
-                            let timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
-                                if displayedScore < finalScore {
-                                    displayedScore += 1
+                            Text("\(displayedScore)")
+                                .font(.system(size: 80, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .scaleEffect(scoreScale)
+                                .animation(.interpolatingSpring(stiffness: 170, damping: 15).delay(0.1), value: scoreScale)
+                                .onAppear {
                                     
-                                    if displayedScore % 10 == 0 {
-                                        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
-                                            scoreScale = 1.1
-                                        }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                            withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
-                                                scoreScale = 1.0
+                                    displayedScore = 0
+                                    scoreScale = 0.5
+                                    isAnimating = false
+                                    shouldAnimateButton = false
+                                    
+                                    withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.5)) {
+                                        scoreScale = 1.0
+                                    }
+                                    
+                                    let finalScore = viewModel.score
+                                    let animationDuration: TimeInterval = 1.5
+                                    
+                                    let timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
+                                        if displayedScore < finalScore {
+                                            displayedScore += 1
+                                            
+                                            if displayedScore % 10 == 0 {
+                                                withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                                                    scoreScale = 1.1
+                                                }
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                    withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                                                        scoreScale = 1.0
+                                                    }
+                                                }
                                             }
+                                        } else {
+                                            timer.invalidate()
+                                            
+                                            shouldAnimateButton = true
                                         }
                                     }
-                                } else {
-                                    timer.invalidate()
                                     
-                                    shouldAnimateButton = true
+                                    if finalScore > 0 {
+                                        timer.tolerance = animationDuration / Double(finalScore)
+                                    }
                                 }
-                            }
                             
-                            if finalScore > 0 {
-                                timer.tolerance = animationDuration / Double(finalScore)
+                            Text(focusTips)
+                                .font(.system(.body, design: .rounded))
+                                .foregroundColor(.white.opacity(0.9))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                                .padding(.vertical, 15)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.white.opacity(0.15))
+                                )
+                            
+                            HStack(spacing: 20) {
+                                StatCard(
+                                    title: "Session Streak",
+                                    value: formatTime(viewModel.bestStreak),
+                                    icon: "bolt.fill"
+                                )
+                                
+                                StatCard(
+                                    title: "Focus Time",
+                                    value: formatTime(viewModel.totalFocusTime),
+                                    icon: "timer"
+                                )
                             }
-                        }
-                    
-                    Text(focusTips)
-                        .font(.system(.body, design: .rounded))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                        .padding(.vertical, 15)
-                        .background(
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(Color.white.opacity(0.15))
-                        )
-                    
-                    HStack(spacing: 20) {
-                        StatCard(
-                            title: "Session Streak",
-                            value: formatTime(viewModel.bestStreak),
-                            icon: "bolt.fill"
-                        )
-                        
-                        StatCard(
-                            title: "Focus Time",
-                            value: formatTime(viewModel.totalFocusTime),
-                            icon: "timer"
-                        )
-                    }
-                    .padding(.bottom, 40)
-                    
-                    VStack(spacing: 20) {
-                        Button {
-                            viewModel.startGame()
-                            dismiss()
-                        } label: {
-                            HStack {
-                                Text("Play Again")
-                                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                            }
-                            .foregroundColor(.white)
-                            .padding(.vertical, 16)
-                            .padding(.horizontal, 35)
-                            .background(
-                                Capsule()
-                                    .fill(Color.white.opacity(0.2))
-                                    .overlay(
+                            .padding(.bottom, 40)
+                            
+                            VStack(spacing: 20) {
+                                Button {
+                                    viewModel.startGame()
+                                    dismiss()
+                                } label: {
+                                    HStack {
+                                        Text("Play Again")
+                                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 16)
+                                    .padding(.horizontal, 35)
+                                    .background(
                                         Capsule()
-                                            .stroke(Color.white, lineWidth: 1.5)
+                                            .fill(Color.white.opacity(0.2))
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(Color.white, lineWidth: 1.5)
+                                            )
+                                            .shadow(color: .white.opacity(0.3), radius: 5, x: 0, y: 2)
                                     )
-                                    .shadow(color: .white.opacity(0.3), radius: 5, x: 0, y: 2)
-                            )
-                        }
-                        .scaleEffect(buttonScale)
-                        .onChange(of: shouldAnimateButton) { _, newValue in
-                            if newValue {
-                                withAnimation(
-                                    .easeInOut(duration: 0.5)
-                                    .repeatForever(autoreverses: true)
-                                ) {
-                                    buttonScale = 1.1
+                                }
+                                .scaleEffect(buttonScale)
+                                .onChange(of: shouldAnimateButton) { _, newValue in
+                                    if newValue {
+                                        withAnimation(
+                                            .easeInOut(duration: 0.5)
+                                            .repeatForever(autoreverses: true)
+                                        ) {
+                                            buttonScale = 1.1
+                                        }
+                                    }
+                                }
+                                
+                                Button {
+                                    hasCompletedIntroduction = false
+                                    showHome = true
+                                } label: {
+                                    HStack {
+                                        Text("Go Home")
+                                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                                    }
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .padding(.vertical, 16)
+                                    .padding(.horizontal, 35)
+                                    .background(
+                                        Capsule()
+                                            .fill(Color.white.opacity(0.15))
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
+                                            )
+                                            .shadow(color: .white.opacity(0.2), radius: 5, x: 0, y: 2)
+                                    )
                                 }
                             }
                         }
+                        .padding(30)
+                        .frame(maxWidth: .infinity)
                         
-                        Button {
-                            hasCompletedIntroduction = false
-                            showHome = true
-                        } label: {
-                            HStack {
-                                Text("Go Home")
-                                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                            }
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.vertical, 16)
-                            .padding(.horizontal, 35)
-                            .background(
-                                Capsule()
-                                    .fill(Color.white.opacity(0.15))
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
-                                    )
-                                    .shadow(color: .white.opacity(0.2), radius: 5, x: 0, y: 2)
-                            )
-                        }
+                        Spacer()
                     }
+                    .frame(minHeight: geometry.size.height)
+                    .frame(maxWidth: .infinity)
                 }
-                
-                Spacer()
             }
-            .padding(30)
         }
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
