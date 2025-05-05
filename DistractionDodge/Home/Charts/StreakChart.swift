@@ -29,10 +29,7 @@ struct StreakChart: View {
             }
             .chartYScale(domain: 30...300)
             .chartXAxis {
-                AxisMarks(values: .stride(
-                    by: timeRange == .week ? .day : .day,
-                    count: timeRange == .week ? 1 : 7
-                )) { value in
+                AxisMarks(preset: .aligned) { value in
                     if let date = value.as(Date.self) {
                         AxisValueLabel {
                             if timeRange == .week {
