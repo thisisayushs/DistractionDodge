@@ -35,12 +35,15 @@ struct NavigationButton: View {
             .foregroundColor(.white)
             .padding(.vertical, 16)
             .padding(.horizontal, 35)
+            // CHANGE: Apply background only on iOS
+            #if os(iOS)
             .background(
                 Capsule()
                     .fill(Color.white.opacity(0.2))
                     .overlay(Capsule().stroke(Color.white, lineWidth: 1.5))
                     .shadow(color: .white.opacity(0.3), radius: 5, x: 0, y: 2)
             )
+            #endif
             
             .scaleEffect(allLinesComplete ? 1.1 : 1.0)
             

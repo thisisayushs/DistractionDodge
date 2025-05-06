@@ -294,7 +294,7 @@ struct OnboardingView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                
+                #if os(iOS)
                 LinearGradient(
                     gradient: Gradient(colors: [
                         self.gradientColors[self.currentIndex].start,
@@ -305,7 +305,7 @@ struct OnboardingView: View {
                 )
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 1.0), value: self.currentIndex)
-                
+                        #endif
                 if self.currentIndex == 3 {
                     ForEach(self.notifications, id: \.id) { notification in
                         Image(systemName: notification.type.rawValue)
@@ -327,20 +327,23 @@ struct OnboardingView: View {
                 
                 DistractionBackground()
                     .blur(radius: 20)
-                
+
+                // CHANGE: Conditionally display MainCircle only on iOS when currentIndex is 3
                 if self.currentIndex == 3 {
+                    #if os(iOS)
                     MainCircle(isGazingAtTarget: self.isGlowing, position: self.ballPosition)
                         .onAppear {
-                            // Start animations only if size is known
+                            // Start animations only if size is known and on iOS
                             if self.viewSize != .zero {
                                 withAnimation(Animation.easeInOut(duration: 2.0).repeatForever()) {
                                     self.isGlowing.toggle()
                                 }
                                 // Call the functions that now internally check viewSize
                                 self.moveBallContinuously()
-                                self.generateNotifications()
+                                self.generateNotifications() // Note: Notifications will also only generate on iOS with this structure
                             }
                         }
+                    #endif // End os(iOS) check
                 }
                 
                 VStack {
@@ -358,6 +361,7 @@ struct OnboardingView: View {
                                 .foregroundColor(.white.opacity(0.7))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
+                                #if os(iOS)
                                 .background(
                                     Capsule()
                                         .fill(Color.white.opacity(0.15))
@@ -366,6 +370,7 @@ struct OnboardingView: View {
                                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                         )
                                 )
+                                #endif
                             }
                             .disabled(isNavigating)
                         }
@@ -380,6 +385,7 @@ struct OnboardingView: View {
                                 .foregroundColor(.white.opacity(0.7))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
+                                #if os(iOS)
                                 .background(
                                     Capsule()
                                         .fill(Color.white.opacity(0.15))
@@ -388,6 +394,7 @@ struct OnboardingView: View {
                                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                         )
                                 )
+                                #endif
                         }
                     }
                     .padding(.top, 50)
@@ -413,11 +420,14 @@ struct OnboardingView: View {
                         allLinesComplete: self.allLinesComplete,
                         isLastScreen: self.currentIndex == self.pages.count - 1
                     ) {
+                        // If it's the last page, tapping completes the introduction (navigates to tutorial)
                         if self.currentIndex == self.pages.count - 1 {
-                            completeIntroduction()
+                            completeIntroduction() // This sets showTutorial = true
                         } else {
+                        // Otherwise, navigate to the next onboarding page
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                                 self.navigate(forward: true)
+                                // Reset state for the next page
                                 self.activeLineIndex = 0
                                 self.completedLines.removeAll()
                                 self.allLinesComplete = false
@@ -490,14 +500,10 @@ struct OnboardingView: View {
                 notificationTimer = nil
                 // Need a way to stop the ball movement timer if applicable
             }
-
-            // Auto-navigate to tutorial logic remains
-            if newValue == pages.count - 1 {
-                // Give time for the last page to appear
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    showTutorial = true
-                }
-            }
+        }
+        .onChange(of: allLinesComplete) { _, newAllLinesComplete in
+           // No action needed here anymore. The button's enabled state is handled by the binding.
+           // The actual navigation happens via the button's tap action.
         }
         .onChange(of: showTutorial) { _, willShow in
             if willShow {

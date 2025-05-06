@@ -78,6 +78,7 @@ struct AlertView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 25)
                             .padding(.vertical, 12)
+                            #if os(iOS)
                             .background(
                                 Capsule()
                                     .fill(Color.white.opacity(0.2))
@@ -86,6 +87,7 @@ struct AlertView: View {
                                             .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                     )
                             )
+                            #endif
                     }
                     
                     
@@ -100,6 +102,7 @@ struct AlertView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 35)
                             .padding(.vertical, 12)
+                            #if os(iOS)
                             .background(
                                 Capsule()
                                     .fill(
@@ -110,6 +113,7 @@ struct AlertView: View {
                                         )
                                     )
                             )
+                            #endif
                     }
                 }
             }

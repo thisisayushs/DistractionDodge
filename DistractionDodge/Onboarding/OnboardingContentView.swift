@@ -42,6 +42,31 @@ struct OnboardingContentView: View {
     var body: some View {
         VStack(spacing: 30) {
             
+            // CHANGE: Wrap emoji in ZStack and add shadow for visionOS
+            #if os(visionOS)
+            ZStack { // Use ZStack for layering effects
+                Text(page.emoji)
+                    // CHANGE: Increase font size for visionOS
+                    .font(.system(size: 95)) // Increased from 80
+                    .shadow(color: .black.opacity(0.2), radius: 5, x: 2, y: 2) // Keep the lighter shadow
+                    .scaleEffect(emojiScale)
+            }
+            .onAppear {
+                withAnimation(
+                    .spring(response: 0.8, dampingFraction: 0.7)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    emojiScale = 1.1
+                }
+            }
+            .onDisappear {
+                withAnimation(.easeInOut) {
+                    emojiScale = 1
+                    // emojiRotation reset removed as it's not used in visionOS block
+                }
+            }
+            .padding(.bottom, 30)
+            #else // Keep original iOS settings
             Text(page.emoji)
                 .font(.system(size: 100))
                 .scaleEffect(emojiScale)
@@ -53,7 +78,7 @@ struct OnboardingContentView: View {
                     ) {
                         emojiScale = 1.2
                     }
-                    
+
                     withAnimation(
                         .easeInOut(duration: 2)
                         .repeatForever(autoreverses: true)
@@ -68,11 +93,15 @@ struct OnboardingContentView: View {
                     }
                 }
                 .padding(.bottom, 30)
+            #endif
         }
         
-        
         Text(page.title)
+            #if os(visionOS)
+            .font(.system(size: 48, weight: .bold, design: .rounded))
+            #else
             .font(.system(size: 42, weight: .bold, design: .rounded))
+            #endif
             .foregroundColor(.white)
             .multilineTextAlignment(.center)
             .padding(.horizontal)
