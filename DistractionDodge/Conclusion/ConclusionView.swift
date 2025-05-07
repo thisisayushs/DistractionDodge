@@ -100,12 +100,14 @@ struct ConclusionView: View {
     
     var body: some View {
         ZStack {
+            #if os(iOS)
             LinearGradient(
                 gradient: Gradient(colors: gradientColors),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
+            #endif
             
             DistractionBackground()
                 .blur(radius: 20)

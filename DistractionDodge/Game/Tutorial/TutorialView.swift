@@ -140,7 +140,7 @@ struct TutorialView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                
+                #if os(iOS)
                 LinearGradient(
                     gradient: Gradient(colors: [
                         gradientColors[currentStep].start,
@@ -151,6 +151,7 @@ struct TutorialView: View {
                 )
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 1.0), value: currentStep)
+                #endif
                 
                 VStack {
                     HStack {

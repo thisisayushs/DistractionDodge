@@ -57,6 +57,7 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                #if os(iOS)
                 LinearGradient(
                     gradient: Gradient(colors: gradientColors),
                     startPoint: .topLeading,
@@ -64,6 +65,7 @@ struct ContentView: View {
                 )
                     .edgesIgnoringSafeArea(.all) // This modifier is fine on the gradient
                     .animation(.easeInOut(duration: 2.0), value: viewModel.backgroundGradient)
+                #endif
 
                 // --- Eye Tracking Handling ---
                 #if os(iOS)

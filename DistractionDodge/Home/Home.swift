@@ -77,8 +77,9 @@ struct Home: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                #if os(iOS)
                 BackgroundView(currentPage: currentPage, colors: gradientColors)
-                
+                #endif
                 TabView(selection: $currentPage) {
                     FirstPageView(
                         selectedDuration: $selectedDuration,
