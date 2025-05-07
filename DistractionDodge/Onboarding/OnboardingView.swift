@@ -328,9 +328,9 @@ struct OnboardingView: View {
                 DistractionBackground()
                     .blur(radius: 20)
 
-                // CHANGE: Conditionally display MainCircle only on iOS when currentIndex is 3
+                
                 if self.currentIndex == 3 {
-                    #if os(iOS)
+                   
                     MainCircle(isGazingAtTarget: self.isGlowing, position: self.ballPosition)
                         .onAppear {
                             // Start animations only if size is known and on iOS
@@ -343,7 +343,7 @@ struct OnboardingView: View {
                                 self.generateNotifications() // Note: Notifications will also only generate on iOS with this structure
                             }
                         }
-                    #endif // End os(iOS) check
+                    
                 }
                 
                 VStack {
