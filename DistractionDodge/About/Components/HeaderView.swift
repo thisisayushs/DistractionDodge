@@ -7,9 +7,14 @@ import SwiftUI
 struct HeaderView: View {
     var body: some View {
         VStack {
+            
             Image("Icon")
                 .resizable()
+            #if os(iOS)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            #elseif os(visionOS)
+                .clipShape(Circle())
+            #endif
                 .frame(width: 100, height: 100)
                 .shadow(color: .white.opacity(0.3), radius: 10)
             
@@ -23,6 +28,6 @@ struct HeaderView: View {
             .foregroundStyle(.white)
           
         }
-        .padding(.top, 80)
+        .padding(.top, 60)
     }
 }

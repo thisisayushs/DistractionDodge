@@ -109,10 +109,10 @@ struct ConclusionView: View {
             .ignoresSafeArea()
             #endif
             
-            #if os(iOS)
+            
             DistractionBackground()
                 .blur(radius: 20)
-            #endif
+            
             
             GeometryReader { geometry in
                 ScrollView {
