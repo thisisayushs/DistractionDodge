@@ -15,18 +15,19 @@ import HealthKitUI
 ///
 /// The Home view consists of two main pages:
 /// 1. A duration selection page with an interactive circular slider
-/// 2. A statistics page showing the user's progress and performance
+/// 2. A statistics page showing the user's progress and performance (now accessible via a button)
 ///
 /// The view uses SwiftData for persistent storage and provides a fluid,
 /// engaging interface for starting focus training sessions.
 struct Home: View {
     @Query private var sessions: [GameSession]
-    @State private var currentPage = 0
+    @State private var currentPage = 0 // Remains for BackgroundView, effectively always 0 for TabView
     @State private var selectedDuration: Double = 60
     @State private var isDragging = false
     @State private var startButtonScale: CGFloat = 1.0
     @State private var hasInteractedWithSlider = false
     @State private var showAbout = false
+    @State private var showStatsPage = false
     
     private let gradientColors: [(start: Color, end: Color)] = [
         (.black.opacity(0.8), .blue.opacity(0.2)),
@@ -92,34 +93,52 @@ struct Home: View {
                         updateDuration: updateDurationFromLocation
                     )
                     .tag(0)
-                    
-                    StatsView(sessions: sessions)
-                        .tag(1)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .automatic))
+                .tabViewStyle(.page(indexDisplayMode: .never))
             }
         }
         .overlay(alignment: .topTrailing) {
-            Button(action: {
-                showAbout = true
-            }) {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(
-                        .linearGradient(
-                            colors: [.white, .white.opacity(0.7)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+            HStack(spacing: 16) {
+                Button(action: {
+                    showStatsPage = true
+                }) {
+                    Image(systemName: "chart.dots.scatter")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(
+                            .linearGradient(
+                                colors: [.white, .white.opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-                    .padding(20)
+                }.padding(.horizontal)
+               
+
+                Button(action: {
+                    showAbout = true
+                }) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(
+                            .linearGradient(
+                                colors: [.white, .white.opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+               
             }
+            .padding(20)
             #if os(visionOS)
             .padding()
             #endif
         }
         .sheet(isPresented: $showAbout) {
             AboutView()
+        }
+        .fullScreenCover(isPresented: $showStatsPage) {
+            StatsView(sessions: sessions)
         }
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
@@ -128,13 +147,6 @@ struct Home: View {
 }
 
 // MARK: - Subviews
-/// A view representing the first page of the home screen with duration selection controls.
-///
-/// Features:
-/// - Interactive circular slider for session duration selection
-/// - Motivational messages
-/// - Dynamic visual feedback
-/// - Start button with animations
 private struct FirstPageView: View {
     @Binding var selectedDuration: Double
     @Binding var isDragging: Bool
