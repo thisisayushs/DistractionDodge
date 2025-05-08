@@ -131,18 +131,20 @@ struct AboutView: View {
                             HStack {
                                 Text("Replay Tutorial")
                                     .font(.headline)
+                                #if os(visionOS)
+                                    .padding()
+                                #endif
                                 Spacer()
                                 Image(systemName: "arrow.counterclockwise")
                                     #if os(visionOS)
-                                    .foregroundStyle(.secondary) 
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal)
                                     #else
                                     .foregroundStyle(.gray)
                                     #endif
                             }
                             .padding(.vertical, 8)
-                            #if os(visionOS)
-                            .foregroundStyle(.link) 
-                            #else // iOS
+                            #if os(iOS) // iOS
                             .foregroundStyle(.white)
                             #endif
                         }
@@ -150,6 +152,7 @@ struct AboutView: View {
                         .listRowBackground(Color.black)
                         #else // visionOS
                         .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
                         #endif
                         
                         Button {
@@ -158,18 +161,20 @@ struct AboutView: View {
                             HStack {
                                 Text("Re-watch Introduction")
                                     .font(.headline)
+                                    #if os(visionOS)
+                                        .padding()
+                                    #endif
                                 Spacer()
                                 Image(systemName: "play.circle")
                                     #if os(visionOS)
-                                    .foregroundStyle(.secondary) 
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal)
                                     #else
                                     .foregroundStyle(.gray)
                                     #endif
                             }
                             .padding(.vertical, 8)
-                            #if os(visionOS)
-                            .foregroundStyle(.link) 
-                            #else // iOS
+                            #if os(iOS) // iOS
                             .foregroundStyle(.white)
                             #endif
                         }
@@ -177,6 +182,7 @@ struct AboutView: View {
                         .listRowBackground(Color.black)
                         #else // visionOS
                         .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
                         #endif
                     } header: {
                         #if os(iOS)
