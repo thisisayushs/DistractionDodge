@@ -110,6 +110,7 @@ struct AlertView: View {
     
     var body: some View {
         ZStack {
+            #if os(iOS)
             Color.black.opacity(0.5)
                 .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
@@ -117,7 +118,7 @@ struct AlertView: View {
                         isPresented = false
                     }
                 }
-            
+            #endif
             #if os(iOS)
             alertContent
                 .background(
@@ -132,8 +133,7 @@ struct AlertView: View {
                 .padding(30) // Outer padding for iOS to give space around the alert box
             #else // visionOS
             alertContent
-                .frame(minWidth: 300, idealWidth: 450, maxWidth: 550,
-                       minHeight: 200, idealHeight: 280, maxHeight: 350) // Constrain size for visionOS
+                // Constrain size for visionOS
                 .glassBackgroundEffect(in: .rect(cornerRadius: 25)) // Standard visionOS background
                 // No outer .padding(30) for visionOS; the ZStack handles centering.
             #endif
