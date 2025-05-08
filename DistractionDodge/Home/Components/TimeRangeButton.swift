@@ -29,5 +29,8 @@ struct TimeRangeButton: View {
                         .stroke(Color.white.opacity(isSelected ? 0 : 0.3), lineWidth: 1)
                 )
         }
+        #if os(visionOS)
+        .buttonStyle(.plain)
+        #endif
     }
 }

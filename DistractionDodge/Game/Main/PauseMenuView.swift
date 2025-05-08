@@ -35,12 +35,15 @@ struct PauseMenuView: View {
     var body: some View {
         ZStack {
             
+            // CHANGE: Conditional gradient background for iOS only
+            #if os(iOS)
             LinearGradient(
                 gradient: Gradient(colors: [.black.opacity(0.8), .purple.opacity(0.2)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
+            #endif
             
             VStack(spacing: 35) {
                 Text("Game Paused")
@@ -73,6 +76,11 @@ struct PauseMenuView: View {
                 }
             }
             .padding(40)
+            // ADD: Conditional background and frame for visionOS
+            #if os(visionOS)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 35)) // Use corner radius from presentation
+            .frame(minWidth: 300, idealWidth: 400, maxWidth: 500) // Adjust width as needed
+            #endif
         }
         .presentationBackground(.clear)
         .presentationCornerRadius(35)
@@ -106,17 +114,20 @@ struct MenuButton: View {
                 .font(.system(.title3, design: .rounded))
                 .bold()
         }
-        .foregroundColor(.white)
+        .foregroundColor(.white) // This should be fine with .ultraThinMaterial
         .frame(maxWidth: .infinity)
         .padding(.vertical, 15)
+        // CHANGE: Conditional background styling for iOS only
+        #if os(iOS)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(0.15))
-                .background(
+                .background( // This nested background is a bit unusual, consider simplifying if it's not rendering as expected
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(Color.white.opacity(0.3), lineWidth: 1)
                 )
                 .shadow(color: .black.opacity(0.2), radius: 10)
         )
+        #endif
     }
 }

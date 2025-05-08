@@ -16,7 +16,10 @@ struct ResourceRowView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(resource.title)
                         .font(.headline)
+                        #if os(iOS)
                         .foregroundStyle(.white)
+                        #else
+                        #endif
                     
                     Text(resource.type == ResourceType.documentary ? "Director: \(resource.author)" : "Author: \(resource.author)")
                         .font(.subheadline)
@@ -31,6 +34,10 @@ struct ResourceRowView: View {
                     .font(.system(size: 14))
             }
         }
+        #if os(iOS)
         .listRowBackground(Color.black)
+        #else
+        .listRowBackground(Color.clear)
+        #endif
     }
 }

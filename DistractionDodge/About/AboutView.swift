@@ -25,6 +25,8 @@ struct AboutView: View {
     /// Controls visibility of the introduction replay
     @State private var replayIntroduction = false
     
+    @Environment(\.dismiss) var dismiss
+    
     /// Collection of educational resources
     private let resources: [Resource] = [
         Resource(title: "Myth and Mystery of Shrinking Attention Span",
@@ -76,42 +78,79 @@ struct AboutView: View {
     
     var body: some View {
         ZStack {
+            #if os(iOS)
             Color.black.opacity(0.7).ignoresSafeArea()
+            #endif
             
             VStack(spacing: 20) {
-                HeaderView()
+                #if os(visionOS)
+                HStack {
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Dismiss")
+                            .font(.headline)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                    }
+                    .background(.thinMaterial, in: Capsule())
+                    .buttonStyle(.plain)
+                }
+                .padding() // Adjust spacing as needed
+                #endif
+                
+                HeaderView() 
                 
                 List {
                     ForEach(ResourceType.allCases, id: \.self) { type in
                         if let resources = groupedResources[type] {
-                            Section(header: Text(type.headerTitle).padding(.vertical).foregroundStyle(.white)) {
+                            Section {
                                 ForEach(resources) { resource in
                                     ResourceRowView(resource: resource) {
                                         UIApplication.shared.open(resource.url)
                                     }
                                 }
+                            } header: {
+                                #if os(iOS)
+                                Text(type.headerTitle).padding(.vertical).foregroundStyle(.white)
+                                #else // visionOS
+                                Text(type.headerTitle) 
+                                #endif
                             }
+                            #if os(visionOS)
+                            .listRowSeparator(.hidden) 
+                            #endif
                         }
                     }
                     
-                    Section(header: Text("More Options").padding(.vertical).foregroundStyle(.white)) {
+                    Section {
                         Button {
                             replayTutorial = true
                         } label: {
                             HStack {
                                 Text("Replay Tutorial")
                                     .font(.headline)
-                                    .foregroundStyle(.white)
-                                
                                 Spacer()
-                                
                                 Image(systemName: "arrow.counterclockwise")
+                                    #if os(visionOS)
+                                    .foregroundStyle(.secondary) 
+                                    #else
                                     .foregroundStyle(.gray)
-                                    .font(.system(size: 14))
+                                    #endif
                             }
                             .padding(.vertical, 8)
+                            #if os(visionOS)
+                            .foregroundStyle(.link) 
+                            #else // iOS
+                            .foregroundStyle(.white)
+                            #endif
                         }
+                        #if os(iOS)
                         .listRowBackground(Color.black)
+                        #else // visionOS
+                        .buttonStyle(.plain)
+                        #endif
                         
                         Button {
                             replayIntroduction = true
@@ -119,22 +158,47 @@ struct AboutView: View {
                             HStack {
                                 Text("Re-watch Introduction")
                                     .font(.headline)
-                                    .foregroundStyle(.white)
-                                
                                 Spacer()
-                                
                                 Image(systemName: "play.circle")
+                                    #if os(visionOS)
+                                    .foregroundStyle(.secondary) 
+                                    #else
                                     .foregroundStyle(.gray)
-                                    .font(.system(size: 14))
+                                    #endif
                             }
                             .padding(.vertical, 8)
+                            #if os(visionOS)
+                            .foregroundStyle(.link) 
+                            #else // iOS
+                            .foregroundStyle(.white)
+                            #endif
                         }
+                        #if os(iOS)
                         .listRowBackground(Color.black)
+                        #else // visionOS
+                        .buttonStyle(.plain)
+                        #endif
+                    } header: {
+                        #if os(iOS)
+                        Text("More Options").padding(.vertical).foregroundStyle(.white)
+                        #else // visionOS
+                        Text("More Options") 
+                        #endif
                     }
+                    #if os(visionOS)
+                    .listRowSeparator(.hidden) 
+                    #endif
                 }
+                #if os(iOS)
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                #endif
             }
+            #if os(visionOS)
+            .frame(width: 600, height: 700) 
+            .glassBackgroundEffect(in: .rect(cornerRadius: 20)) 
+            .padding(30) 
+            #endif
         }
         .fullScreenCover(isPresented: $replayTutorial) {
             TutorialView()

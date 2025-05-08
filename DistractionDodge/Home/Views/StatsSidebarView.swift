@@ -126,6 +126,9 @@ struct StatsSidebarView: View {
                         )
                 )
             }
+            #if os(visionOS)
+            .buttonStyle(.plain)
+            #endif
             .disabled(isAuthorizing)
             .alert("Health Access Required", isPresented: $showSettings) {
                 Button("Open Health", role: .none) {

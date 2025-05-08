@@ -164,6 +164,7 @@ struct TutorialView: View {
                                 .foregroundColor(.white.opacity(0.7))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
+                                #if os(iOS)
                                 .background(
                                     Capsule()
                                         .fill(Color.white.opacity(0.15))
@@ -172,6 +173,7 @@ struct TutorialView: View {
                                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                         )
                                 )
+                                #endif
                         }
                         .padding(.top, 50)
                         .padding(.trailing, 20)
@@ -636,7 +638,9 @@ struct TutorialView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 10)
+                                #if os(iOS)
                                 .background(Capsule().fill(Color.white.opacity(0.2)))
+                                #endif
                             }
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                             .disabled(isNavigating)
@@ -665,7 +669,9 @@ struct TutorialView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
+                            #if os(iOS)
                             .background(Capsule().fill(Color.white.opacity(0.2)))
+                            #endif
                             .scaleEffect(showNextButton ? nextButtonScale : 1.0)
                         }
                         .disabled(isNavigating)

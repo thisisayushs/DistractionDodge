@@ -109,8 +109,10 @@ struct ConclusionView: View {
             .ignoresSafeArea()
             #endif
             
+            #if os(iOS)
             DistractionBackground()
                 .blur(radius: 20)
+            #endif
             
             GeometryReader { geometry in
                 ScrollView {
@@ -130,7 +132,6 @@ struct ConclusionView: View {
                                 .scaleEffect(scoreScale)
                                 .animation(.interpolatingSpring(stiffness: 170, damping: 15).delay(0.1), value: scoreScale)
                                 .onAppear {
-                                    
                                     displayedScore = 0
                                     scoreScale = 0.5
                                     isAnimating = false
@@ -175,10 +176,12 @@ struct ConclusionView: View {
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                                 .padding(.vertical, 15)
+                                #if os(iOS)
                                 .background(
                                     RoundedRectangle(cornerRadius: 15)
                                         .fill(Color.white.opacity(0.15))
                                 )
+                                #endif
                             
                             HStack(spacing: 20) {
                                 StatCard(
@@ -207,6 +210,7 @@ struct ConclusionView: View {
                                     .foregroundColor(.white)
                                     .padding(.vertical, 16)
                                     .padding(.horizontal, 35)
+                                    #if os(iOS)
                                     .background(
                                         Capsule()
                                             .fill(Color.white.opacity(0.2))
@@ -216,6 +220,7 @@ struct ConclusionView: View {
                                             )
                                             .shadow(color: .white.opacity(0.3), radius: 5, x: 0, y: 2)
                                     )
+                                    #endif
                                 }
                                 .scaleEffect(buttonScale)
                                 .onChange(of: shouldAnimateButton) { _, newValue in
@@ -240,6 +245,7 @@ struct ConclusionView: View {
                                     .foregroundColor(.white.opacity(0.8))
                                     .padding(.vertical, 16)
                                     .padding(.horizontal, 35)
+                                    #if os(iOS)
                                     .background(
                                         Capsule()
                                             .fill(Color.white.opacity(0.15))
@@ -249,6 +255,7 @@ struct ConclusionView: View {
                                             )
                                             .shadow(color: .white.opacity(0.2), radius: 5, x: 0, y: 2)
                                     )
+                                    #endif
                                 }
                             }
                         }
@@ -266,42 +273,6 @@ struct ConclusionView: View {
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
         .onAppear {
-            displayedScore = 0
-            scoreScale = 0.5
-            isAnimating = false
-            shouldAnimateButton = false
-            
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.5)) {
-                scoreScale = 1.0
-            }
-            
-            let finalScore = viewModel.score
-            let animationDuration: TimeInterval = 1.5
-            
-            let timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
-                if displayedScore < finalScore {
-                    displayedScore += 1
-                    
-                    if displayedScore % 10 == 0 {
-                        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
-                            scoreScale = 1.1
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
-                                scoreScale = 1.0
-                            }
-                        }
-                    }
-                } else {
-                    timer.invalidate()
-                    
-                    shouldAnimateButton = true
-                }
-            }
-            
-            if finalScore > 0 {
-                timer.tolerance = animationDuration / Double(finalScore)
-            }
             saveMindfulMinutes()
         }
         .fullScreenCover(isPresented: $showHome) {

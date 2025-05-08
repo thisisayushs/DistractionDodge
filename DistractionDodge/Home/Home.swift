@@ -114,6 +114,9 @@ struct Home: View {
                     )
                     .padding(20)
             }
+            #if os(visionOS)
+            .padding()
+            #endif
         }
         .sheet(isPresented: $showAbout) {
             AboutView()
@@ -342,6 +345,9 @@ private struct GlowingSliderThumb: View {
             .shadow(color: .white.opacity(0.7), radius: isDragging ? 12 : 8)
             .position(thumbPosition)
             .scaleEffect(isDragging ? 1.2 : 1.0)
+            #if os(visionOS)
+            .hoverEffect()
+            #endif
             .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isDragging)
             .animation(.easeInOut(duration: 0.1), value: selectedDuration)
     }
@@ -403,16 +409,19 @@ private struct StartButton: View {
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .frame(width: 280, height: 60)
+                #if os(iOS) // Conditional background styling for iOS
                 .background(.ultraThinMaterial)
-               
                 .clipShape(Capsule())
                 .overlay(
                     Capsule()
                         .stroke(.white.opacity(0.2), lineWidth: 1)
                 )
                 .shadow(color: .white.opacity(0.2), radius: 15)
+                #endif
         }
-       
+        #if os(visionOS)
+        .buttonStyle(.plain)
+        #endif
         .scaleEffect(hasInteracted ? buttonScale : 1.0)
         .onChange(of: hasInteracted) { _, newValue in
             if newValue {

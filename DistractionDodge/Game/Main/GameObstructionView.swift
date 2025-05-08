@@ -95,6 +95,9 @@ struct GameObstructionView: View {
                         )
                         .shadow(color: .black.opacity(0.2), radius: 10)
                 }
+                #if os(visionOS)
+                .buttonStyle(.plain)
+                #endif
                 .padding(.top, 20)
             }
             .padding(40)

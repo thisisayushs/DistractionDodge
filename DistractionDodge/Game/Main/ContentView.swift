@@ -145,6 +145,9 @@ struct ContentView: View {
                                 )
                                 .frame(width: 44, height: 44)
                         }
+                        #if os(visionOS)
+                        .buttonStyle(.plain) // This removes default button styling on visionOS
+                        #endif
                         .padding(.trailing, 20)
                     }
                     .padding(.top, 40)
