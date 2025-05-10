@@ -385,7 +385,7 @@ struct OnboardingView: View {
                                 .padding(.vertical, 8)
                             
                                 #if os(iOS)
-                                .background(
+                                .background( // This background is for the Text label on iOS
                                     Capsule()
                                         .fill(Color.white.opacity(0.15))
                                         .overlay(
@@ -393,26 +393,21 @@ struct OnboardingView: View {
                                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                         )
                                 )
-                                #elseif os(visionOS)
-                                .buttonStyle(.plain) // Apply plain style for visionOS
                                 #endif
-                        }
+                        } // End of Button's label closure
                         #if os(visionOS)
-                        .padding([.top, .trailing], 25) // Matches visionOSTutorialView skip button padding
-                        #else
-                        .padding(.top, 50) // Keep original iOS padding
+                        .buttonStyle(.plain)
+                        .padding([.top, .trailing], 25) 
+                        #else // iOS specific padding for the Button
+                        .padding(.top, 50) 
                         .padding(.horizontal, 20)
                         #endif
-                    }
-                    #if os(iOS) // Keep original iOS padding for HStack
+                    } // End of HStack for top buttons
+                    #if os(iOS) 
                     .padding(.top, 50)
                     .padding(.horizontal, 20)
                     #elseif os(visionOS)
-                    // For visionOS, the skip button itself has padding, so HStack might not need as much, or different.
-                    // Let's assume the individual button padding for visionOS is sufficient for positioning.
-                    // Or, adjust this HStack padding if needed for overall layout on visionOS.
-                    // For now, an empty else to signify conditional structure.
-                    .frame(height: 50) // Match height from visionOSTutorialView
+                    .frame(height: 50) 
                     #endif
                     
                     Spacer()

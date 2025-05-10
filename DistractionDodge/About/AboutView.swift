@@ -207,7 +207,11 @@ struct AboutView: View {
             #endif
         }
         .fullScreenCover(isPresented: $replayTutorial) {
+            #if os(iOS)
             TutorialView()
+            #elseif os(visionOS)
+            visionOSTutorialView()
+            #endif
         }
         .fullScreenCover(isPresented: $replayIntroduction) {
             OnboardingView()
