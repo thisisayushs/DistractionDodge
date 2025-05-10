@@ -4,7 +4,7 @@
 //
 //  Created by Ayush Kumar Singh on 11/02/25.
 //
-
+#if os(iOS)
 import SwiftUI
 import SwiftData
 
@@ -221,7 +221,7 @@ struct TutorialView: View {
                         switch tutorialSteps[currentStep].scoringType {
                         case .introduction:
                             ZStack {
-                                #if os(iOS)
+                                
                                 EyeTrackingView { isGazing in
                                     if self.demoIsGazing != isGazing {
                                         self.demoIsGazing = isGazing
@@ -265,40 +265,7 @@ struct TutorialView: View {
                                         }
                                     }
                                 }
-                                #else
-                                Color.clear
-                                    .frame(width: 0, height: 0)
-                                    .onAppear {
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                            if self.currentStep == 0 && !self.demoIsGazing && !self.isMovingBall && !self.hasDemonstratedFollowing {
-                                                print("Simulating gaze ON for visionOS intro")
-                                                self.demoIsGazing = true
-                                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                                                    print("Simulating ball movement START for visionOS intro")
-                                                    withAnimation {
-                                                        isMovingBall = true
-                                                        if self.viewSize != .zero { self.startBallMovement() }
-                                                    }
-                                                }
-                                                DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
-                                                     print("Simulating ball movement END for visionOS intro")
-                                                     withAnimation(.easeInOut(duration: 0.5)) {
-                                                        isMovingBall = false
-                                                        if self.viewSize != .zero { self.customPosition = CGPoint(x: self.viewSize.width / 2, y: self.viewSize.height * 0.15) }
-                                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                                             print("Simulating show NEXT button for visionOS intro")
-                                                             withAnimation(.easeInOut) {
-                                                                hasDemonstratedFollowing = true
-                                                                showNextButton = true
-                                                                withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { nextButtonScale = 1.1 }
-                                                            }
-                                                        }
-                                                     }
-                                                }
-                                            }
-                                        }
-                                    }
-                                #endif
+                       
                                 VStack(spacing: 60) {
                                     HStack {
                                         Image(systemName: "eye")
@@ -1084,3 +1051,4 @@ struct TutorialView: View {
 #Preview {
     TutorialView()
 }
+#endif

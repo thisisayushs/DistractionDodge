@@ -5,6 +5,8 @@
 //  Created by Ayush Kumar Singh on 28/12/24.
 //
 
+#if os(iOS)
+
 import SwiftUI
 import AVFoundation
 import SwiftData
@@ -57,7 +59,7 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                #if os(iOS)
+               
                 LinearGradient(
                     gradient: Gradient(colors: gradientColors),
                     startPoint: .topLeading,
@@ -65,17 +67,17 @@ struct ContentView: View {
                 )
                     .edgesIgnoringSafeArea(.all) // This modifier is fine on the gradient
                     .animation(.easeInOut(duration: 2.0), value: viewModel.backgroundGradient)
-                #endif
+                
 
                 // --- Eye Tracking Handling ---
-                #if os(iOS)
-                // Only include EyeTrackingView on iOS where ARKit face tracking is used
+                
+                
                 EyeTrackingView { isGazing in
                     viewModel.updateGazeStatus(isGazing)
                 }
-                // Apply modifier only when the view exists
+                
                 .edgesIgnoringSafeArea(.all)
-                #endif
+               
 
                 // VideoDistraction - placed after geometry is known
                 VideoDistraction()
@@ -145,9 +147,7 @@ struct ContentView: View {
                                 )
                                 .frame(width: 44, height: 44)
                         }
-                        #if os(visionOS)
-                        .buttonStyle(.plain) // This removes default button styling on visionOS
-                        #endif
+                        
                         .padding(.trailing, 20)
                     }
                     .padding(.top, 40)
@@ -163,12 +163,6 @@ struct ContentView: View {
 
                 // Pass the view size to the ViewModel
                 viewModel.updateViewSize(geometry.size)
-
-                // ADD: Platform-specific logic INSIDE the correct .onAppear
-                #if !os(iOS)
-                // On visionOS (or other non-iOS), simulate gaze being true for now.
-                 viewModel.updateGazeStatus(true)
-                #endif
 
                 // Start the game logic AFTER size setup and potential gaze simulation
                 viewModel.updateModelContext(modelContext)
@@ -206,6 +200,4 @@ struct ContentView: View {
     } // End body
 } // End struct
 
-#Preview {
-    ContentView()
-}
+#endif

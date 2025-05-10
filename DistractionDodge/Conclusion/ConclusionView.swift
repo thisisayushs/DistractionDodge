@@ -162,10 +162,6 @@ struct ConclusionView: View {
             .ignoresSafeArea()
             DistractionBackground()
                 .blur(radius: 20)
-            #elseif os(visionOS)
-            RealityViewPlaceholder(color: .clear)
-                .background(.ultraThinMaterial)
-                .ignoresSafeArea()
             #endif
             
             
@@ -355,12 +351,3 @@ struct ConclusionView: View {
     }
 }
 
-#if os(visionOS)
-// Placeholder for RealityView if not fully implemented or needed for background
-struct RealityViewPlaceholder: View {
-    var color: Color = .clear
-    var body: some View {
-        color
-    }
-}
-#endif
