@@ -8,6 +8,10 @@ import HealthKit
 struct StatsSidebarView: View {
     /// Array of completed game sessions
     let sessions: [GameSession]
+    /// All-time longest streak for iOS (time-based)
+    let longestIOSStreak: TimeInterval
+    /// All-time longest streak for visionOS (count-based)
+    let longestVisionOSStreak: Double
     /// HealthKit sync status
     @Binding var isSynced: Bool
     /// HealthKit authorization status
@@ -22,10 +26,17 @@ struct StatsSidebarView: View {
     /// - Parameter seconds: Duration in seconds
     /// - Returns: Formatted string (e.g. "2m 30s")
     private func formatTime(_ seconds: TimeInterval) -> String {
+        guard seconds > 0 else { return "0s" }
         let minutes = Int(seconds) / 60
         let remainingSeconds = Int(seconds) % 60
-        return seconds < 60 ? "\(Int(seconds))s" :
-               "\(minutes)m \(remainingSeconds)s"
+        
+        if minutes > 0 && remainingSeconds > 0 {
+            return "\(minutes)m \(remainingSeconds)s"
+        } else if minutes > 0 {
+            return "\(minutes)m"
+        } else {
+            return "\(remainingSeconds)s"
+        }
     }
     
     /// Initiates HealthKit authorization and sync process
@@ -36,31 +47,103 @@ struct StatsSidebarView: View {
         }
         
         let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
-        let status = healthStore.authorizationStatus(for: mindfulType)
+        let currentStatus = healthStore.authorizationStatus(for: mindfulType)
         
-        if !isSynced {
-            if status == .notDetermined {
-                isSynced = false
-                isAuthorizing = true
-                
-                healthStore.requestAuthorization(toShare: [mindfulType], read: []) { success, error in
-                    DispatchQueue.main.async {
-                        isAuthorizing = false
-                        if success {
-                            withAnimation {
-                                isSynced = true
+        if currentStatus == .notDetermined {
+            isAuthorizing = true // Show progress indicator
+            healthStore.requestAuthorization(toShare: [mindfulType], read: []) { success, error in
+                DispatchQueue.main.async {
+                    if success {
+                        // Permission granted, now write historical data
+                        self.writeHistoricalDataToHealthKit { writeSuccess in
+                            // The writeSuccess parameter indicates if the batch save was generally successful
+                            // Individual errors are logged within writeHistoricalDataToHealthKit
+                            if writeSuccess {
+                                withAnimation { self.isSynced = true }
+                            } else {
+                                // Optionally, show a more specific error if the batch write failed
+                                self.showError = true // Using generic error for now
                             }
-                        } else {
-                            showError = true
+                            self.isAuthorizing = false // Hide progress indicator
                         }
+                    } else {
+                        self.showError = true
+                        self.isAuthorizing = false // Hide progress indicator
                     }
                 }
-            } else {
-                showSettings = true
             }
+        } else if currentStatus == .sharingAuthorized {
+            // Already authorized, user might be tapping to ensure historical data is synced
+            // or if isSynced state variable was false for some reason.
+            isAuthorizing = true // Show progress indicator
+            self.writeHistoricalDataToHealthKit { writeSuccess in
+                DispatchQueue.main.async {
+                    if writeSuccess {
+                        withAnimation { self.isSynced = true }
+                    } else {
+                        self.showError = true
+                    }
+                    self.isAuthorizing = false // Hide progress indicator
+                }
+            }
+        } else { // currentStatus is .sharingDenied
+            showSettings = true // Prompt user to go to settings
         }
     }
     
+    private func writeHistoricalDataToHealthKit(completion: @escaping (Bool) -> Void) {
+        guard !sessions.isEmpty else {
+            print("HealthKit Sync: No historical sessions to write.")
+            completion(true) // Nothing to sync, consider it a success
+            return
+        }
+
+        let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
+        var samplesToSave: [HKCategorySample] = []
+
+        for session in sessions {
+            // session.totalFocusTime is already platform-specific:
+            // - For visionOS, it's actualPlayedDuration.
+            // - For iOS, it's the eye-gaze totalFocusTime.
+            guard session.totalFocusTime > 0 else {
+                print("HealthKit Sync: Skipping session with zero duration: \(session.date)")
+                continue
+            }
+
+            let endDate = session.date // This is the completion date of the session
+            let startDate = endDate.addingTimeInterval(-session.totalFocusTime)
+            
+            let sample = HKCategorySample(
+                type: mindfulType,
+                value: HKCategoryValue.notApplicable.rawValue,
+                start: startDate,
+                end: endDate
+            )
+            samplesToSave.append(sample)
+        }
+
+        guard !samplesToSave.isEmpty else {
+            print("HealthKit Sync: No valid historical sessions with positive duration to save.")
+            completion(true) // No valid samples to save, consider it success for flow
+            return
+        }
+        
+        healthStore.save(samplesToSave) { success, error in
+            if let error = error {
+                print("HealthKit Sync: Error saving batch of \(samplesToSave.count) historical mindful minutes: \(error.localizedDescription)")
+                completion(false)
+            } else if success {
+                print("HealthKit Sync: Successfully saved batch of \(samplesToSave.count) historical mindful sessions.")
+                completion(true)
+            } else {
+                // This case should ideally not happen if error is nil and success is false,
+                // but as a fallback:
+                print("HealthKit Sync: Saving batch of historical mindful minutes failed for an unknown reason.")
+                completion(false)
+            }
+        }
+    }
+
     var body: some View {
         VStack(alignment: .center, spacing: 20) {
             Spacer()
@@ -78,11 +161,19 @@ struct StatsSidebarView: View {
                 icon: "trophy.fill"
             )
             
+            #if os(visionOS)
             StatCard(
                 title: "Best Streak",
-                value: formatTime(sessions.map { $0.bestStreak }.max() ?? 0),
+                value: "\(Int(longestVisionOSStreak))",
+                icon: "sparkles"
+            )
+            #else
+            StatCard(
+                title: "Best Streak",
+                value: formatTime(longestIOSStreak),
                 icon: "bolt.fill"
             )
+            #endif
 
             Button(action: syncToHealth) {
                 HStack(spacing: 12) {

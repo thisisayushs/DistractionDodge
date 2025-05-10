@@ -1,5 +1,6 @@
 import SwiftUI
 import Charts
+import SwiftData
 
 /// Main content view for statistics display.
 /// - Manages data filtering and transformation
@@ -19,14 +20,22 @@ struct StatsContentView: View {
     /// Settings sheet presentation flag
     @Binding var showSettings: Bool
     @Environment(\.healthStore) private var healthStore
+
+    /// Query for UserProgress
+    @Query private var userProgressList: [UserProgress]
+
+    /// Computed property to safely access the first UserProgress object
+    private var userProgress: UserProgress? {
+        userProgressList.first
+    }
     
     /// Filtered focus time data based on selected range
     private var focusTimeData: [(date: Date, minutes: Double)] {
         Dictionary(grouping: filteredSessions) { session in
             Calendar.current.startOfDay(for: session.date)
         }
-        .map { date, sessions in
-            (date, sessions.reduce(0) { $0 + $1.totalFocusTime } / 60)
+        .map { date, sessionsInDay in
+            (date, sessionsInDay.reduce(0) { $0 + $1.totalFocusTime } / 60)
         }
         .sorted { $0.date < $1.date }
     }
@@ -36,8 +45,8 @@ struct StatsContentView: View {
         Dictionary(grouping: filteredSessions) { session in
             Calendar.current.startOfDay(for: session.date)
         }
-        .map { date, sessions in
-            (date, sessions.map { $0.bestStreak }.max() ?? 0)
+        .map { date, sessionsInDay in
+            (date, sessionsInDay.map { $0.bestStreak }.max() ?? 0)
         }
         .sorted { $0.date < $1.date }
     }
@@ -62,6 +71,8 @@ struct StatsContentView: View {
             
             StatsSidebarView(
                 sessions: sessions,
+                longestIOSStreak: userProgress?.longestStreak ?? 0,
+                longestVisionOSStreak: userProgress?.longestVisionOSStreak ?? 0.0,
                 isSynced: $isSynced,
                 isAuthorizing: $isAuthorizing,
                 showError: $showError,

@@ -26,6 +26,50 @@ struct GameObstructionView: View {
     @ObservedObject var viewModel: AttentionViewModel
     @Binding var isPresented: Bool
     
+    private var titleText: String {
+        switch viewModel.endGameReason {
+        case .distractionTap:
+            return "Attention Lost!"
+        case .heartsDepleted:
+            return "Out of Hearts!"
+        case .timeUp: // Should ideally be handled by ConclusionView, but good to have a fallback
+            return "Time's Up!"
+        }
+    }
+    
+    private var messageText: String {
+        switch viewModel.endGameReason {
+        case .distractionTap:
+            return "You got distracted and tapped on a distraction object."
+        case .heartsDepleted:
+            return "You got distracted and missed too many holograms."
+        case .timeUp:
+            return "The game session has ended as time ran out."
+        }
+    }
+    
+    private var iconName: String {
+        switch viewModel.endGameReason {
+        case .distractionTap:
+            return "exclamationmark.triangle.fill"
+        case .heartsDepleted:
+            return "heart.slash.fill" // More appropriate icon for hearts depleted
+        case .timeUp:
+            return "timer.square"
+        }
+    }
+    
+    private var iconColors: [Color] {
+        switch viewModel.endGameReason {
+        case .distractionTap:
+            return [.yellow, .orange]
+        case .heartsDepleted:
+            return [.pink, .red] // Colors for hearts depleted
+        case .timeUp:
+            return [.gray, .blue]
+        }
+    }
+    
     var body: some View {
         ZStack {
             LinearGradient(
@@ -37,11 +81,11 @@ struct GameObstructionView: View {
             
             VStack(spacing: 35) {
                 VStack(spacing: 25) {
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    Image(systemName: iconName)
                         .font(.system(size: 60))
                         .foregroundStyle(
                             .linearGradient(
-                                colors: [.yellow, .orange],
+                                colors: iconColors,
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
@@ -49,12 +93,12 @@ struct GameObstructionView: View {
                         .padding(.bottom)
                     
                     VStack(spacing: 15) {
-                        Text("Attention Lost!")
+                        Text(titleText)
                             .font(.system(.title, design: .rounded))
                             .bold()
                             .foregroundColor(.white)
                         
-                        Text("You got distracted and tapped on a distraction object.")
+                        Text(messageText)
                             .font(.system(.body, design: .rounded))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
@@ -75,7 +119,13 @@ struct GameObstructionView: View {
                 Button {
                     isPresented = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        viewModel.startGame()
+                        // Assuming GameObstructionView is primarily for visionOS game over by hearts or iOS distraction tap.
+                        // If it's visionOS:
+                        if viewModel.endGameReason == .heartsDepleted || viewModel.endGameReason == .timeUp && viewModel.isVisionOSMode {
+                             viewModel.startGame(isVisionOSGame: true)
+                        } else { // iOS distraction tap or iOS time up (though time up usually goes to ConclusionView)
+                             viewModel.startGame(isVisionOSGame: false)
+                        }
                     }
                 } label: {
                     Text("Try Again")

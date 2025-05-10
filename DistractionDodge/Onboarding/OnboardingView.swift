@@ -39,7 +39,6 @@ struct OnboardingView: View {
     @State private var isGlowing = false
 
     /// Position of the interactive ball demonstration
-    // CHANGE: Initialize to zero, set later with GeometryReader
     @State private var ballPosition: CGPoint = .zero
 
     /// Timer for generating notifications in the demo
@@ -152,7 +151,6 @@ struct OnboardingView: View {
     }
     
     private func moveBallContinuously() {
-        // ADD: Guard against zero view size
         guard viewSize != .zero else {
             print("OnboardingView: Cannot move ball, viewSize is zero.")
             return
@@ -163,7 +161,6 @@ struct OnboardingView: View {
                 return
             }
             
-            // ADD: Guard again just in case size becomes zero during timer life
             guard self.viewSize != .zero else {
                 timer.invalidate()
                 return
@@ -171,7 +168,6 @@ struct OnboardingView: View {
 
             let speed: CGFloat = 3.0
             let ballSize: CGFloat = 100
-            // CHANGE: Use stored viewSize
             let currentSize = self.viewSize
             
             var newX = self.ballPosition.x + (self.moveDirection.x * speed)
@@ -196,7 +192,6 @@ struct OnboardingView: View {
     }
     
     private func generateNotifications() {
-        // ADD: Guard against zero view size
         guard viewSize != .zero else {
             print("OnboardingView: Cannot generate notifications, viewSize is zero.")
             return
@@ -207,7 +202,6 @@ struct OnboardingView: View {
                 return
             }
             
-            // ADD: Guard again just in case size becomes zero during timer life
             guard self.viewSize != .zero else {
                 timer.invalidate()
                 return
@@ -217,7 +211,6 @@ struct OnboardingView: View {
             let bottomSafeArea: CGFloat = 120
             let sideSafeArea: CGFloat = 50
             
-            // CHANGE: Use stored viewSize
             let currentWidth = self.viewSize.width
             let currentHeight = self.viewSize.height
             
@@ -260,7 +253,6 @@ struct OnboardingView: View {
     }
     
     private func resetAndStartAnimations() {
-        // ADD: Guard against zero view size before starting animations that depend on it
         guard viewSize != .zero else {
             print("OnboardingView: Cannot reset/start animations, viewSize is zero.")
             return
@@ -273,14 +265,12 @@ struct OnboardingView: View {
             }
         }
 
-        // CHANGE: Use stored viewSize to set initial position
         ballPosition = CGPoint(x: 100, y: viewSize.height / 2) // Keep X fixed, set Y based on size
         moveDirection = CGPoint(x: 1, y: 1)
         moveBallContinuously()
         generateNotifications()
     }
     
-    // ADD: State variable to hold the view size
     @State private var viewSize: CGSize = .zero
     
     @State private var activeLineIndex = 0
@@ -305,7 +295,10 @@ struct OnboardingView: View {
                 )
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 1.0), value: self.currentIndex)
-                        #endif
+                #elseif os(visionOS)
+                Color.clear.ignoresSafeArea()
+                #endif
+
                 if self.currentIndex == 3 {
                     ForEach(self.notifications, id: \.id) { notification in
                         Image(systemName: notification.type.rawValue)
@@ -325,22 +318,24 @@ struct OnboardingView: View {
                     }
                 }
                 
+                #if os(iOS) // Keep DistractionBackground for iOS only if it's iOS-specific
                 DistractionBackground()
                     .blur(radius: 20)
+                #endif
 
                 
                 if self.currentIndex == 3 {
                    
                     MainCircle(isGazingAtTarget: self.isGlowing, position: self.ballPosition)
                         .onAppear {
-                            // Start animations only if size is known and on iOS
+                            // Start animations only if size is known
                             if self.viewSize != .zero {
                                 withAnimation(Animation.easeInOut(duration: 2.0).repeatForever()) {
                                     self.isGlowing.toggle()
                                 }
                                 // Call the functions that now internally check viewSize
                                 self.moveBallContinuously()
-                                self.generateNotifications() // Note: Notifications will also only generate on iOS with this structure
+                                self.generateNotifications()
                             }
                         }
                     
@@ -348,6 +343,7 @@ struct OnboardingView: View {
                 
                 VStack {
                     HStack {
+                        #if os(iOS)
                         if self.currentIndex > 0 {
                             Button(action: {
                                 self.navigate(forward: false)
@@ -361,7 +357,7 @@ struct OnboardingView: View {
                                 .foregroundColor(.white.opacity(0.7))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
-                                #if os(iOS)
+                                
                                 .background(
                                     Capsule()
                                         .fill(Color.white.opacity(0.15))
@@ -370,10 +366,11 @@ struct OnboardingView: View {
                                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                         )
                                 )
-                                #endif
+                                
                             }
                             .disabled(isNavigating)
                         }
+                        #endif
                         
                         Spacer()
                         
@@ -381,10 +378,12 @@ struct OnboardingView: View {
                             showSkipAlert = true
                         }) {
                             Text("Skip")
+                            
                                 .font(.system(size: 17, weight: .medium, design: .rounded))
                                 .foregroundColor(.white.opacity(0.7))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
+                            
                                 #if os(iOS)
                                 .background(
                                     Capsule()
@@ -394,11 +393,27 @@ struct OnboardingView: View {
                                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                         )
                                 )
+                                #elseif os(visionOS)
+                                .buttonStyle(.plain) // Apply plain style for visionOS
                                 #endif
                         }
+                        #if os(visionOS)
+                        .padding([.top, .trailing], 25) // Matches visionOSTutorialView skip button padding
+                        #else
+                        .padding(.top, 50) // Keep original iOS padding
+                        .padding(.horizontal, 20)
+                        #endif
                     }
+                    #if os(iOS) // Keep original iOS padding for HStack
                     .padding(.top, 50)
                     .padding(.horizontal, 20)
+                    #elseif os(visionOS)
+                    // For visionOS, the skip button itself has padding, so HStack might not need as much, or different.
+                    // Let's assume the individual button padding for visionOS is sufficient for positioning.
+                    // Or, adjust this HStack padding if needed for overall layout on visionOS.
+                    // For now, an empty else to signify conditional structure.
+                    .frame(height: 50) // Match height from visionOSTutorialView
+                    #endif
                     
                     Spacer()
                     
@@ -434,8 +449,15 @@ struct OnboardingView: View {
                             }
                         }
                     }
+                    #if os(visionOS)
+                     // Match height from visionOSTutorialView
+                    .padding(.bottom, geometry.safeAreaInsets.bottom > 0 ? geometry.safeAreaInsets.bottom : 30)
+                    .padding(.horizontal, 40)
+                    #endif
                 }
+                #if os(iOS) // Keep original iOS padding for VStack
                 .padding(.bottom, 50)
+                #endif
                 
                 .gesture(
                     DragGesture()
@@ -452,20 +474,36 @@ struct OnboardingView: View {
                         }
                 )
                 
-                if showSkipAlert {
-                    AlertView(
-                        title: "Skip Introduction?",
-                        message: "You are about to skip the introduction. You will be taken to the tutorial.",
-                        primaryAction: {
-                            showTutorial = true
-                        },
-                        secondaryAction: {},
-                        isPresented: $showSkipAlert
-                    )
+                #if os(iOS)
+                .overlay { // Using overlay to keep AlertView logic for iOS
+                    if showSkipAlert {
+                        AlertView(
+                            title: "Skip Introduction?",
+                            message: "You are about to skip the introduction. You will be taken to the tutorial.",
+                            primaryAction: {
+                                showTutorial = true
+                                showSkipAlert = false // Ensure alert is dismissed
+                            },
+                            secondaryAction: {
+                                showSkipAlert = false // Ensure alert is dismissed
+                            },
+                            isPresented: $showSkipAlert
+                        )
+                    }
                 }
+                #elseif os(visionOS)
+                .alert("Skip Introduction?", isPresented: $showSkipAlert) {
+                    Button("Skip", role: .destructive) {
+                        showTutorial = true
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("You are about to skip the introduction. You will be taken to the tutorial.")
+                }
+                #endif
             } // End ZStack
-            .onAppear { 
-                if self.viewSize == .zero { 
+            .onAppear {
+                if self.viewSize == .zero {
                     self.viewSize = geometry.size
                     self.ballPosition = CGPoint(x: 100, y: geometry.size.height / 2)
                     if self.currentIndex == 3 {
@@ -473,7 +511,7 @@ struct OnboardingView: View {
                     }
                 }
             }
-            .onChange(of: geometry.size) { oldSize, newSize in 
+            .onChange(of: geometry.size) { oldSize, newSize in
                 if newSize != .zero {
                     self.viewSize = newSize
                     self.ballPosition.y = newSize.height / 2
@@ -519,11 +557,17 @@ struct OnboardingView: View {
             Home()
         }
         .fullScreenCover(isPresented: $showTutorial) {
+            #if os(iOS)
             TutorialView()
+            #elseif os(visionOS)
+            visionOSTutorialView()
+            #endif
         }
         .preferredColorScheme(.dark)
-        .statusBarHidden(true)
-        .persistentSystemOverlays(.hidden)
+        #if os(iOS)
+        .statusBarHidden(true) // Keep for iOS
+        .persistentSystemOverlays(.hidden) // Keep for iOS
+        #endif
         .onDisappear {
             // Clean up timers when the view disappears entirely
             notificationTimer?.invalidate()

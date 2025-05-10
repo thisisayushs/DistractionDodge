@@ -13,8 +13,11 @@ final class UserProgress {
     /// Highest score achieved across all sessions
     var highScore: Int
     
-    /// Longest focus streak achieved in seconds
+    /// Longest focus streak achieved in seconds (used for iOS)
     var longestStreak: TimeInterval
+    
+    /// Longest focus streak achieved on visionOS (e.g., count of successful focus periods)
+    var longestVisionOSStreak: Double
     
     /// Total number of completed sessions
     var totalSessions: Int
@@ -24,16 +27,19 @@ final class UserProgress {
     ///   - hasCompletedOnboarding: Onboarding completion status, defaults to false
     ///   - highScore: Highest score achieved, defaults to 0
     ///   - longestStreak: Longest streak in seconds, defaults to 0
+    ///   - longestVisionOSStreak: Longest streak on visionOS, defaults to 0.0
     ///   - totalSessions: Number of completed sessions, defaults to 0
     init(
         hasCompletedOnboarding: Bool = false,
         highScore: Int = 0,
         longestStreak: TimeInterval = 0,
+        longestVisionOSStreak: Double = 0.0,
         totalSessions: Int = 0
     ) {
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.highScore = highScore
         self.longestStreak = longestStreak
+        self.longestVisionOSStreak = longestVisionOSStreak
         self.totalSessions = totalSessions
     }
 }

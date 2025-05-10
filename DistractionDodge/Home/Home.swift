@@ -268,10 +268,12 @@ private struct CircularSliderView: View {
                     isGazingAtTarget: isDragging,
                     position: CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
                 )
+                .hoverEffect()
                 .scaleEffect((selectedDuration/300) * 0.5 + 0.3)
                 .animation(.easeInOut(duration: 0.3), value: selectedDuration)
                 
                 BackgroundCircle()
+                    
                 
                 ProgressCircle(selectedDuration: selectedDuration)
                 
@@ -281,6 +283,7 @@ private struct CircularSliderView: View {
                     proxy: proxy,
                     angleForDuration: angleForDuration
                 )
+                .hoverEffect()
                 
                 DragGestureArea(
                     proxy: proxy,
@@ -447,7 +450,11 @@ private struct StartButton: View {
         }
         .transition(.scale.combined(with: .opacity))
         .fullScreenCover(isPresented: $showGame) {
+            #if os(visionOS)
+            VisionOSGameHostView(duration: duration)
+            #else
             ContentView(duration: duration)
+            #endif
         }
     }
 }

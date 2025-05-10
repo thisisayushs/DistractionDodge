@@ -35,7 +35,6 @@ struct PauseMenuView: View {
     var body: some View {
         ZStack {
             
-            // CHANGE: Conditional gradient background for iOS only
             #if os(iOS)
             LinearGradient(
                 gradient: Gradient(colors: [.black.opacity(0.8), .purple.opacity(0.2)]),
@@ -62,7 +61,7 @@ struct PauseMenuView: View {
                     Button {
                         dismiss()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            viewModel.startGame()
+                            viewModel.startGame(isVisionOSGame: viewModel.isVisionOSMode)
                         }
                     } label: {
                         MenuButton(title: "Restart", icon: "arrow.clockwise")
@@ -76,7 +75,6 @@ struct PauseMenuView: View {
                 }
             }
             .padding(40)
-            // ADD: Conditional background and frame for visionOS
             #if os(visionOS)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 35)) // Use corner radius from presentation
             .frame(minWidth: 300, idealWidth: 400, maxWidth: 500) // Adjust width as needed
@@ -117,7 +115,6 @@ struct MenuButton: View {
         .foregroundColor(.white) // This should be fine with .ultraThinMaterial
         .frame(maxWidth: .infinity)
         .padding(.vertical, 15)
-        // CHANGE: Conditional background styling for iOS only
         #if os(iOS)
         .background(
             RoundedRectangle(cornerRadius: 20)

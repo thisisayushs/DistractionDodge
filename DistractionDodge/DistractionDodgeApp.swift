@@ -32,7 +32,7 @@ struct DistractionDodge: App {
             let context = container.mainContext
             let progressFetch = try context.fetch(FetchDescriptor<UserProgress>())
             if progressFetch.isEmpty {
-                let progress = UserProgress(hasCompletedOnboarding: false)
+                let progress = UserProgress(hasCompletedOnboarding: false, longestVisionOSStreak: 0.0)
                 context.insert(progress)
                 try context.save()
             }

@@ -56,22 +56,38 @@ struct FloatingCard: View {
                 .fill(Color.white.opacity(0.15))
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(glowCondition ? glowColor : Color.white.opacity(0.3), lineWidth: 1)
+                        .stroke(glowCondition ? glowColor : Color.white.opacity(0.3), lineWidth: glowCondition ? 2.5 : 1)
                 )
-                .shadow(color: glowCondition ? glowColor.opacity(isGlowing ? 0.6 : 0.0) : .black.opacity(0.2),
-                        radius: glowCondition ? 8 : 10,
+                .shadow(color: glowCondition ? glowColor.opacity(isGlowing ? 0.8 : 0.2) : .black.opacity(0.2),
+                        radius: glowCondition ? (isGlowing ? 12 : 8) : 10,
                         x: 0,
                         y: 5)
         )
+        .scaleEffect(glowCondition && isGlowing ? 1.03 : 1.0)
         .onChange(of: glowCondition) { _, newValue in
             if newValue {
-                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                if !isGlowing {
+                    withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                        isGlowing = true
+                    }
+                } else {
                     isGlowing = true
                 }
             } else {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     isGlowing = false
                 }
+            }
+        }
+        .onAppear {
+            if glowCondition {
+                if !isGlowing {
+                    withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                        isGlowing = true
+                    }
+                }
+            } else {
+                isGlowing = false
             }
         }
     }

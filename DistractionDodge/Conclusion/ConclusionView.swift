@@ -7,7 +7,9 @@
 
 import SwiftUI
 import SwiftData
+#if canImport(HealthKit) // Ensure HealthKit is only imported if available
 import HealthKit
+#endif
 
 /// A view that presents the user's performance results and feedback after completing a focus training session.
 ///
@@ -25,8 +27,10 @@ struct ConclusionView: View {
     /// Environment dismiss action
     @Environment(\.dismiss) var dismiss
     
+    #if canImport(HealthKit)
     /// Environment health store
     @Environment(\.healthStore) private var healthStore
+    #endif
     
     /// Tracks completion of introduction for navigation
     @AppStorage("hasCompletedIntroduction") private var hasCompletedIntroduction = false
@@ -55,47 +59,96 @@ struct ConclusionView: View {
         .purple.opacity(0.25)
     ]
     
-    /// Provides contextual messages based on the user's score
     private var focusTips: String {
-        if viewModel.score < 20 {
-            return "Try to maintain your gaze on the target consistently. Small improvements in focus can lead to better scores."
-        } else if viewModel.score < 40 {
-            return "Your focus is improving! Try to build longer streaks by staying locked on the target."
+        if viewModel.isVisionOSMode {
+            switch viewModel.endGameReason {
+            case .timeUp:
+                if viewModel.score < 30 {
+                    return "Good effort! Keep practicing to improve your hologram catching speed and accuracy."
+                } else if viewModel.score < 70 {
+                    return "Nice work! You're getting the hang of dodging distractions and catching holograms."
+                } else {
+                    return "Fantastic performance! You're a true Distraction Dodger on visionOS!"
+                }
+            default:
+                return "Great job completing the session!"
+            }
         } else {
-            return "Excellent focus control! Keep challenging yourself to maintain even longer streaks."
+            if viewModel.score < 20 {
+                return "Try to maintain your gaze on the target consistently. Small improvements in focus can lead to better scores."
+            } else if viewModel.score < 40 {
+                return "Your focus is improving! Try to build longer streaks by staying locked on the target."
+            } else {
+                return "Excellent focus control! Keep challenging yourself to maintain even longer streaks."
+            }
         }
     }
     
-    @Query(sort: \GameSession.score, order: .reverse) private var sessions: [GameSession]
-
     private func formatTime(_ seconds: TimeInterval) -> String {
         let totalSeconds = Int(seconds)
         let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        return String(format: "%02d:%02d", minutes, seconds)
+        let secondsValue = totalSeconds % 60
+        return String(format: "%02d:%02d", minutes, secondsValue)
     }
     
+    // The internal logic determines the correct duration and handles HealthKit availability.
     private func saveMindfulMinutes() {
+        #if canImport(HealthKit)
+        guard HKHealthStore.isHealthDataAvailable() else {
+            print("HealthKit: Data is not available on this device.")
+            return
+        }
+        
         let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
         
-        // Check if we have permission before attempting to save
-        if case .sharingAuthorized = healthStore.authorizationStatus(for: mindfulType) {
-            let endDate = Date()
-            let startDate = endDate.addingTimeInterval(-viewModel.totalFocusTime)
+        // Explicitly capture viewModel
+        healthStore.requestAuthorization(toShare: [mindfulType], read: nil) { [viewModel] (success, error) in
+            if !success {
+                print("HealthKit: Authorization failed or was denied. Error: \(String(describing: error?.localizedDescription))")
+                return
+            }
             
-            let sample = HKCategorySample(
-                type: mindfulType,
-                value: HKCategoryValue.notApplicable.rawValue,
-                start: startDate,
-                end: endDate
-            )
-            
-            healthStore.save(sample) { success, error in
-                if let error = error {
-                    print("Error saving mindful minutes: \(error.localizedDescription)")
+            // Use the captured `viewModel` instance
+            if self.healthStore.authorizationStatus(for: mindfulType) == .sharingAuthorized {
+                let endDate = Date()
+                
+                let gameSpecificDuration: TimeInterval
+                if viewModel.isVisionOSMode {
+                    gameSpecificDuration = viewModel.actualPlayedDuration
+                } else {
+                    gameSpecificDuration = viewModel.totalFocusTime
                 }
+                
+                guard gameSpecificDuration > 0 else {
+                    print("HealthKit: Mindful session duration is zero or negative, not saving.")
+                    return
+                }
+
+                let startDate = endDate.addingTimeInterval(-gameSpecificDuration)
+                
+                let sample = HKCategorySample(
+                    type: mindfulType,
+                    value: HKCategoryValue.notApplicable.rawValue, // Standard for mindful sessions
+                    start: startDate,
+                    end: endDate
+                )
+                
+                self.healthStore.save(sample) { (success, error) in // Use self.healthStore
+                    if let error = error {
+                        print("HealthKit: Error saving mindful minutes: \(error.localizedDescription)")
+                    } else if success {
+                        // Access viewModel properties from the captured viewModel
+                        let platform = viewModel.isVisionOSMode ? "visionOS" : "iOS"
+                        print("HealthKit: Mindful minutes saved successfully for \(gameSpecificDuration) seconds on \(platform).")
+                    }
+                }
+            } else {
+                print("HealthKit: Authorization not granted after request attempt.")
             }
         }
+        #else
+        print("HealthKit: Framework not available on this build target.")
+        #endif
     }
     
     var body: some View {
@@ -107,11 +160,13 @@ struct ConclusionView: View {
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            #endif
-            
-            
             DistractionBackground()
                 .blur(radius: 20)
+            #elseif os(visionOS)
+            RealityViewPlaceholder(color: .clear)
+                .background(.ultraThinMaterial)
+                .ignoresSafeArea()
+            #endif
             
             
             GeometryReader { geometry in
@@ -120,11 +175,11 @@ struct ConclusionView: View {
                         Spacer()
                         
                         VStack(spacing: 30) {
-                            Text("Focus Score")
-                                .font(.system(.title2, design: .rounded))
+                            Text("Session Complete!")
+                                .font(.system(self.viewModel.isVisionOSMode ? .largeTitle : .title2, design: .rounded))
                                 .bold()
                                 .foregroundColor(.white)
-                                .padding(.top, 20)
+                                .padding(.top, self.viewModel.isVisionOSMode ? 40 : 20)
                             
                             Text("\(displayedScore)")
                                 .font(.system(size: 80, weight: .bold, design: .rounded))
@@ -141,12 +196,13 @@ struct ConclusionView: View {
                                         scoreScale = 1.0
                                     }
                                     
-                                    let finalScore = viewModel.score
-                                    let animationDuration: TimeInterval = 1.5
+                                    let finalScore = self.viewModel.score
                                     
-                                    let timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
+                                    Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
                                         if displayedScore < finalScore {
-                                            displayedScore += 1
+                                            let increment = max(1, (finalScore - displayedScore) / 20) // Faster for large scores
+                                            displayedScore += increment
+                                            if displayedScore > finalScore { displayedScore = finalScore }
                                             
                                             if displayedScore % 10 == 0 {
                                                 withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
@@ -160,13 +216,8 @@ struct ConclusionView: View {
                                             }
                                         } else {
                                             timer.invalidate()
-                                            
                                             shouldAnimateButton = true
                                         }
-                                    }
-                                    
-                                    if finalScore > 0 {
-                                        timer.tolerance = animationDuration / Double(finalScore)
                                     }
                                 }
                             
@@ -181,26 +232,40 @@ struct ConclusionView: View {
                                     RoundedRectangle(cornerRadius: 15)
                                         .fill(Color.white.opacity(0.15))
                                 )
+                                #elseif os(visionOS)
+                                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 15))
                                 #endif
                             
                             HStack(spacing: 20) {
-                                StatCard(
-                                    title: "Session Streak",
-                                    value: formatTime(viewModel.bestStreak),
-                                    icon: "bolt.fill"
-                                )
-                                
-                                StatCard(
-                                    title: "Focus Time",
-                                    value: formatTime(viewModel.totalFocusTime),
-                                    icon: "timer"
-                                )
+                                if viewModel.isVisionOSMode {
+                                    StatCard(
+                                        title: "Max Streak", 
+                                        value: "\(self.viewModel.visionOSCatchStreak)", // Use self.viewModel for clarity
+                                        icon: "target"
+                                    )
+                                    StatCard(
+                                        title: "Play Time", 
+                                        value: formatTime(self.viewModel.actualPlayedDuration),
+                                        icon: "timer"
+                                    )
+                                } else { 
+                                    StatCard(
+                                        title: "Session Streak",
+                                        value: formatTime(self.viewModel.bestStreak as TimeInterval), // Use self.viewModel
+                                        icon: "bolt.fill"
+                                    )
+                                    StatCard(
+                                        title: "Focus Time",
+                                        value: formatTime(self.viewModel.totalFocusTime as TimeInterval), // Use self.viewModel
+                                        icon: "eye.fill" 
+                                    )
+                                }
                             }
                             .padding(.bottom, 40)
                             
                             VStack(spacing: 20) {
                                 Button {
-                                    viewModel.startGame()
+                                    self.viewModel.startGame(isVisionOSGame: self.viewModel.isVisionOSMode)
                                     dismiss()
                                 } label: {
                                     HStack {
@@ -222,6 +287,10 @@ struct ConclusionView: View {
                                     )
                                     #endif
                                 }
+                                #if os(visionOS)
+                                .buttonStyle(.borderedProminent)
+                                
+                                #endif
                                 .scaleEffect(buttonScale)
                                 .onChange(of: shouldAnimateButton) { _, newValue in
                                     if newValue {
@@ -235,7 +304,6 @@ struct ConclusionView: View {
                                 }
                                 
                                 Button {
-                                    hasCompletedIntroduction = false
                                     showHome = true
                                 } label: {
                                     HStack {
@@ -257,9 +325,12 @@ struct ConclusionView: View {
                                     )
                                     #endif
                                 }
+                                #if os(visionOS)
+                                .buttonStyle(.bordered)
+                                #endif
                             }
                         }
-                        .padding(30)
+                        .padding(self.viewModel.isVisionOSMode ? 40 : 30)
                         .frame(maxWidth: .infinity)
                         
                         Spacer()
@@ -270,9 +341,12 @@ struct ConclusionView: View {
             }
         }
         .preferredColorScheme(.dark)
+        #if os(iOS)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
+        #endif
         .onAppear {
+            // The function itself handles HealthKit availability and platform-specific duration.
             saveMindfulMinutes()
         }
         .fullScreenCover(isPresented: $showHome) {
@@ -280,3 +354,13 @@ struct ConclusionView: View {
         }
     }
 }
+
+#if os(visionOS)
+// Placeholder for RealityView if not fully implemented or needed for background
+struct RealityViewPlaceholder: View {
+    var color: Color = .clear
+    var body: some View {
+        color
+    }
+}
+#endif
