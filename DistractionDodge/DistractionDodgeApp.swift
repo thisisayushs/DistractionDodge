@@ -23,21 +23,30 @@ struct DistractionDodge: App {
     
     init() {
         do {
+            let isPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+            
+            let modelConfiguration = ModelConfiguration(isStoredInMemoryOnly: isPreview)
+            
             container = try ModelContainer(
                 for: GameSession.self, UserProgress.self,
-                configurations: ModelConfiguration(isStoredInMemoryOnly: false)
+                configurations: modelConfiguration // Use the determined configuration
             )
             
             // Initialize UserProgress if needed
+            // This will apply to the in-memory store for previews or persistent store for normal runs
             let context = container.mainContext
-            let progressFetch = try context.fetch(FetchDescriptor<UserProgress>())
-            if progressFetch.isEmpty {
+            let progressFetchDescriptor = FetchDescriptor<UserProgress>()
+            if (try? context.fetch(progressFetchDescriptor))?.isEmpty ?? true {
                 let progress = UserProgress(hasCompletedOnboarding: false, longestVisionOSStreak: 0.0)
                 context.insert(progress)
-                try context.save()
+                // For in-memory, changes are typically available immediately after insert.
+                if !isPreview {
+                    try context.save()
+                }
             }
         } catch {
-            fatalError("Could not initialize ModelContainer: \(error.localizedDescription)")
+            let previewMessage = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" ? " (in Preview)" : ""
+            fatalError("Could not initialize ModelContainer\(previewMessage): \(error.localizedDescription). Full Error: \(error)")
         }
     }
     
