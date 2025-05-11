@@ -1,7 +1,5 @@
 import SwiftUI
 import Charts
-import HealthKit
-import HealthKitUI
 
 /// Root view for statistics and progress tracking.
 /// - Manages time range selection
@@ -10,6 +8,7 @@ import HealthKitUI
 struct StatsView: View {
     /// Array of completed game sessions
     let sessions: [GameSession]
+    @ObservedObject var healthKitManager: HealthKitManager
     
     /// Time range options for data filtering
     enum TimeRange {
@@ -18,13 +17,6 @@ struct StatsView: View {
     
     // State properties
     @State private var timeRange: TimeRange = .week
-    @State private var isSynced = false
-    @State private var isAuthorizing = false
-    @State private var showError = false
-    @State private var showSettings = false
-    @State private var authTrigger = false
-    @State private var isAuthenticated = false
-    @Environment(\.healthStore) private var healthStore
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) var dismiss
     
@@ -34,15 +26,15 @@ struct StatsView: View {
         (.black.opacity(0.8), .indigo.opacity(0.2))  // Index 2
     ]
     
-    private let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
-    
     /// Updates HealthKit authorization status
     private func checkAuthorizationStatus() {
+        /*
         let status = healthStore.authorizationStatus(for: mindfulType)
         withAnimation {
-            isSynced = status == .sharingAuthorized
-            isAuthenticated = status == .sharingAuthorized
+            // isSynced = status == .sharingAuthorized // healthKitManager.isSynced
+            // isAuthenticated = status == .sharingAuthorized // Potentially map to healthKitManager.isSynced
         }
+        */
     }
     
     var body: some View {
@@ -63,10 +55,7 @@ struct StatsView: View {
                         StatsContentView(
                             sessions: sessions,
                             timeRange: $timeRange,
-                            isSynced: $isSynced,
-                            isAuthorizing: $isAuthorizing,
-                            showError: $showError,
-                            showSettings: $showSettings
+                            healthKitManager: healthKitManager
                         )
                         .frame(maxWidth: .infinity, maxHeight: .infinity) 
                     }
@@ -106,12 +95,19 @@ struct StatsView: View {
             }
         }
         .onAppear {
-            checkAuthorizationStatus()
+            // checkAuthorizationStatus() // Rely on HealthKitManager's state
+            // If an explicit re-check is needed upon appearing, HealthKitManager should provide a method.
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                checkAuthorizationStatus()
+                // checkAuthorizationStatus() // Rely on HealthKitManager's state
+                // HealthKitManager could also observe scenePhase if needed.
             }
         }
     }
 }
+
+// If StatsView has a PreviewProvider, it will need to be updated:
+// #Preview {
+//     StatsView(sessions: [], healthKitManager: HealthKitManager()) // Add HealthKitManager
+// }

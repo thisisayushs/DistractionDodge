@@ -1,4 +1,3 @@
-
 //
 //  VisionOSGameHostView.swift
 //  DistractionDodge
@@ -13,9 +12,10 @@ import SwiftData
 struct VisionOSGameHostView: View {
     @Environment(\.modelContext) private var modelContext
     let duration: Double
+    @ObservedObject var healthKitManager: HealthKitManager
 
     var body: some View {
-        visionOSContentView(duration: duration, modelContext: modelContext)
+        visionOSContentView(duration: duration, modelContext: modelContext, healthKitManager: healthKitManager)
     }
 }
 #endif

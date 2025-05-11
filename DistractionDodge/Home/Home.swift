@@ -8,8 +8,6 @@
 import SwiftUI
 import Charts
 import SwiftData
-import HealthKit
-import HealthKitUI
 
 /// A view that serves as the main landing page of DistractionDodge, featuring focus duration selection and stats.
 ///
@@ -29,6 +27,8 @@ struct Home: View {
     @State private var showAbout = false
     @State private var showStatsPage = false
     
+    @StateObject private var healthKitManager = HealthKitManager()
+
     private let gradientColors: [(start: Color, end: Color)] = [
         (.black.opacity(0.8), .blue.opacity(0.2)),
         (.black.opacity(0.8), .purple.opacity(0.2)),
@@ -90,7 +90,8 @@ struct Home: View {
                         message: randomMotivationalMessage,
                         formatDuration: formatDuration,
                         angleForDuration: angleForDuration,
-                        updateDuration: updateDurationFromLocation
+                        updateDuration: updateDurationFromLocation,
+                        healthKitManager: healthKitManager
                     )
                     .tag(0)
                 }
@@ -138,7 +139,7 @@ struct Home: View {
             AboutView()
         }
         .fullScreenCover(isPresented: $showStatsPage) {
-            StatsView(sessions: sessions)
+            StatsView(sessions: sessions, healthKitManager: healthKitManager)
         }
         .preferredColorScheme(.dark)
         .statusBarHidden(true)
@@ -156,6 +157,7 @@ private struct FirstPageView: View {
     let formatDuration: (Double) -> String
     let angleForDuration: (Double) -> Double
     let updateDuration: (CGPoint, CGSize) -> Void
+    @ObservedObject var healthKitManager: HealthKitManager
     
     @State private var showGame = false
     
@@ -181,7 +183,8 @@ private struct FirstPageView: View {
                 scale: startButtonScale,
                 duration: selectedDuration,
                 showGame: $showGame,
-                hasInteracted: $hasInteractedWithSlider
+                hasInteracted: $hasInteractedWithSlider,
+                healthKitManager: healthKitManager
             )
             
             Spacer()
@@ -413,6 +416,7 @@ private struct StartButton: View {
     let duration: Double
     @Binding var showGame: Bool
     @Binding var hasInteracted: Bool
+    @ObservedObject var healthKitManager: HealthKitManager
     
     @State private var buttonScale: CGFloat = 1.0
     
@@ -451,9 +455,9 @@ private struct StartButton: View {
         .transition(.scale.combined(with: .opacity))
         .fullScreenCover(isPresented: $showGame) {
             #if os(visionOS)
-            VisionOSGameHostView(duration: duration)
+            VisionOSGameHostView(duration: duration, healthKitManager: healthKitManager)
             #else
-            ContentView(duration: duration)
+            ContentView(duration: duration, healthKitManager: healthKitManager)
             #endif
         }
     }

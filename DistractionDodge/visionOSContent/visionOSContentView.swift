@@ -84,6 +84,7 @@ struct visionOSContentView: View {
     // MARK: - Properties
     private let totalGameDuration: Double
     @StateObject private var attentionViewModel: AttentionViewModel
+    @ObservedObject var healthKitManager: HealthKitManager
 
     @State private var circlePosition: CGPoint = .zero
     @State private var isDragging = false
@@ -115,9 +116,10 @@ struct visionOSContentView: View {
 
 
     // MARK: - Init
-    init(duration: Double = 60.0, modelContext: ModelContext) {
+    init(duration: Double = 60.0, modelContext: ModelContext, healthKitManager: HealthKitManager) {
         self.totalGameDuration = duration
         _attentionViewModel = StateObject(wrappedValue: AttentionViewModel(modelContext: modelContext))
+        self.healthKitManager = healthKitManager
     }
 
     // MARK: - Computed Properties for Difficulty
@@ -337,7 +339,7 @@ struct visionOSContentView: View {
                 PauseMenuView(viewModel: attentionViewModel)
             }
             .sheet(isPresented: $showConclusionView) {
-                ConclusionView(viewModel: attentionViewModel)
+                ConclusionView(viewModel: attentionViewModel, healthKitManager: healthKitManager)
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
                 if attentionViewModel.gameActive && !attentionViewModel.isPaused {

@@ -11,15 +11,8 @@ struct StatsContentView: View {
     let sessions: [GameSession]
     /// Currently selected time range
     @Binding var timeRange: StatsView.TimeRange
-    /// HealthKit sync status
-    @Binding var isSynced: Bool
-    /// HealthKit authorization status
-    @Binding var isAuthorizing: Bool
-    /// Error alert presentation flag
-    @Binding var showError: Bool
-    /// Settings sheet presentation flag
-    @Binding var showSettings: Bool
-    @Environment(\.healthStore) private var healthStore
+    /// HealthKit manager instance
+    @ObservedObject var healthKitManager: HealthKitManager
 
     /// Query for UserProgress
     @Query private var userProgressList: [UserProgress]
@@ -73,10 +66,7 @@ struct StatsContentView: View {
                 sessions: sessions,
                 longestIOSStreak: userProgress?.longestStreak ?? 0,
                 longestVisionOSStreak: userProgress?.longestVisionOSStreak ?? 0.0,
-                isSynced: $isSynced,
-                isAuthorizing: $isAuthorizing,
-                showError: $showError,
-                showSettings: $showSettings
+                healthKitManager: healthKitManager
             )
         }
         .padding(.horizontal, 30)

@@ -23,6 +23,7 @@ struct ContentView: View {
     
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel: AttentionViewModel
+    @ObservedObject var healthKitManager: HealthKitManager
     
     /// Controls the game obstructed overlay.
     @State private var gameObstructed = false
@@ -34,7 +35,6 @@ struct ContentView: View {
     @State private var showPauseMenu = false
     
     /// Position of video distraction element
-    // CHANGE: Initialize to zero, will be set in onAppear using GeometryReader
     @State private var videoPosition: CGPoint = .zero
     
     /// Gradient colors for background effect
@@ -43,10 +43,11 @@ struct ContentView: View {
         .purple.opacity(0.2)
     ]
     
-    init(duration: Double = 60) {
+    init(duration: Double = 60, healthKitManager: HealthKitManager) {
         let viewModel = AttentionViewModel(modelContext: ModelContext(try! ModelContainer(for: GameSession.self, UserProgress.self)))
         viewModel.setGameDuration(duration)
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.healthKitManager = healthKitManager
     }
     
     private func formatTime(_ seconds: TimeInterval) -> String {
@@ -192,7 +193,7 @@ struct ContentView: View {
             GameObstructionView(viewModel: viewModel, isPresented: $gameObstructed)
         }
         .fullScreenCover(isPresented: $showConclusion) {
-            ConclusionView(viewModel: viewModel)
+            ConclusionView(viewModel: viewModel, healthKitManager: healthKitManager)
         }
         .sheet(isPresented: $showPauseMenu) {
             PauseMenuView(viewModel: viewModel)

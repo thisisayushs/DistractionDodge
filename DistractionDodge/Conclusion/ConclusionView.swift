@@ -7,9 +7,6 @@
 
 import SwiftUI
 import SwiftData
-#if canImport(HealthKit) // Ensure HealthKit is only imported if available
-import HealthKit
-#endif
 
 /// A view that presents the user's performance results and feedback after completing a focus training session.
 ///
@@ -23,14 +20,11 @@ struct ConclusionView: View {
     
     /// View model containing game results and statistics
     @ObservedObject var viewModel: AttentionViewModel
+    /// HealthKitManager instance
+    @ObservedObject var healthKitManager: HealthKitManager
     
     /// Environment dismiss action
     @Environment(\.dismiss) var dismiss
-    
-    #if canImport(HealthKit)
-    /// Environment health store
-    @Environment(\.healthStore) private var healthStore
-    #endif
     
     /// Tracks completion of introduction for navigation
     @AppStorage("hasCompletedIntroduction") private var hasCompletedIntroduction = false
@@ -93,67 +87,27 @@ struct ConclusionView: View {
     
     // The internal logic determines the correct duration and handles HealthKit availability.
     private func saveMindfulMinutes() {
-        #if canImport(HealthKit)
-        guard HKHealthStore.isHealthDataAvailable() else {
-            print("HealthKit: Data is not available on this device.")
+        let gameSpecificDuration: TimeInterval
+        if viewModel.isVisionOSMode {
+            gameSpecificDuration = viewModel.actualPlayedDuration
+        } else {
+            gameSpecificDuration = viewModel.totalFocusTime
+        }
+        
+        guard gameSpecificDuration > 0 else {
+            print("ConclusionView: Mindful session duration is zero or negative, not attempting to save via HealthKitManager.")
             return
         }
-        
-        let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
-        
-        // Explicitly capture viewModel
-        healthStore.requestAuthorization(toShare: [mindfulType], read: nil) { [viewModel] (success, error) in
-            if !success {
-                print("HealthKit: Authorization failed or was denied. Error: \(String(describing: error?.localizedDescription))")
-                return
-            }
-            
-            // Use the captured `viewModel` instance
-            if self.healthStore.authorizationStatus(for: mindfulType) == .sharingAuthorized {
-                let endDate = Date()
-                
-                let gameSpecificDuration: TimeInterval
-                if viewModel.isVisionOSMode {
-                    gameSpecificDuration = viewModel.actualPlayedDuration
-                } else {
-                    gameSpecificDuration = viewModel.totalFocusTime
-                }
-                
-                guard gameSpecificDuration > 0 else {
-                    print("HealthKit: Mindful session duration is zero or negative, not saving.")
-                    return
-                }
 
-                let startDate = endDate.addingTimeInterval(-gameSpecificDuration)
-                
-                let sample = HKCategorySample(
-                    type: mindfulType,
-                    value: HKCategoryValue.notApplicable.rawValue, // Standard for mindful sessions
-                    start: startDate,
-                    end: endDate
-                )
-                
-                self.healthStore.save(sample) { (success, error) in // Use self.healthStore
-                    if let error = error {
-                        print("HealthKit: Error saving mindful minutes: \(error.localizedDescription)")
-                    } else if success {
-                        // Access viewModel properties from the captured viewModel
-                        let platform = viewModel.isVisionOSMode ? "visionOS" : "iOS"
-                        print("HealthKit: Mindful minutes saved successfully for \(gameSpecificDuration) seconds on \(platform).")
-                    }
-                }
-            } else {
-                print("HealthKit: Authorization not granted after request attempt.")
-            }
-        }
-        #else
-        print("HealthKit: Framework not available on this build target.")
-        #endif
+        healthKitManager.saveMindfulMinutes(
+            duration: gameSpecificDuration,
+            endDate: Date(), // Session just ended
+            isVisionOSMode: viewModel.isVisionOSMode
+        )
     }
     
     var body: some View {
         ZStack {
-            #if os(iOS)
             LinearGradient(
                 gradient: Gradient(colors: gradientColors),
                 startPoint: .topLeading,
@@ -162,8 +116,6 @@ struct ConclusionView: View {
             .ignoresSafeArea()
             DistractionBackground()
                 .blur(radius: 20)
-            #endif
-            
             
             GeometryReader { geometry in
                 ScrollView {
@@ -236,7 +188,7 @@ struct ConclusionView: View {
                                 if viewModel.isVisionOSMode {
                                     StatCard(
                                         title: "Max Streak", 
-                                        value: "\(self.viewModel.visionOSCatchStreak)", // Use self.viewModel for clarity
+                                        value: "\(self.viewModel.visionOSCatchStreak)", 
                                         icon: "target"
                                     )
                                     StatCard(
@@ -247,12 +199,12 @@ struct ConclusionView: View {
                                 } else { 
                                     StatCard(
                                         title: "Session Streak",
-                                        value: formatTime(self.viewModel.bestStreak as TimeInterval), // Use self.viewModel
+                                        value: formatTime(self.viewModel.bestStreak as TimeInterval), 
                                         icon: "bolt.fill"
                                     )
                                     StatCard(
                                         title: "Focus Time",
-                                        value: formatTime(self.viewModel.totalFocusTime as TimeInterval), // Use self.viewModel
+                                        value: formatTime(self.viewModel.totalFocusTime as TimeInterval), 
                                         icon: "eye.fill" 
                                     )
                                 }
@@ -342,7 +294,6 @@ struct ConclusionView: View {
         .persistentSystemOverlays(.hidden)
         #endif
         .onAppear {
-            // The function itself handles HealthKit availability and platform-specific duration.
             saveMindfulMinutes()
         }
         .fullScreenCover(isPresented: $showHome) {
@@ -350,4 +301,3 @@ struct ConclusionView: View {
         }
     }
 }
-
