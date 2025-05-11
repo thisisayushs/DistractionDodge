@@ -2,9 +2,9 @@
 //  DistractionBackground.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 11/02/25.
+//  Created by Ayush Kumar Singh on 2/11/25.
 //
-
+#if os(iOS)
 import SwiftUI
 
 /// A view that creates an animated background with floating circles.
@@ -68,3 +68,4 @@ struct DistractionBackground: View {
         // .ignoresSafeArea() // Example: Can be added here or by the view using DistractionBackground
     }
 }
+#endif

@@ -2,9 +2,9 @@
 //  ScoringRuleCard.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 11/02/25.
+//  Created by Ayush Kumar Singh on 2/11/25.
 //
-
+#if os(iOS)
 import SwiftUI
 
 /// A view component that displays a scoring rule or mechanic in the tutorial.
@@ -83,3 +83,4 @@ struct ScoringRuleCard: View {
         .padding(.horizontal)
     }
 }
+#endif

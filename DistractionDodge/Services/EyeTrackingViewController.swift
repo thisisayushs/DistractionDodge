@@ -2,13 +2,12 @@
 //  EyeTrackingViewController.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 28/12/24.
+//  Created by Ayush Kumar Singh on 12/28/24.
 //
+#if os(iOS)
 
 import ARKit
 import SwiftUI
-
-#if os(iOS)
 
 /// A view controller that manages eye tracking using ARKit's face tracking capabilities.
 ///

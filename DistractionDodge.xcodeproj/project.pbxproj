@@ -16,6 +16,35 @@
 			membershipExceptions = (
 				Info.plist,
 			);
+			platformFiltersByRelativePath = {
+				Game/Main/ContentView.swift = (ios, );
+				Game/Main/Distractions/NotificationDistraction/GlassBackground.swift = (ios, );
+				Game/Main/Distractions/NotificationDistraction/NotificationAnimation.swift = (ios, );
+				Game/Main/Distractions/NotificationDistraction/NotificationEffects.swift = (ios, );
+				Game/Main/Distractions/VideoDistraction/FloatingElement.swift = (ios, );
+				Game/Tutorial/AlertView.swift = (ios, );
+				Game/Tutorial/HoveringScoreModifier.swift = (ios, );
+				Game/Tutorial/ScoringRuleCard.swift = (ios, );
+				Game/Tutorial/ScoringType.swift = (ios, );
+				Game/Tutorial/StyledTextEffect.swift = (ios, );
+				Game/Tutorial/TutorialStep.swift = (ios, );
+				Game/Tutorial/TutorialView.swift = (ios, );
+				Onboarding/DistractionBackground.swift = (ios, );
+				Services/EyeTrackingViewController.swift = (ios, );
+				visionOSContent/Game/Distractions/VisionOSDistractionView.swift = (xros, );
+				visionOSContent/Game/Models/CollisionEffect.swift = (xros, );
+				visionOSContent/Game/Models/Hologram.swift = (xros, );
+				visionOSContent/Game/VisionOSGameHostView.swift = (xros, );
+				visionOSContent/Game/visionOSContentView.swift = (xros, );
+				visionOSContent/SharedViews/HologramView.swift = (xros, );
+				visionOSContent/SharedViews/SparkleExplosionView.swift = (xros, );
+				visionOSContent/Tutorial/Models/FlyingPoint.swift = (xros, );
+				visionOSContent/Tutorial/Models/TutorialHologram.swift = (xros, );
+				visionOSContent/Tutorial/Models/TutorialSparkEffect.swift = (xros, );
+				visionOSContent/Tutorial/Models/VisionOSTutorialStep.swift = (xros, );
+				visionOSContent/Tutorial/Views/FlyingPointsView.swift = (xros, );
+				visionOSContent/Tutorial/visionOSTutorialView.swift = (xros, );
+			};
 			target = 2834FF032D20161E004B462C /* DistractionDodge */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */

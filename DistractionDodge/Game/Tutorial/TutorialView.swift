@@ -2,58 +2,89 @@
 //  TutorialView.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 11/02/25.
+//  Created by Ayush Kumar Singh on 2/11/25.
 //
 #if os(iOS)
 import SwiftUI
 import SwiftData
 
-/// A comprehensive tutorial view that guides users through the game mechanics.
+/// A comprehensive tutorial view that guides users through the game mechanics of the iOS version of DistractionDodge.
 ///
-/// TutorialView provides:
-/// - Step-by-step introduction to game features
-/// - Interactive demonstrations
-/// - Practice sessions for core mechanics
-/// - Visual feedback and instructions
+/// `TutorialView` provides a step-by-step interactive learning experience:
+/// - It presents a series of `TutorialStep`s, each focusing on a specific game aspect.
+/// - Interactive demonstrations allow users to practice core mechanics like eye tracking,
+///   responding to distractions, and understanding the scoring system.
+/// - Visual feedback, animations, and descriptive text enhance the learning process.
+/// - The tutorial covers basic focus, distractions, scoring, multipliers, streak bonuses, and penalties.
+/// - Users can navigate between steps using buttons or swipe gestures.
+/// - An option to skip the tutorial is provided.
 ///
-/// The tutorial covers:
-/// - Basic eye tracking and focus
-/// - Dealing with distractions
-/// - Scoring system
-/// - Multipliers and bonuses
-/// - Penalties
+/// The view uses `GeometryReader` for adaptive layout and `AttentionViewModel` (though not directly visible in the provided snippet, assumed to be used by `MainCircle` or `NotificationView` if they were fully shown) or similar logic for game element simulations.
+///
+/// - Note: This view is specific to the iOS platform, due to its reliance on `EyeTrackingView` and
+///   platform-specific UI/UX paradigms for the tutorial steps.
 struct TutorialView: View {
+    /// The SwiftData model context, used for updating `UserProgress` upon tutorial completion.
     @Environment(\.modelContext) private var modelContext
+    /// The index of the current step in the `tutorialSteps` array.
     @State private var currentStep = 0
+    /// Controls the presentation of the `Home` view after completing or skipping the tutorial.
     @State private var showHomeView = false
+    /// The position for demonstration elements like the `MainCircle`. (Currently not directly used in the provided snippet, but often needed for such views).
     @State private var demoPosition: CGPoint = .zero
+    /// Simulates the gaze status for eye-tracking demonstrations.
     @State private var demoIsGazing = false
+    /// Simulates the game score during scoring demonstrations.
     @State private var demoScore = 0
+    /// Simulates the focus streak during streak demonstrations.
     @State private var demoStreak = 0
+    /// (Currently unused) Controls visibility of a scoring rule card for base scoring.
     @State private var showScoreCard = false
+    /// (Currently unused) Controls visibility of a scoring rule card for multipliers.
     @State private var showMultiplierCard = false
+    /// (Currently unused) Controls visibility of a scoring rule card for penalties.
     @State private var showPenaltyCard = false
+    /// Controls the visibility of a mock distraction during the distraction demonstration step.
     @State private var showDemoDistraction = false
+    /// Simulates the score multiplier during the multiplier demonstration.
     @State private var demoMultiplier = 1
+    /// Controls the animation of a "+1" score increment indicator.
     @State private var showScoreIncrementIndicator = false
+    /// Controls the animation of a "+5 BONUS" indicator for streak bonuses.
     @State private var showBonusIndicator = false
+    /// Controls the animation of a "Focus Lost" or penalty indicator.
     @State private var showPenaltyIndicator = false
+    /// Simulates elapsed time for demonstrations like multipliers.
     @State private var elapsedTime: Int = 0
+    /// Simulates streak time for streak bonus demonstrations.
     @State private var streakTime: Int = 0
+    /// Timer used for penalty demonstration animations. (Currently not directly used in the provided snippet's logic, but declared).
     @State private var penaltyTimer: Timer? = nil
     
+    /// Indicates if the demonstration focus ball is currently moving.
     @State private var isMovingBall = false
+    /// The direction vector for the demonstration ball's movement.
     @State private var moveDirection = CGPoint(x: 1, y: 1)
+    /// Tracks if the user has successfully demonstrated following the ball with their gaze.
     @State private var hasDemonstratedFollowing = false
+    /// Controls the visibility of the "Next" button, often shown after a step's interaction is complete.
     @State private var showNextButton = false
+    /// The current position of the demonstration `MainCircle`, adaptable by `viewSize`.
     @State private var customPosition: CGPoint = .zero
+    /// Scale factor for the "Next" button's pulsing animation.
     @State private var nextButtonScale: CGFloat = 1.0
+    /// Flag to prevent rapid navigation actions.
     @State private var isNavigating = false
+    /// Tracks the horizontal offset of a drag gesture for swipe navigation.
     @GestureState private var dragOffset: CGFloat = 0
+    /// Controls the presentation of an alert to confirm skipping the tutorial.
     @State private var showSkipAlert = false
+    /// Counter for how many times the penalty screen has appeared, used to vary `id` for animations.
     @State private var penaltyScreenAppearCount = 0
+    /// The size of the view, obtained from `GeometryReader`, used for layout and positioning.
     @State private var viewSize: CGSize = .zero
     
+    /// An array of gradient color pairs for the background of each tutorial step.
     private let gradientColors: [(start: Color, end: Color)] = [
         (.black.opacity(0.8), .indigo.opacity(0.2)),
         (.black.opacity(0.8), .purple.opacity(0.2)),
@@ -63,6 +94,7 @@ struct TutorialView: View {
         (.black.opacity(0.8), .purple.opacity(0.2))
     ]
     
+    /// An array defining the content and type for each step of the tutorial.
     let tutorialSteps = [
         TutorialStep(
             title: "Prepare to Train Your Focus",
@@ -113,6 +145,9 @@ struct TutorialView: View {
         )
     ]
     
+    /// Handles navigation between tutorial steps.
+    /// - Parameter forward: If `true`, navigates to the next step; if `false`, to the previous.
+    /// Manages `isNavigating` to prevent multiple rapid transitions and resets `showNextButton`.
     private func navigate(forward: Bool) {
         if !isNavigating {
             isNavigating = true

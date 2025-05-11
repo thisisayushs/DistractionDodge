@@ -2,9 +2,9 @@
 //  StyledTextEffect.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 11/02/25.
+//  Created by Ayush Kumar Singh on 2/11/25.
 //
-
+#if os(iOS)
 import SwiftUI
 
 /// A view modifier that applies animated effects to bonus and penalty text.
@@ -53,3 +53,4 @@ struct StyledTextEffect: ViewModifier {
             )
     }
 }
+#endif

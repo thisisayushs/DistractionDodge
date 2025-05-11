@@ -2,9 +2,9 @@
 //  VideoDistraction.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 22/01/25.
+//  Created by Ayush Kumar Singh on 1/22/25.
 //
-
+#if os(iOS)
 import SwiftUI
 
 /// A view that simulates a social media video feed as a distraction element.
@@ -315,3 +315,4 @@ extension Comparable {
         min(max(self, limits.lowerBound), limits.upperBound)
     }
 }
+#endif

@@ -1,3 +1,9 @@
+//
+//  HeaderView.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/5/25.
+//
 import SwiftUI
 
 /// A view component displaying the app's header information.

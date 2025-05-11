@@ -1,4 +1,9 @@
-
+//
+//  CGPoint+Distance.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/10/25.
+//
 import Foundation
 import CoreGraphics
 

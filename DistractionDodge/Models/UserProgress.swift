@@ -1,3 +1,9 @@
+//
+//  UserProgress.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/3/25.
+//
 import SwiftUI
 import SwiftData
 

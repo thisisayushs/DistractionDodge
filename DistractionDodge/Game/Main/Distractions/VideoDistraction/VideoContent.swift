@@ -2,9 +2,9 @@
 //  VideoContent.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 22/01/25.
+//  Created by Ayush Kumar Singh on 1/22/25.
 //
-
+#if os(iOS)
 import SwiftUI
 
 /// A model representing video content for distraction elements.
@@ -22,3 +22,4 @@ struct VideoContent: Identifiable {
     let emojis: [String]
     let symbols: [String]
 }
+#endif

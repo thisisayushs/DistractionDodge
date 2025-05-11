@@ -2,7 +2,7 @@
 //  AttentionViewModel.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 28/12/24.
+//  Created by Ayush Kumar Singh on 12/28/24.
 //
 
 import SwiftUI
@@ -11,70 +11,98 @@ import SwiftData
 
 /// The view model responsible for managing the focus training game's state and logic.
 ///
-/// AttentionViewModel handles:
-/// - Game state management (start, pause, resume, stop)
-/// - Score tracking and calculations
-/// - Focus streak monitoring
-/// - Distraction generation and management
-/// - Target movement patterns
-/// - Eye gaze status updates
+/// `AttentionViewModel` orchestrates the game flow for both iOS (eye-tracking based) and visionOS (tap-based interaction).
+/// It handles:
+/// - Game lifecycle: starting, pausing, resuming, and ending games.
+/// - Scoring: tracking scores, multipliers, and streaks.
+/// - Distraction Management: generating and displaying distractions appropriate for the platform.
+/// - Target Movement: controlling the movement of the focus target in iOS mode.
+/// - Eye Gaze Updates: processing gaze status from `EyeTrackingViewController` for iOS.
+/// - Game Timers: managing game duration, focus streaks, and distraction spawning.
+/// - Persistent Storage: saving game session data and user progress using SwiftData.
+/// - Platform Adaptation: provides distinct logic for iOS and visionOS game modes.
+///
+/// It uses `NotificationCenter` to observe application lifecycle events like entering background or becoming active
+/// to appropriately pause or resume the game.
+///
+/// - Important: This class manages game state for two distinct modes: a traditional iOS eye-tracking game
+///   and a visionOS tap-based game. Many properties and methods are specific to one mode, often indicated by
+///   `isVisionOSMode` checks or "visionOS" in their names.
 ///
 /// Usage:
 /// ```swift
-/// @StateObject private var viewModel = AttentionViewModel(modelContext: ModelContext())
+/// @StateObject private var viewModel = AttentionViewModel(modelContext: modelContext)
+/// // Ensure viewSize is updated, e.g., in a GeometryReader
+/// viewModel.updateViewSize(geometry.size)
+/// viewModel.startGame(isVisionOSGame: false) // or true for visionOS
 /// ```
 class AttentionViewModel: ObservableObject {
     // MARK: - Published Properties
     
-    /// Current position of the focus target
+    /// Current position of the focus target (primarily for iOS mode).
+    /// In visionOS, `visionOSCirclePosition` is used for the main target.
     @Published var position = CGPoint.zero
     
-    /// Indicates if the user is currently gazing at the target
+    /// Indicates if the user is currently gazing at the target (iOS-specific).
     @Published var isGazingAtObject = false
     
-    /// Collection of active distractions
+    /// Collection of active distractions displayed on screen.
+    /// These can be notifications or other distracting elements.
     @Published var distractions: [Distraction] = []
     
-    /// Current game score
+    /// Current game score. Updated based on game events and platform-specific scoring rules.
     @Published var score: Int = 0
     
-    /// Duration of current focus streak
+    /// Duration of current focus streak in seconds (iOS-specific).
+    /// Resets when focus is lost.
     @Published var focusStreak: TimeInterval = 0
     
-    /// Longest focus streak achieved
+    /// Longest focus streak achieved during the current iOS game session.
     @Published var bestStreak: TimeInterval = 0
     
-    /// Total time spent focused during the game
+    /// Total time spent focused on the target during the current iOS game session.
     @Published var totalFocusTime: TimeInterval = 0
     
-    /// Remaining game time in seconds
+    /// Remaining game time in seconds. Counts down from `gameDuration`.
     @Published var gameTime: TimeInterval = 60
     
-    /// Indicates if the game is currently active
+    /// Indicates if the game is currently active (i.e., started and not ended).
     @Published var gameActive = false
     
-    /// Current background gradient colors
+    /// Current background gradient colors for the game view.
     @Published var backgroundGradient: [Color] = [.black.opacity(0.8), .cyan.opacity(0.2)]
     
-    /// Reason for game ending (time up or distraction)
+    /// Reason for the game ending (e.g., time up, distraction tap, hearts depleted).
     @Published var endGameReason: EndGameReason = .timeUp
     
-    /// Indicates if the game is paused
+    /// Indicates if the game is currently paused.
     @Published var isPaused = false
     
+    /// Timestamp for when the current game session started.
     @Published var sessionStartTime: Date = Date()
+    
+    /// Timestamp for when the current game session ended. `nil` if the session is ongoing.
     @Published var sessionEndTime: Date? = nil
     
+    /// A unique identifier for the current game session.
     @Published var gameID: UUID = UUID()
 
+    /// Enum defining the possible reasons a game can end.
     enum EndGameReason {
+        /// Game ended because the timer reached zero.
         case timeUp
+        /// Game ended because the user tapped on a distraction (iOS-specific).
         case distractionTap
+        /// Game ended because the user ran out of hearts (visionOS-specific).
         case heartsDepleted
     }
     
+    // MARK: - Dependencies
     private var modelContext: ModelContext
     
+    // MARK: - Configuration Data
+    /// Data for generating notification-style distractions.
+    /// Contains tuples of (title, icon SF Symbol name, gradient colors, system sound ID).
     let notificationData: [(title: String, icon: String, colors: [Color], sound: SystemSoundID)] = [
         ("Messages", "message.fill",
          [Color(red: 32/255, green: 206/255, blue: 97/255), Color(red: 24/255, green: 190/255, blue: 80/255)],
@@ -102,46 +130,67 @@ class AttentionViewModel: ObservableObject {
          1005)
     ]
     
-    private var timer: Timer?
-    private var distractionTimer: Timer?
-    private var focusStreakTimer: Timer?
-    private var gameTimer: Timer?
-    private var wasActiveBeforeBackground = false
-    private var isInBackground = false
-    private var moveDirection = CGPoint(x: 1, y: 1)
-    private var currentNotificationInterval: TimeInterval = 2.0
-    private var distractionProbability: Double = 0.2
-    private var scoreMultiplier: Int = 1
-    private var lastFocusState: Bool = false
-    private var gameDuration: TimeInterval = 60
+    // MARK: - Private Game State & Timers
+    private var timer: Timer? // Timer for iOS target movement
+    private var distractionTimer: Timer? // Timer for iOS distraction spawning
+    private var focusStreakTimer: Timer? // Timer for iOS focus streak and scoring
+    private var gameTimer: Timer? // Timer for game duration countdown
     
+    private var wasActiveBeforeBackground = false // Flag to manage game state during backgrounding
+    private var isInBackground = false // (Currently unused, consider removal if not planned for use)
+    
+    private var moveDirection = CGPoint(x: 1, y: 1) // Direction for iOS target movement
+    private var currentNotificationInterval: TimeInterval = 2.0 // (Potentially obsolete, consider review)
+    private var distractionProbability: Double = 0.2 // (Potentially obsolete, consider review)
+    @Published internal var scoreMultiplier: Int = 1 // Score multiplier for iOS game mode
+    private var lastFocusState: Bool = false // Previous gaze state for iOS, to detect changes
+    private var gameDuration: TimeInterval = 60 // Total duration for a game session
+    
+    /// The size of the view hosting the game, used for positioning elements.
+    /// Must be updated via `updateViewSize(_:)`.
     private var viewSize: CGSize = .zero
     
+    /// Flag indicating if the game is running in visionOS mode.
+    /// This dictates which game logic, UI elements, and scoring rules are applied.
     internal var isVisionOSMode: Bool = false
     
+    /// The total configured duration for the current game type.
     var totalGameDuration: TimeInterval {
         gameDuration
     }
     
-    private let baseDistractionProbability = 0.3
-    private let baseDistractionInterval: TimeInterval = 2.5
+    private let baseDistractionProbability = 0.3 // Base probability for spawning distractions in iOS mode
+    private let baseDistractionInterval: TimeInterval = 2.5 // Base interval for attempting distraction spawns in iOS mode
     
+    // MARK: - visionOS Specific Published Properties
+    /// Current catch streak in visionOS mode. Increases with successful hologram catches.
     @Published var visionOSCatchStreak: Int = 0
+    /// Current score multiplier in visionOS mode. Increases as the game progresses.
     @Published var visionOSScoreMultiplier: Double = 1.0
+    /// Remaining hearts in visionOS mode. Decreases when a hologram expires. Game ends if it reaches 0.
     @Published var visionOSRemainingHearts: Int = 3
     
+    /// Current position of the main draggable circle in visionOS mode.
     @Published var visionOSCirclePosition: CGPoint = .zero
+    /// Positions of the target holograms in visionOS mode.
     @Published var visionOSHologramPositions: [CGPoint] = []
     
-    private var visionOSDistractionTimer: Timer?
-    private let visionOSDistractionSize: CGFloat = 160
-    private let visionOSDistractionPadding: CGFloat = 20
+    // MARK: - visionOS Specific Private Properties
+    private var visionOSDistractionTimer: Timer? // Timer for visionOS distraction spawning
+    private let visionOSDistractionSize: CGFloat = 160 // Size of distraction elements in visionOS
+    private let visionOSDistractionPadding: CGFloat = 20 // Padding around distraction elements in visionOS
     
+    // MARK: - Initialization
+    
+    /// Initializes the AttentionViewModel with a SwiftData model context.
+    /// - Parameter modelContext: The `ModelContext` for saving game data.
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         setupNotificationObservers()
     }
     
+    /// Sets up observers for application lifecycle notifications (e.g., will resign active, did become active).
+    /// This allows the game to pause when backgrounded and resume when foregrounded.
     private func setupNotificationObservers() {
         NotificationCenter.default.addObserver(
             forName: UIApplication.willResignActiveNotification,
@@ -165,6 +214,10 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    /// Sets the total duration for the game.
+    /// This should be called before starting a new game if a non-default duration is desired.
+    /// If the game is not active, `gameTime` (remaining time) is also updated to this duration.
+    /// - Parameter duration: The desired game duration in seconds.
     func setGameDuration(_ duration: TimeInterval) {
         gameDuration = duration
         if !gameActive {
@@ -172,6 +225,10 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    /// Updates the view model with the actual size of the game view.
+    /// This is crucial for correct positioning and movement of game elements.
+    /// Call this when the view's geometry is available, e.g., from a `GeometryReader`.
+    /// - Parameter size: The `CGSize` of the game view.
     func updateViewSize(_ size: CGSize) {
         if size != .zero && self.viewSize != size {
             self.viewSize = size
@@ -181,6 +238,9 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    /// Starts a new game session.
+    /// Resets game state (score, time, streaks, distractions) and starts relevant timers.
+    /// - Parameter isVisionOSGame: A boolean indicating whether to start the game in visionOS mode (`true`) or iOS mode (`false`). Defaults to `false`.
     func startGame(isVisionOSGame: Bool = false) {
         self.gameID = UUID()
 
@@ -233,6 +293,9 @@ class AttentionViewModel: ObservableObject {
         startGameTimer()
     }
     
+    /// Initializes and starts the main game timer.
+    /// This timer counts down `gameTime` every second. If `gameTime` reaches zero, it ends the game.
+    /// For visionOS, it also triggers updates to the `visionOSScoreMultiplier`.
     private func startGameTimer() {
         gameTimer?.invalidate()
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
@@ -256,6 +319,8 @@ class AttentionViewModel: ObservableObject {
         }
     }
 
+    /// Updates the score multiplier for visionOS mode based on game progress.
+    /// The multiplier increases as more of the total game duration elapses.
     private func updateVisionOSMultiplier() {
         guard isVisionOSMode, totalGameDuration > 0 else { return }
         let progress = (totalGameDuration - gameTime) / totalGameDuration
@@ -272,6 +337,10 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    /// Ends the current game session.
+    /// Sets `gameActive` to `false`, records the session end time, saves the game session data to SwiftData,
+    /// updates user progress (high score, longest streak), and stops all game timers.
+    /// - Parameter isVisionOSGame: A boolean indicating if the game ending is for visionOS mode. This ensures correct data saving.
     private func endGame(isVisionOSGame: Bool = false) {
         guard gameActive else { return }
 
@@ -326,6 +395,8 @@ class AttentionViewModel: ObservableObject {
         stopGame(isVisionOSGame: self.isVisionOSMode)
     }
     
+    /// Pauses the game.
+    /// Sets `isPaused` to `true` and invalidates all active game timers (movement, distractions, focus streak, game time).
     func pauseGame() {
         isPaused = true
         timer?.invalidate()
@@ -340,6 +411,9 @@ class AttentionViewModel: ObservableObject {
         visionOSDistractionTimer = nil
     }
     
+    /// Resumes a paused game.
+    /// Sets `isPaused` to `false` and restarts the appropriate timers based on the current game mode (iOS or visionOS).
+    /// Also restarts the main game timer.
     func resumeGame() {
         isPaused = false
         if isVisionOSMode {
@@ -352,6 +426,10 @@ class AttentionViewModel: ObservableObject {
         startGameTimer()
     }
     
+    /// Stops all game activities and cleans up resources.
+    /// Invalidates all timers and clears active distractions.
+    /// Sets `wasActiveBeforeBackground` to `false`.
+    /// - Parameter isVisionOSGame: A boolean indicating if the game stopping is for visionOS mode.
     func stopGame(isVisionOSGame: Bool = false) {
         self.isVisionOSMode = isVisionOSGame
         wasActiveBeforeBackground = false
@@ -374,6 +452,10 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    /// Updates the game state based on the user's gaze (iOS-specific).
+    /// If focus is broken (`isGazing` is `false` after being `true`), applies a penalty and resets the score multiplier.
+    /// Updates `isGazingAtObject`, `focusStreak`, and `bestStreak`.
+    /// - Parameter isGazing: A boolean indicating whether the user is currently gazing at the target.
     func updateGazeStatus(_ isGazing: Bool) {
         guard !isVisionOSMode else { return }
         
@@ -394,6 +476,9 @@ class AttentionViewModel: ObservableObject {
         lastFocusState = isGazing
     }
     
+    /// Starts the timer responsible for moving the target randomly on the screen (iOS-specific).
+    /// The target bounces off the edges of the `viewSize`.
+    /// Requires `viewSize` to be set and non-zero.
     private func startRandomMovement() {
         guard !isVisionOSMode else { return }
         
@@ -429,6 +514,10 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    /// Starts the timer responsible for periodically spawning distractions (iOS-specific).
+    /// Distractions (e.g., mock notifications) appear at random positions.
+    /// The frequency and probability are influenced by `baseDistractionInterval` and `baseDistractionProbability`.
+    /// Requires `viewSize` to be set and non-zero.
     private func startDistractions() {
         guard !isVisionOSMode else { return }
         
@@ -490,6 +579,9 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    /// Starts the timer that tracks focus streaks and updates the score accordingly (iOS-specific).
+    /// This timer fires every second. If `isGazingAtObject` is `true`, it increments `focusStreak`,
+    /// `totalFocusTime`, updates `bestStreak`, and calls `updateScore()`.
     private func startFocusStreakTimer() {
         guard !isVisionOSMode else { return }
         
@@ -504,6 +596,10 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    /// Updates the score based on focus duration and streaks (iOS-specific).
+    /// Adds points based on the current `scoreMultiplier`.
+    /// Increases `scoreMultiplier` every 5 seconds of continuous focus (max 3x).
+    /// Adds a bonus of 5 points every 10 seconds of continuous focus.
     private func updateScore() {
         guard !isVisionOSMode else { return }
         score += 1 * scoreMultiplier
@@ -517,6 +613,9 @@ class AttentionViewModel: ObservableObject {
         }
     }
 
+    /// Handles a successful "catch" event in visionOS mode (e.g., user drags circle to hologram).
+    /// Awards points based on a base value, current streak, and `visionOSScoreMultiplier`.
+    /// Increments `visionOSCatchStreak`.
     func handleVisionOSCatch() {
         guard isVisionOSMode && gameActive else { return }
 
@@ -536,6 +635,9 @@ class AttentionViewModel: ObservableObject {
         score = max(0, score)
     }
 
+    /// Handles the expiration of a hologram in visionOS mode (i.e., user failed to "catch" it in time).
+    /// Applies a small score penalty, resets `visionOSCatchStreak`, and decrements `visionOSRemainingHearts`.
+    /// If `visionOSRemainingHearts` reaches zero, the game ends.
     func handleVisionOSHologramExpired() {
         guard isVisionOSMode && gameActive else { return }
 
@@ -555,6 +657,8 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
+    /// Starts the timer responsible for spawning distractions in visionOS mode.
+    /// These distractions are non-interactive visual elements.
     private func startVisionOSDistractions() {
         guard isVisionOSMode else { return }
         visionOSDistractionTimer?.invalidate()
@@ -571,8 +675,12 @@ class AttentionViewModel: ObservableObject {
         }
     }
 
+    /// Attempts to spawn a new distraction in visionOS mode.
+    /// Ensures distractions don't overlap with the main circle, existing holograms, or paths between them.
+    /// Distractions have a limited lifespan and are removed automatically.
+    /// Requires `viewSize` to be set and non-zero.
     private func trySpawnVisionOSDistraction() {
-        guard distractions.count < 2 else { return }
+        guard distractions.count < 2 else { return } // Max 2 visual distractions for visionOS
         guard viewSize != .zero else { return }
 
         let distractionRadius = visionOSDistractionSize / 2
@@ -659,7 +767,14 @@ class AttentionViewModel: ObservableObject {
         }
     }
 
-    // Helper function to check if a point is near a line segment
+    /// Helper function to determine if a point is within a certain threshold distance from a line segment.
+    /// Used in visionOS mode to prevent distractions from blocking the path between the main circle and holograms.
+    /// - Parameters:
+    ///   - point: The `CGPoint` to check.
+    ///   - start: The starting `CGPoint` of the line segment.
+    ///   - end: The ending `CGPoint` of the line segment.
+    ///   - threshold: The maximum allowed distance from the line segment.
+    /// - Returns: `true` if the point is near the line segment, `false` otherwise.
     private func isPointNearLineSegment(point: CGPoint, start: CGPoint, end: CGPoint, threshold: CGFloat) -> Bool {
         // if the start and end points are the same, just check distance to start
         if start.distance(to: end) < 1.0 { // Use a small epsilon to handle floating point inaccuracies
@@ -681,6 +796,8 @@ class AttentionViewModel: ObservableObject {
         return point.distance(to: closestPointOnLine) < threshold
     }
     
+    /// Handles the event where a user taps on a distraction (iOS-specific).
+    /// This action ends the game with the reason `.distractionTap`.
     func handleDistractionTap() {
         guard !isVisionOSMode else { return } // This action is for iOS mode
         guard gameActive else { return }
@@ -691,26 +808,36 @@ class AttentionViewModel: ObservableObject {
     
     // MARK: - Computed Properties for Stats
     
+    /// The all-time high score achieved by the user across all iOS game sessions.
+    /// Fetched from `UserProgress` in SwiftData.
     var allTimeHighScore: Int {
         let progressFetch = FetchDescriptor<UserProgress>()
         return (try? modelContext.fetch(progressFetch).first)?.highScore ?? 0
     }
     
+    /// The all-time longest focus streak (in seconds) achieved by the user across all iOS game sessions.
+    /// Fetched from `UserProgress` in SwiftData.
     var allTimeLongestStreak: TimeInterval { // This refers to iOS time-based streak
         let progressFetch = FetchDescriptor<UserProgress>()
         return (try? modelContext.fetch(progressFetch).first)?.longestStreak ?? 0
     }
 
+    /// The all-time longest catch streak achieved by the user across all visionOS game sessions.
+    /// Fetched from `UserProgress` in SwiftData.
     var allTimeLongestVisionOSStreak: Double {
         let progressFetch = FetchDescriptor<UserProgress>()
         return (try? modelContext.fetch(progressFetch).first)?.longestVisionOSStreak ?? 0.0
     }
     
+    /// The total number of game sessions played by the user.
+    /// Fetched from `UserProgress` in SwiftData.
     var totalGameSessions: Int {
         let progressFetch = FetchDescriptor<UserProgress>()
         return (try? modelContext.fetch(progressFetch).first)?.totalSessions ?? 0
     }
     
+    /// A list of the 10 most recent game sessions.
+    /// Fetched from `GameSession` in SwiftData, sorted by date in descending order.
     var recentSessions: [GameSession] {
         var sessionsFetch = FetchDescriptor<GameSession>(
             sortBy: [SortDescriptor(\.date, order: .reverse)]
@@ -719,6 +846,9 @@ class AttentionViewModel: ObservableObject {
         return (try? modelContext.fetch(sessionsFetch)) ?? []
     }
     
+    /// The actual duration the last game session was played.
+    /// Calculated from `sessionStartTime` and `sessionEndTime`.
+    /// If the game is currently active, it returns the time elapsed since `sessionStartTime`.
     var actualPlayedDuration: TimeInterval {
         guard let endTime = sessionEndTime else {
             return gameActive ? Date().timeIntervalSince(sessionStartTime) : 0
@@ -726,6 +856,10 @@ class AttentionViewModel: ObservableObject {
         return endTime.timeIntervalSince(sessionStartTime)
     }
 
+    /// Updates the model context if a new one is provided.
+    /// This might be used if the environment's model context changes.
+    /// Includes a basic check to see if the context is actually different before updating.
+    /// - Parameter newContext: The new `ModelContext` to use.
     func updateModelContext(_ newContext: ModelContext) {
         // A more robust way to compare contexts if needed, but often direct assignment is fine
         // if the context is guaranteed to be the correct one from the environment.
@@ -735,8 +869,12 @@ class AttentionViewModel: ObservableObject {
         }
     }
     
-    // This comparison might be problematic if the URL isn't always set or if configurations differ.
-    // If issues arise, consider simplifying or removing this check.
+    /// Compares the current model context with another to check for equality.
+    /// This comparison is based on the URL of their container's first configuration.
+    /// - Note: This comparison might be problematic if URLs are not always set (e.g., for in-memory stores)
+    ///   or if configurations differ in other ways.
+    /// - Parameter other: The `ModelContext` to compare against.
+    /// - Returns: `true` if the contexts are considered equal based on their container configuration URL, `false` otherwise.
     private func isEqual(_ other: ModelContext) -> Bool {
         // Check if both contexts are from the same container.
         // This is a simplified check; more robust comparison might be needed if using multiple containers/configurations.

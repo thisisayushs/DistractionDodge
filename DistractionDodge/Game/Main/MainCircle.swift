@@ -2,7 +2,7 @@
 //  MainCircle.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 28/12/24.
+//  Created by Ayush Kumar Singh on 12/28/24.
 //
 
 import SwiftUI
@@ -10,7 +10,7 @@ import SwiftUI
 /// A view representing the main focus target in the game.
 ///
 /// MainCircle provides visual feedback about the player's focus through:
-/// - Color changes based on gaze status
+/// - Color changes based on gaze status on iOS or drag status on visionOS
 /// - Scale animations when focused
 /// - Gradient and glow effects
 ///

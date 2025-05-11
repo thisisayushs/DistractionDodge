@@ -2,32 +2,48 @@
 //  AboutView.swift
 //  DistractionDodge
 //
-//  Created by Ayush Singh on 5/4/25.
+//  Created by Ayush Kumar Singh on 5/4/25.
 //
 
 import SwiftUI
 
-/// A view that provides educational resources and app information.
+/// A view that provides educational resources and information about the DistractionDodge app.
 ///
-/// Features:
-/// - Curated list of research papers, documentaries, and books
-/// - Grouped resources by type for easy navigation
-/// - Interactive links to external content
-/// - Options to replay tutorial or introduction
-/// - Custom styling with blur effects and gradients
+/// `AboutView` serves as an educational hub, offering users curated content to understand
+/// the science behind attention, focus training, and the impact of digital distractions.
+/// It also provides options to revisit introductory parts of the app.
 ///
-/// The view serves as an educational hub, helping users understand
-/// the science behind attention and focus training.
+/// ## Features
+/// - Displays a list of educational resources, including research papers, documentaries, and books.
+/// - Groups resources by type (e.g., ``ResourceType/research``, ``ResourceType/documentary``, ``ResourceType/book``) for organized browsing.
+/// - Allows users to open external links to these resources.
+/// - Offers options to replay the app's tutorial (``TutorialView`` or ``visionOSTutorialView``) and introduction (``OnboardingView``).
+/// - Adapts its layout and styling for both iOS and visionOS platforms.
+///
+/// ## Usage
+/// This view is typically presented modally or within a navigation context where users can
+/// explore supplementary information about the app and the concepts it's built upon.
+///
+/// ```swift
+/// // Example of presenting AboutView
+/// .sheet(isPresented: $showAboutView) {
+///     AboutView()
+/// }
+/// ```
 struct AboutView: View {
-    /// Controls visibility of the tutorial replay
+    /// Controls the presentation of the tutorial view as a full-screen cover.
+    /// When `true`, the tutorial is presented.
     @State private var replayTutorial = false
     
-    /// Controls visibility of the introduction replay
+    /// Controls the presentation of the onboarding view as a full-screen cover.
+    /// When `true`, the onboarding introduction is presented.
     @State private var replayIntroduction = false
     
+    /// An environment property used to dismiss the current view.
     @Environment(\.dismiss) var dismiss
     
-    /// Collection of educational resources
+    /// A collection of ``Resource`` objects, each representing an educational item
+    /// such as an article, documentary, or book related to attention and focus.
     private let resources: [Resource] = [
         Resource(title: "Myth and Mystery of Shrinking Attention Span",
                 author: "Dr. K.R. Sundaramanian, Credait",
@@ -71,11 +87,15 @@ struct AboutView: View {
                 type: ResourceType.book)
     ]
     
-    /// Resources grouped by their type for sectioned display
+    /// A computed property that groups the ``resources`` array by their ``ResourceType``.
+    ///
+    /// This dictionary is used to display resources in sections within the `List`.
+    /// - Returns: A dictionary where keys are ``ResourceType`` cases and values are arrays of ``Resource`` objects.
     private var groupedResources: [ResourceType: [Resource]] {
         Dictionary(grouping: resources) { $0.type }
     }
     
+    /// The body of the `AboutView`, defining its content and layout.
     var body: some View {
         ZStack {
             #if os(iOS)
@@ -84,6 +104,7 @@ struct AboutView: View {
             
             VStack(spacing: 20) {
                 #if os(visionOS)
+                // Dismiss button specific to visionOS for better platform integration.
                 HStack {
                     Spacer()
                     Button {
@@ -97,29 +118,31 @@ struct AboutView: View {
                     .background(.thinMaterial, in: Capsule())
                     .buttonStyle(.plain)
                 }
-                .padding() // Adjust spacing as needed
+                .padding()
                 #endif
                 
-                HeaderView() 
+                HeaderView()
                 
+                // List displaying resources grouped by type and additional options.
                 List {
                     ForEach(ResourceType.allCases, id: \.self) { type in
                         if let resources = groupedResources[type] {
                             Section {
                                 ForEach(resources) { resource in
                                     ResourceRowView(resource: resource) {
+                                        // Opens the URL associated with the resource in an external browser.
                                         UIApplication.shared.open(resource.url)
                                     }
                                 }
                             } header: {
                                 #if os(iOS)
                                 Text(type.headerTitle).padding(.vertical).foregroundStyle(.white)
-                                #else // visionOS
-                                Text(type.headerTitle) 
+                                #else
+                                Text(type.headerTitle)
                                 #endif
                             }
                             #if os(visionOS)
-                            .listRowSeparator(.hidden) 
+                            .listRowSeparator(.hidden)
                             #endif
                         }
                     }
@@ -144,13 +167,13 @@ struct AboutView: View {
                                     #endif
                             }
                             .padding(.vertical, 8)
-                            #if os(iOS) // iOS
+                            #if os(iOS)
                             .foregroundStyle(.white)
                             #endif
                         }
                         #if os(iOS)
                         .listRowBackground(Color.black)
-                        #else // visionOS
+                        #else
                         .buttonStyle(.plain)
                         .listRowBackground(Color.clear)
                         #endif
@@ -174,25 +197,25 @@ struct AboutView: View {
                                     #endif
                             }
                             .padding(.vertical, 8)
-                            #if os(iOS) // iOS
+                            #if os(iOS)
                             .foregroundStyle(.white)
                             #endif
                         }
                         #if os(iOS)
                         .listRowBackground(Color.black)
-                        #else // visionOS
+                        #else
                         .buttonStyle(.plain)
                         .listRowBackground(Color.clear)
                         #endif
                     } header: {
                         #if os(iOS)
                         Text("More Options").padding(.vertical).foregroundStyle(.white)
-                        #else // visionOS
-                        Text("More Options") 
+                        #else
+                        Text("More Options")
                         #endif
                     }
                     #if os(visionOS)
-                    .listRowSeparator(.hidden) 
+                    .listRowSeparator(.hidden)
                     #endif
                 }
                 #if os(iOS)
@@ -201,11 +224,13 @@ struct AboutView: View {
                 #endif
             }
             #if os(visionOS)
-            .frame(width: 600, height: 700) 
-            .glassBackgroundEffect(in: .rect(cornerRadius: 20)) 
-            .padding(30) 
+            // Specific visionOS styling for the view container.
+            .frame(width: 600, height: 700)
+            .glassBackgroundEffect(in: .rect(cornerRadius: 20))
+            .padding(30)
             #endif
         }
+        // Presents the TutorialView when replayTutorial is true.
         .fullScreenCover(isPresented: $replayTutorial) {
             #if os(iOS)
             TutorialView()
@@ -213,6 +238,7 @@ struct AboutView: View {
             visionOSTutorialView()
             #endif
         }
+        // Presents the OnboardingView when replayIntroduction is true.
         .fullScreenCover(isPresented: $replayIntroduction) {
             OnboardingView()
         }

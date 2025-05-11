@@ -2,9 +2,9 @@
 //  TutorialStep.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 11/02/25.
+//  Created by Ayush Kumar Singh on 2/11/25.
 //
-
+#if os(iOS)
 import Foundation
 
 /// A model representing a single step in the tutorial sequence.
@@ -37,3 +37,4 @@ struct TutorialStep: Identifiable {
     /// Type of scoring mechanic being demonstrated
     let scoringType: ScoringType
 }
+#endif

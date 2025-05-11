@@ -1,3 +1,9 @@
+//
+//  StatsContentView.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/4/25.
+//
 import SwiftUI
 import Charts
 import SwiftData

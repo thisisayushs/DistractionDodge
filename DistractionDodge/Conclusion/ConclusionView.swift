@@ -2,7 +2,7 @@
 //  ConclusionView.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 22/01/25.
+//  Created by Ayush Kumar Singh on 1/22/25.
 //
 
 import SwiftUI
@@ -10,49 +10,69 @@ import SwiftData
 
 /// A view that presents the user's performance results and feedback after completing a focus training session.
 ///
-/// ConclusionView provides:
-/// - Animated score reveal
-/// - Performance statistics display
-/// - Contextual tips based on performance
-/// - Options to retry or restart training
+/// `ConclusionView` is displayed when a game session ends, either by time running out or by the user
+/// tapping a distraction. It provides a summary of the user's performance, including their score,
+/// key statistics like focus time or catch streaks (depending on the platform), and contextual tips.
+/// Users can choose to play another session or navigate back to the home screen.
+///
+/// ## Key Features
+/// - **Animated Score Reveal:** The final score is displayed with a counting animation.
+/// - **Performance Statistics:** Shows relevant stats like "Session Streak" & "Focus Time" (iOS) or "Max Streak" & "Play Time" (visionOS).
+/// - **Contextual Feedback:** Offers tips based on the user's score and the platform.
+/// - **Navigation Options:** Provides "Play Again" and "Go Home" buttons.
+/// - **Mindful Minutes Logging:** Automatically attempts to save the session duration as mindful minutes to HealthKit.
+/// - **Platform-Adaptive UI:** Adjusts its layout and presented statistics for iOS and visionOS.
+///
+/// ## Usage
+/// This view is typically presented as a full-screen cover when ``AttentionViewModel/gameActive`` becomes `false`.
+///
+/// ```swift
+/// .fullScreenCover(isPresented: $showConclusion) {
+///     ConclusionView(viewModel: viewModel, healthKitManager: healthKitManager)
+/// }
+/// ```
 struct ConclusionView: View {
     // MARK: - Properties
     
-    /// View model containing game results and statistics
+    /// The view model that holds the state and results of the completed game session.
     @ObservedObject var viewModel: AttentionViewModel
-    /// HealthKitManager instance
+    /// The manager responsible for interacting with HealthKit, used here to save mindful minutes.
     @ObservedObject var healthKitManager: HealthKitManager
     
-    /// Environment dismiss action
+    /// An environment property used to dismiss the current view (e.g., when "Play Again" is tapped).
     @Environment(\.dismiss) var dismiss
     
-    /// Tracks completion of introduction for navigation
+    /// An AppStorage property that tracks whether the user has completed the initial app introduction.
+    /// This is read but not directly modified in this view.
     @AppStorage("hasCompletedIntroduction") private var hasCompletedIntroduction = false
     
-    /// Animated score counter
+    /// The score value displayed on screen, animated from 0 to the final score.
     @State private var displayedScore = 0
     
-    /// Controls navigation back to introduction
+    /// Controls the presentation of the ``Home`` view as a full-screen cover.
     @State private var showHome = false
     
-    /// Scale factor for score animation
+    /// The scale factor for the score text, used for animation effects.
     @State private var scoreScale: CGFloat = 0.5
     
-    /// Controls animation states
+    /// A general flag to control animation states, currently used to initialize animations on appear.
     @State private var isAnimating = false
     
-    /// Scale factor for button animations
+    /// The scale factor for the "Play Again" button, used for a repeating animation.
     @State private var buttonScale: CGFloat = 1.0
     
-    /// Triggers button animation after score reveal
+    /// A flag that triggers the animation for the "Play Again" button after the score reveal is complete.
     @State private var shouldAnimateButton = false
     
-    /// Background gradient colors
+    /// The colors used for the background `LinearGradient`.
     private let gradientColors: [Color] = [
         .black.opacity(0.8),
         .purple.opacity(0.25)
     ]
     
+    /// Provides contextual feedback to the user based on their performance and the platform.
+    ///
+    /// For visionOS, tips relate to hologram catching. For iOS, tips focus on gaze maintenance and streaks.
     private var focusTips: String {
         if viewModel.isVisionOSMode {
             switch viewModel.endGameReason {
@@ -64,8 +84,8 @@ struct ConclusionView: View {
                 } else {
                     return "Fantastic performance! You're a true Distraction Dodger on visionOS!"
                 }
-            default:
-                return "Great job completing the session!"
+            default: // Covers .distractionTapped, .heartsDepleted
+                return "Great job completing the session! Try to avoid those distractions or keep your hearts up next time."
             }
         } else {
             if viewModel.score < 20 {
@@ -78,6 +98,9 @@ struct ConclusionView: View {
         }
     }
     
+    /// Formats a `TimeInterval` (in seconds) into a "MM:SS" string.
+    /// - Parameter seconds: The time interval to format.
+    /// - Returns: A string representation of the time in minutes and seconds.
     private func formatTime(_ seconds: TimeInterval) -> String {
         let totalSeconds = Int(seconds)
         let minutes = totalSeconds / 60
@@ -85,7 +108,13 @@ struct ConclusionView: View {
         return String(format: "%02d:%02d", minutes, secondsValue)
     }
     
-    // The internal logic determines the correct duration and handles HealthKit availability.
+    /// Saves the duration of the completed game session as mindful minutes to HealthKit.
+    ///
+    /// The duration logged depends on the game mode:
+    /// - For visionOS, it uses ``AttentionViewModel/actualPlayedDuration``.
+    /// - For iOS, it uses ``AttentionViewModel/totalFocusTime``.
+    ///
+    /// If the determined duration is zero or less, no attempt is made to save.
     private func saveMindfulMinutes() {
         let gameSpecificDuration: TimeInterval
         if viewModel.isVisionOSMode {
@@ -101,21 +130,24 @@ struct ConclusionView: View {
 
         healthKitManager.saveMindfulMinutes(
             duration: gameSpecificDuration,
-            endDate: Date(), // Session just ended
+            endDate: Date(), // Assumes the session just ended.
             isVisionOSMode: viewModel.isVisionOSMode
         )
     }
     
+    /// The body of the `ConclusionView`, defining its content and layout.
     var body: some View {
         ZStack {
+            #if os(iOS)
             LinearGradient(
                 gradient: Gradient(colors: gradientColors),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            DistractionBackground()
+            DistractionBackground() // Decorative animated background elements.
                 .blur(radius: 20)
+            #endif
             
             GeometryReader { geometry in
                 ScrollView {
@@ -129,29 +161,34 @@ struct ConclusionView: View {
                                 .foregroundColor(.white)
                                 .padding(.top, self.viewModel.isVisionOSMode ? 40 : 20)
                             
+                            // Animated score display
                             Text("\(displayedScore)")
                                 .font(.system(size: 80, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                                 .scaleEffect(scoreScale)
                                 .animation(.interpolatingSpring(stiffness: 170, damping: 15).delay(0.1), value: scoreScale)
                                 .onAppear {
+                                    // Reset animation states
                                     displayedScore = 0
                                     scoreScale = 0.5
-                                    isAnimating = false
+                                    isAnimating = false // TODO: Confirm if isAnimating has a distinct role here
                                     shouldAnimateButton = false
                                     
+                                    // Initial score scale animation
                                     withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.5)) {
                                         scoreScale = 1.0
                                     }
                                     
                                     let finalScore = self.viewModel.score
                                     
+                                    // Timer to animate score counting up
                                     Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { timer in
                                         if displayedScore < finalScore {
                                             let increment = max(1, (finalScore - displayedScore) / 20) // Faster for large scores
                                             displayedScore += increment
                                             if displayedScore > finalScore { displayedScore = finalScore }
                                             
+                                            // Brief scale pulse for every 10 points
                                             if displayedScore % 10 == 0 {
                                                 withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
                                                     scoreScale = 1.1
@@ -164,11 +201,12 @@ struct ConclusionView: View {
                                             }
                                         } else {
                                             timer.invalidate()
-                                            shouldAnimateButton = true
+                                            shouldAnimateButton = true // Trigger button animation
                                         }
                                     }
                                 }
                             
+                            // Display contextual focus tips
                             Text(focusTips)
                                 .font(.system(.body, design: .rounded))
                                 .foregroundColor(.white.opacity(0.9))
@@ -184,37 +222,39 @@ struct ConclusionView: View {
                                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 15))
                                 #endif
                             
+                            // Display statistics cards
                             HStack(spacing: 20) {
                                 if viewModel.isVisionOSMode {
                                     StatCard(
-                                        title: "Max Streak", 
-                                        value: "\(self.viewModel.visionOSCatchStreak)", 
-                                        icon: "target"
+                                        title: "Max Streak",
+                                        value: "\(self.viewModel.visionOSCatchStreak)",
+                                        icon: "target" // Represents successful hologram catches.
                                     )
                                     StatCard(
-                                        title: "Play Time", 
+                                        title: "Play Time",
                                         value: formatTime(self.viewModel.actualPlayedDuration),
                                         icon: "timer"
                                     )
-                                } else { 
+                                } else {
                                     StatCard(
                                         title: "Session Streak",
-                                        value: formatTime(self.viewModel.bestStreak as TimeInterval), 
-                                        icon: "bolt.fill"
+                                        value: formatTime(self.viewModel.bestStreak as TimeInterval),
+                                        icon: "bolt.fill" // Represents focus streak.
                                     )
                                     StatCard(
                                         title: "Focus Time",
-                                        value: formatTime(self.viewModel.totalFocusTime as TimeInterval), 
-                                        icon: "eye.fill" 
+                                        value: formatTime(self.viewModel.totalFocusTime as TimeInterval),
+                                        icon: "eye.fill" // Represents time spent gazing at the target.
                                     )
                                 }
                             }
                             .padding(.bottom, 40)
                             
+                            // Action buttons
                             VStack(spacing: 20) {
                                 Button {
                                     self.viewModel.startGame(isVisionOSGame: self.viewModel.isVisionOSMode)
-                                    dismiss()
+                                    dismiss() // Dismiss ConclusionView to go back to the game.
                                 } label: {
                                     HStack {
                                         Text("Play Again")
@@ -236,11 +276,11 @@ struct ConclusionView: View {
                                     #endif
                                 }
                                 #if os(visionOS)
-                                .buttonStyle(.borderedProminent)
-                                
+                                .buttonStyle(.borderedProminent) // Platform-specific button style.
                                 #endif
                                 .scaleEffect(buttonScale)
                                 .onChange(of: shouldAnimateButton) { _, newValue in
+                                    // Start repeating scale animation for the button when ready.
                                     if newValue {
                                         withAnimation(
                                             .easeInOut(duration: 0.5)
@@ -252,7 +292,7 @@ struct ConclusionView: View {
                                 }
                                 
                                 Button {
-                                    showHome = true
+                                    showHome = true // Trigger presentation of the Home view.
                                 } label: {
                                     HStack {
                                         Text("Go Home")
@@ -274,7 +314,7 @@ struct ConclusionView: View {
                                     #endif
                                 }
                                 #if os(visionOS)
-                                .buttonStyle(.bordered)
+                                .buttonStyle(.bordered) // Platform-specific button style.
                                 #endif
                             }
                         }
@@ -283,7 +323,7 @@ struct ConclusionView: View {
                         
                         Spacer()
                     }
-                    .frame(minHeight: geometry.size.height)
+                    .frame(minHeight: geometry.size.height) // Ensure scroll content fills height.
                     .frame(maxWidth: .infinity)
                 }
             }
@@ -291,13 +331,14 @@ struct ConclusionView: View {
         .preferredColorScheme(.dark)
         #if os(iOS)
         .statusBarHidden(true)
-        .persistentSystemOverlays(.hidden)
+        .persistentSystemOverlays(.hidden) // Hide system bars for immersive experience on iOS.
         #endif
         .onAppear {
-            saveMindfulMinutes()
+            saveMindfulMinutes() // Attempt to save mindful minutes when the view appears.
         }
         .fullScreenCover(isPresented: $showHome) {
-            Home()
+            Home() // Present Home view.
         }
     }
 }
+

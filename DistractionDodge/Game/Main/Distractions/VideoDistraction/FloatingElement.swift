@@ -2,9 +2,9 @@
 //  FloatingElement.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 22/01/25.
+//  Created by Ayush Kumar Singh on 1/22/25.
 //
-
+#if os(iOS)
 import Foundation
 
 /// A model representing floating visual elements in video distractions.
@@ -21,3 +21,4 @@ struct FloatingElement: Identifiable {
     let content: String
     var velocity: CGPoint
 }
+#endif

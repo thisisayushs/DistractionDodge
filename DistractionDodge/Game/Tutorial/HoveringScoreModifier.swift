@@ -2,9 +2,9 @@
 //  HoveringScoreModifier.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 11/02/25.
+//  Created by Ayush Kumar Singh on 2/11/25.
 //
-
+#if os(iOS)
 import SwiftUI
 
 /// A view modifier that creates a floating animation effect for score indicators.
@@ -40,3 +40,4 @@ struct FloatingScoreModifier: ViewModifier {
             )
     }
 }
+#endif

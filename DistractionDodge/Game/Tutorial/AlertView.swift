@@ -2,9 +2,10 @@
 // AlertView.swift
 // DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 11/02/25.
+//  Created by Ayush Kumar Singh on 2/11/25.
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A custom alert view component used throughout the tutorial.
@@ -69,7 +70,7 @@ struct AlertView: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 25)
                         .padding(.vertical, 12)
-                        #if os(iOS)
+                       
                         .background(
                             Capsule()
                                 .fill(Color.white.opacity(0.2))
@@ -78,7 +79,7 @@ struct AlertView: View {
                                         .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                 )
                         )
-                        #endif
+                        
                 }
                 
                 Button(action: {
@@ -92,7 +93,7 @@ struct AlertView: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 35)
                         .padding(.vertical, 12)
-                        #if os(iOS)
+                        
                         .background(
                             LinearGradient(
                                 colors: [.red.opacity(0.8), .orange.opacity(0.8)],
@@ -101,7 +102,7 @@ struct AlertView: View {
                             )
                             .clipShape(Capsule())
                         )
-                        #endif
+                        
                 }
             }
         }
@@ -110,7 +111,7 @@ struct AlertView: View {
     
     var body: some View {
         ZStack {
-            #if os(iOS)
+           
             Color.black.opacity(0.5)
                 .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
@@ -118,8 +119,8 @@ struct AlertView: View {
                         isPresented = false
                     }
                 }
-            #endif
-            #if os(iOS)
+            
+            
             alertContent
                 .background(
                     RoundedRectangle(cornerRadius: 25)
@@ -130,14 +131,11 @@ struct AlertView: View {
                         )
                         .shadow(color: .black.opacity(0.2), radius: 15)
                 )
-                .padding(30) // Outer padding for iOS to give space around the alert box
-            #else // visionOS
-            alertContent
-                // Constrain size for visionOS
-                .glassBackgroundEffect(in: .rect(cornerRadius: 25)) // Standard visionOS background
-                // No outer .padding(30) for visionOS; the ZStack handles centering.
-            #endif
+                .padding(30)
+          
+            
         }
         .transition(.opacity.combined(with: .scale(scale: 0.9)))
     }
 }
+#endif

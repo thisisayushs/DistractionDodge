@@ -2,7 +2,7 @@
 //  TextAnimator.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 22/01/25.
+//  Created by Ayush Kumar Singh on 1/22/25.
 //
 
 import SwiftUI

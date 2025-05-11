@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 28/12/24.
+//  Created by Ayush Kumar Singh on 12/28/24.
 //
 
 #if os(iOS)
@@ -11,45 +11,69 @@ import SwiftUI
 import AVFoundation
 import SwiftData
 
-/// The main game view where users practice maintaining focus while avoiding distractions.
+/// The main game view for the iOS version of DistractionDodge.
 ///
-/// ContentView implements the core game mechanics of the focus training app:
-/// - Eye tracking to detect user's gaze on the target
-/// - Progressive difficulty with timed distractions
-/// - Real-time score tracking and feedback
-/// - Pause functionality and game state management
+/// `ContentView` is responsible for displaying the core gameplay elements, including:
+/// - The eye-tracking overlay (`EyeTrackingView`) to monitor user gaze.
+/// - The primary focus target (`MainCircle`).
+/// - Dynamic distractions (`NotificationView`, `VideoDistraction`).
+/// - Real-time game information display (`FloatingCard` for time, score, streak, multiplier).
+/// - A pause button and associated pause menu (`PauseMenuView`).
+///
+/// It uses `AttentionViewModel` to manage game logic, state, and data.
+/// The view's size is determined using `GeometryReader` and passed to the `AttentionViewModel`
+/// for correct element positioning and game mechanics.
+///
+/// Game state changes, such as game over or obstruction, trigger navigation to
+/// `ConclusionView` or `GameObstructionView` respectively.
+///
+/// - Note: This view is specific to iOS due to its reliance on `EyeTrackingView` and ARKit.
+///   A separate view handles the visionOS game experience.
 struct ContentView: View {
     // MARK: - Properties
     
+    /// The SwiftData model context, used by `AttentionViewModel` for data persistence.
     @Environment(\.modelContext) private var modelContext
+    /// The main view model managing game state, logic, and data.
     @StateObject private var viewModel: AttentionViewModel
+    /// Manages HealthKit interactions, such as saving mindful minutes.
     @ObservedObject var healthKitManager: HealthKitManager
     
-    /// Controls the game obstructed overlay.
+    /// Controls the presentation of the `GameObstructionView` when a distraction is tapped.
     @State private var gameObstructed = false
     
-    /// Controls navigation to conclusion screen
+    /// Controls the navigation to the `ConclusionView` when the game ends due to time up.
     @State private var showConclusion = false
     
-    /// Controls display of pause menu
+    /// Controls the presentation of the `PauseMenuView`.
     @State private var showPauseMenu = false
     
-    /// Position of video distraction element
+    /// The current screen position for the `VideoDistraction` element.
     @State private var videoPosition: CGPoint = .zero
     
-    /// Gradient colors for background effect
+    /// Gradient colors used for the background of the game view.
     private let gradientColors: [Color] = [
         .black.opacity(0.8),
         .purple.opacity(0.2)
     ]
     
+    /// Initializes the `ContentView` with a specified game duration and HealthKit manager.
+    /// - Parameters:
+    ///   - duration: The total duration for the game session in seconds. Defaults to 60 seconds.
+    ///   - healthKitManager: The `HealthKitManager` instance for HealthKit integration.
     init(duration: Double = 60, healthKitManager: HealthKitManager) {
+        // Initializes AttentionViewModel internally, ensuring it has a ModelContext.
+        // This ModelContext is created here; ideally, it should be passed from a higher level
+        // if ContentView is part of a larger SwiftData-managed application structure.
         let viewModel = AttentionViewModel(modelContext: ModelContext(try! ModelContainer(for: GameSession.self, UserProgress.self)))
         viewModel.setGameDuration(duration)
         _viewModel = StateObject(wrappedValue: viewModel)
         self.healthKitManager = healthKitManager
     }
     
+    /// Formats a time interval (in seconds) into a "MM:SS" string.
+    /// - Parameter seconds: The time interval in seconds.
+    /// - Returns: A string representing the formatted time (e.g., "01:30").
     private func formatTime(_ seconds: TimeInterval) -> String {
         let totalSeconds = Int(seconds)
         let minutes = totalSeconds / 60
@@ -131,6 +155,13 @@ struct ContentView: View {
                             glowColor: .orange
                         )
                         
+                        FloatingCard(
+                            title: "Multiplier",
+                            value: "\(viewModel.scoreMultiplier)x",
+                            glowCondition: viewModel.scoreMultiplier == 3,
+                            glowColor: .cyan
+                        )
+                        
                         Spacer()
                         
                         Button {
@@ -198,7 +229,7 @@ struct ContentView: View {
         .sheet(isPresented: $showPauseMenu) {
             PauseMenuView(viewModel: viewModel)
         }
-    } // End body
-} // End struct
+    }
+}
 
 #endif

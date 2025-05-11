@@ -1,3 +1,9 @@
+//
+//  EmptyStateView.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/5/25.
+//
 import SwiftUI
 
 /// A view displayed when no statistics are available.

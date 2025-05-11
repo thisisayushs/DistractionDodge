@@ -2,23 +2,28 @@
 //  OnboardingView.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 21/01/25.
+//  Created by Ayush Kumar Singh on 1/21/25.
 //
 
 import SwiftUI
 import SwiftData
 
 #if os(visionOS)
-struct OnboardingHologram: Identifiable { // Renamed to avoid conflict if Hologram exists elsewhere globally
+/// Represents a simple hologram element used during the visionOS onboarding demonstration.
+struct OnboardingHologram: Identifiable {
+    /// A unique identifier for the hologram.
     let id = UUID()
+    /// The screen position of the hologram.
     var position: CGPoint
 }
 
+/// A SwiftUI view that renders a single `OnboardingHologram`.
+/// It displays a circular, translucent shape with a glowing effect, specific to the visionOS onboarding demo.
 struct OnboardingHologramView: View { // Renamed for clarity
     var body: some View {
         Circle()
             .fill(Color.cyan.opacity(0.4))
-            .frame(width: 70, height: 70) // Slightly smaller for onboarding
+            .frame(width: 70, height: 70) 
             .overlay(
                 Circle()
                     .stroke(Color.cyan.opacity(0.7), lineWidth: 1.5)
@@ -31,64 +36,72 @@ struct OnboardingHologramView: View { // Renamed for clarity
 #endif
 
 
-/// A view that provides an interactive introduction.
+/// A view that provides an interactive and educational introduction to the DistractionDodge app.
 ///
-/// The OnboardingView presents a series of educational pages about focus and attention,
-/// incorporating interactive elements and animations to demonstrate key concepts.
-/// It serves as the entry point for the experience, providing context about focus challenges
-/// and introducing the app's training approach.
+/// The `OnboardingView` presents a series of pages (`Page` model) to inform the user about
+/// focus, distractions, and how the app can help. It features:
+/// - Platform-specific animated backgrounds and interactive elements.
+/// - A demonstration of game mechanics on the fourth page (moving ball and distractions/holograms).
+/// - Navigation through swipe gestures or a prominent "Next" button.
+/// - Text animator effect for displaying content line by line.
+/// - Option to skip the introduction and proceed directly to the tutorial.
+///
+/// It uses `GeometryReader` to adapt its layout and animations to the available screen space.
+/// State variables manage the current page, animations, navigation, and presentation of modals/alerts.
 struct OnboardingView: View {
     // MARK: - Properties
     
-    /// Current page index in the onboarding flow
+    /// The index of the currently displayed onboarding page in the `pages` array.
     @State private var currentIndex = 0
     
-    /// Scale factor for emoji animations
+    /// Scale factor for the emoji animation on the current page.
     @State private var emojiScale: CGFloat = 1
     
-    /// Rotation angle for emoji animations
+    /// Rotation angle (in degrees) for the emoji animation on the current page.
     @State private var emojiRotation: CGFloat = 0
     
-    /// Scale factor for SF symbols
+    /// Scale factor for the SF symbol animation on the current page. (Currently not actively animated in displayed code but available).
     @State private var symbolScale: CGFloat = 1
     
-    /// Controls navigation state to prevent rapid transitions
+    /// A flag to prevent rapid, repeated navigation actions.
     @State private var isNavigating = false
     
-    /// Opacity level for background distractions
+    /// Opacity level for the background distraction elements (iOS specific).
     @State private var distractionOpacity: Double = 0.3
     
-    /// Controls the glow effect animation
+    /// Controls the glowing animation state for the main focus ball demonstration.
     @State private var isGlowing = false
 
-    /// Position of the interactive ball demonstration
+    /// The current screen position of the interactive focus ball demonstration element.
     @State private var ballPosition: CGPoint = .zero
 
-    /// Timer for generating notifications in the demo (iOS)
+    /// Timer responsible for generating mock notification distractions during the iOS onboarding demonstration.
     @State private var notificationTimer: Timer?
     
-    /// Collection of active notification demonstrations (iOS)
+    /// A collection of active mock notification distractions displayed during the iOS onboarding demonstration.
+    /// Each tuple contains the notification type, its position, and a unique ID.
     @State private var notifications: [(type: NotificationCategory, position: CGPoint, id: UUID)] = []
     
     #if os(visionOS)
-    /// Timer for generating holograms in the demo (visionOS)
+    /// Timer responsible for generating `OnboardingHologram` elements during the visionOS onboarding demonstration.
     @State private var onboardingHologramTimer: Timer?
-    /// Collection of active hologram demonstrations (visionOS)
+    /// A collection of active `OnboardingHologram` elements displayed during the visionOS onboarding demonstration.
     @State private var activeOnboardingHolograms: [OnboardingHologram] = [] // USE OnboardingHologram
     #endif
     
-    /// Direction vector for ball movement
+    /// The direction vector for the movement of the focus ball demonstration element.
     @State private var moveDirection = CGPoint(x: 1, y: 1)
     
-    /// Controls navigation to main content
-    @State private var showContentView = false
+    /// Controls the presentation of the main game content view (`Home`) after onboarding (if tutorial is skipped or already done).
+    @State private var showContentView = false // Note: Currently navigates to TutorialView first
     
-    /// Controls navigation to tutorial
+    /// Controls the presentation of the `TutorialView` after completing or skipping onboarding.
     @State private var showTutorial = false
     
-    /// Tracks drag gesture state
+    /// Tracks the horizontal offset of a drag gesture, used for swipe navigation between pages.
     @GestureState private var dragOffset: CGFloat = 0
     
+    /// A collection of gradient color pairs used for the background of each onboarding page on iOS.
     let gradientColors: [(start: Color, end: Color)] = [
         (.black.opacity(0.8), .blue.opacity(0.2)),
         (.black.opacity(0.8), .indigo.opacity(0.2)),
@@ -97,6 +110,7 @@ struct OnboardingView: View {
         (.black.opacity(0.8), .blue.opacity(0.25))
     ]
     
+    /// An array of `Page` objects, each defining the content for one screen of the onboarding flow.
     let pages: [Page] = [
         Page(
             title: "Where Did Our Focus Go?",
@@ -153,16 +167,23 @@ struct OnboardingView: View {
         )
     ]
     
+    /// Fetches `UserProgress` data from SwiftData to check if onboarding has been completed previously.
     @Query private var userProgress: [UserProgress]
     
+    /// A computed property indicating whether the user has already completed the onboarding process.
+    /// (Currently not used to skip onboarding, but available for such logic).
     private var hasCompletedIntroduction: Bool {
         userProgress.first?.hasCompletedOnboarding ?? false
     }
     
+    /// Triggers the navigation to the `TutorialView` when onboarding is completed or skipped.
     private func completeIntroduction() {
         showTutorial = true
     }
     
+    /// Handles navigation between onboarding pages.
+    /// - Parameter forward: If `true`, navigates to the next page; if `false`, navigates to the previous page.
+    /// Manages `isNavigating` to prevent multiple navigations at once.
     private func navigate(forward: Bool) {
         if !isNavigating {
             isNavigating = true
@@ -180,6 +201,9 @@ struct OnboardingView: View {
         }
     }
     
+    /// Manages the continuous movement of the demonstration focus ball on the fourth onboarding page.
+    /// The ball bounces off the edges of the `viewSize`.
+    /// Requires `viewSize` to be non-zero.
     private func moveBallContinuously() {
         guard viewSize != .zero else {
             print("OnboardingView: Cannot move ball, viewSize is zero.")
@@ -219,6 +243,9 @@ struct OnboardingView: View {
         }
     }
     
+    /// Generates mock notification distractions periodically on the fourth onboarding page (iOS-specific).
+    /// Notifications appear at random positions within safe screen bounds and have a limited lifetime.
+    /// Requires `viewSize` to be non-zero.
     private func generateNotifications() {
         guard viewSize != .zero else {
             print("OnboardingView: Cannot generate notifications, viewSize is zero.")
@@ -285,6 +312,9 @@ struct OnboardingView: View {
         }
     }
     
+    /// Generates `OnboardingHologram` elements periodically on the fourth onboarding page (visionOS-specific).
+    /// Holograms appear at random positions within safe screen bounds and have a limited lifetime.
+    /// Requires `viewSize` to be non-zero.
     private func generateOnboardingHolograms() { // visionOS specific
         #if os(visionOS) // Ensure this function's body is only for visionOS
         guard viewSize != .zero else {
@@ -350,6 +380,10 @@ struct OnboardingView: View {
         #endif
     }
     
+    /// Resets and restarts all animations specific to the fourth onboarding page (demonstration page).
+    /// This includes clearing existing distractions/holograms, resetting the ball position and glow,
+    /// and restarting their respective timers and movement.
+    /// Requires `viewSize` to be non-zero.
     private func resetAndStartAnimations() {
         guard viewSize != .zero else {
             print("OnboardingView: Cannot reset/start animations, viewSize is zero.")
@@ -385,14 +419,20 @@ struct OnboardingView: View {
         #endif
     }
     
+    /// The size of the view, obtained from `GeometryReader`. Used for positioning and animation bounds.
     @State private var viewSize: CGSize = .zero
     
+    /// The index of the current line being animated by `TextAnimator` in `OnboardingContentView`.
     @State private var activeLineIndex = 0
+    /// A set of indices for lines that have completed their animation in `OnboardingContentView`.
     @State private var completedLines: Set<Int> = []
+    /// A flag indicating if all lines of text on the current page have finished animating.
     @State private var allLinesComplete = false
     
+    /// Controls the presentation of an alert asking the user to confirm skipping the introduction.
     @State private var showSkipAlert = false
     
+    /// A flag to signal `TextAnimator` to stop its animation, typically when navigating away.
     @State private var shouldStopTextAnimation = false
     
     var body: some View {

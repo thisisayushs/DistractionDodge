@@ -1,3 +1,9 @@
+//
+//  TimeRangeButton.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/4/25.
+//
 import SwiftUI
 
 /// A styled button for time range selection.

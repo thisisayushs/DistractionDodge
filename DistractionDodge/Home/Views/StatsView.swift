@@ -1,3 +1,9 @@
+//
+//  StatsView.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/4/25.
+//
 import SwiftUI
 import Charts
 
@@ -38,10 +44,8 @@ struct StatsView: View {
     }
     
     var body: some View {
-        ZStack { // Outer ZStack for background and content
-            // We can pick a specific gradient, e.g., index 1 (purple) for StatsView
-            // or make it dynamic if needed. For now, using index 1.
-            #if os(iOS) // BackgroundView might be iOS specific based on Home.swift
+        ZStack { 
+            #if os(iOS)
             BackgroundView(currentPage: 1, colors: gradientColors)
             #endif
 
@@ -60,7 +64,7 @@ struct StatsView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity) 
                     }
                 }
-                // The BackgroundView now handles the full background.
+                
                 .animation(.easeInOut, value: timeRange)
                 
                 Button {
@@ -94,10 +98,7 @@ struct StatsView: View {
                 #endif
             }
         }
-        .onAppear {
-            // checkAuthorizationStatus() // Rely on HealthKitManager's state
-            // If an explicit re-check is needed upon appearing, HealthKitManager should provide a method.
-        }
+        
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 // checkAuthorizationStatus() // Rely on HealthKitManager's state
@@ -107,7 +108,3 @@ struct StatsView: View {
     }
 }
 
-// If StatsView has a PreviewProvider, it will need to be updated:
-// #Preview {
-//     StatsView(sessions: [], healthKitManager: HealthKitManager()) // Add HealthKitManager
-// }

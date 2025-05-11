@@ -1,3 +1,9 @@
+//
+//  ResourceRowView.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/5/25.
+//
 import SwiftUI
 
 /// A row view for displaying educational resources.

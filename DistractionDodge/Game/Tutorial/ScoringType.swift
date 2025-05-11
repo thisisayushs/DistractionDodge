@@ -2,9 +2,9 @@
 //  ScoringType.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 11/02/25.
+//  Created by Ayush Kumar Singh on 2/11/25.
 //
-
+#if os(iOS)
 import Foundation
 
 /// Defines the different types of scoring mechanics demonstrated in the tutorial.
@@ -42,3 +42,4 @@ enum ScoringType {
     /// Dealing with distraction elements
     case distractions
 }
+#endif

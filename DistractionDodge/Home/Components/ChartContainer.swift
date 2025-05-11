@@ -1,3 +1,9 @@
+//
+//  ChartContainer.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/4/25.
+//
 import SwiftUI
 
 /// A reusable container view for charts with consistent styling.

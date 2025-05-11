@@ -2,9 +2,9 @@
 //  NotificationEffects.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 15/02/25.
+//  Created by Ayush Kumar Singh on 2/15/25.
 //
-
+#if os(iOS)
 import SwiftUI
 
 /// A geometry effect that creates a horizontal shake animation.
@@ -63,3 +63,4 @@ struct PulseEffect: ViewModifier {
             }
     }
 }
+#endif

@@ -2,169 +2,108 @@
 //  visionOSTutorialView.swift
 //  DistractionDodge
 //
-//  Created by Ayush Singh on 5/10/25.
+//  Created by Ayush Kumar Singh on 5/5/25.
 //
+#if os(visionOS)
 
 import SwiftUI
 import SwiftData
 
-#if os(visionOS)
+// Note: TutorialHologram, TutorialSparkEffect, FlyingPoint, FlyingPointsView, VisionOSTutorialStep
+// definitions have been moved to their own files in Tutorial/Models/ and Tutorial/Views/.
+// HologramView and SparkleExplosionView are used from SharedViews/.
 
-// MARK: - Tutorial-specific Hologram and Effect Definitions
-// COPIED/ADAPTED from visionOSContentView.swift for tutorial use
-
-struct TutorialHologram: Identifiable, Equatable {
-    let id = UUID()
-    var position: CGPoint
-    let creationTime = Date()
-    static let lifespan: TimeInterval = 6.0 // Lifespan for tutorial holograms
-    static let diameter: CGFloat = 90
-    static var radius: CGFloat { diameter / 2 }
-}
-
-// Using HologramView directly from visionOSContentView for visual consistency.
-// Ensure HologramView is accessible or copy its definition here if not.
-// For this example, assuming HologramView is defined as in visionOSContentView.swift.
-// If HologramView is not directly usable, it might be defined like this:
-/*
- struct HologramView: View { // This is a placeholder if not accessible
-     var body: some View {
-         Circle()
-             .fill(Color.cyan.opacity(0.5))
-             .frame(width: TutorialHologram.diameter, height: TutorialHologram.diameter)
-             .overlay(
-                 Circle()
-                     .stroke(Color.cyan.opacity(0.8), lineWidth: 2)
-                     .blur(radius: 3)
-             )
-             .shadow(color: .cyan.opacity(0.7), radius: 10, x: 0, y: 0)
-             .transition(.scale.combined(with: .opacity))
-     }
- }
-*/
-// To use the actual HologramView from the other file, you would ensure it's public
-// or in a shared module. For this suggestion, I'll assume it's available or
-// you'll copy its exact definition here if needed. The one in visionOSContentView is:
-// struct HologramView: View {
-//     var body: some View {
-//         Circle()
-//             .fill(Color.cyan.opacity(0.5))
-//             .frame(width: 90, height: 90) // Matches TutorialHologram.diameter
-//             .overlay(...)
-//             .shadow(...)
-//             .transition(...)
-//     }
-// }
-
-
-struct TutorialSparkEffect: Identifiable {
-    let id = UUID()
-    var position: CGPoint
-}
-
-// Using SparkleExplosionView directly.
-// Ensure SparkleExplosionView is accessible or copy its definition.
-// For this example, assuming SparkleExplosionView is defined as in visionOSContentView.swift.
-// Definition from visionOSContentView.swift:
-// struct SparkleExplosionView: View {
-//     @State private var scale: CGFloat = 0.2
-//     @State private var opacity: Double = 1.0
-//     let onComplete: () -> Void
-//     private let animationDuration: TimeInterval = 0.6
-//     var body: some View { ... } // Full body from visionOSContentView
-// }
-
-struct FlyingPoint: Identifiable {
-    let id = UUID()
-    let text: String
-    var position: CGPoint
-    let creationTime = Date()
-    static let animationDuration: TimeInterval = 1.0
-}
-
-struct FlyingPointsView: View {
-    let point: FlyingPoint
-    @State private var opacity: Double = 1.0
-    @State private var offsetY: CGFloat = 0
-
-    var body: some View {
-        Text(point.text)
-            .font(.system(size: 24, weight: .bold, design: .rounded))
-            .foregroundColor(.yellow)
-            .shadow(color: .black.opacity(0.5), radius: 2, x: 1, y: 1)
-            .position(x: point.position.x, y: point.position.y + offsetY)
-            .opacity(opacity)
-            .onAppear {
-                withAnimation(.easeOut(duration: FlyingPoint.animationDuration)) {
-                    offsetY = -60
-                    opacity = 0
-                }
-            }
-    }
-}
-
-enum VisionOSTutorialStep {
-    case dragCircle
-    case catchHologram
-    case learnDistractions
-    case learnScoring
-    case learnHearts
-}
-
-struct visionOSTutorialView: View {
+/// The main view for the interactive tutorial on visionOS.
+///
+/// This view guides the user through various game mechanics, including controlling the circle,
+/// catching holograms, understanding distractions, scoring, and the hearts system.
+public struct visionOSTutorialView: View {
+    /// Environment value to dismiss the current view.
     @Environment(\.dismiss) private var dismiss
+    /// The SwiftData model context, used for saving tutorial completion progress.
     @Environment(\.modelContext) private var modelContext
 
-    // MARK: - State Variables
+    // MARK: - State Variables for Tutorial Flow
+    /// The current step of the tutorial.
     @State private var currentStep: VisionOSTutorialStep = .dragCircle
-
+    /// The main title text displayed for the current tutorial step.
     @State private var currentTitle: String = "Control your Circle"
+    /// The subtitle/instructional text displayed for the current tutorial step.
     @State private var currentSubtitle: String = "Drag the circle around with your gaze or finger."
 
+    // MARK: - State Variables for Draggable Circle
+    /// The current position of the draggable main circle in the demo area.
     @State private var circlePosition: CGPoint = .zero
+    /// A Boolean indicating whether the main circle is currently being dragged by the user.
     @State private var isDraggingCircle: Bool = false
+    /// The position of the main circle at the start of a drag gesture.
     @State private var dragStartCirclePosition: CGPoint = .zero
+    /// A Boolean indicating if the user has successfully dragged the circle at least once in the `dragCircle` step.
     @State private var hasDraggedOnce: Bool = false
 
+    /// The visual radius of the main draggable circle for tutorial purposes.
     private let mainCircleVisualRadius: CGFloat = 100
 
-    // State for hologram step
+    // MARK: - State Variables for Hologram Catching Step
+    /// An array of `TutorialHologram` objects currently active in the demo area.
     @State private var activeTutorialHolograms: [TutorialHologram] = []
+    /// An array of `TutorialSparkEffect` objects currently active in the demo area.
     @State private var activeSparkEffects: [TutorialSparkEffect] = []
+    /// An array of `FlyingPoint` objects (e.g., score indicators) currently active.
     @State private var activeFlyingPoints: [FlyingPoint] = []
+    /// Timer for spawning tutorial holograms.
     @State private var hologramSpawnTimer: Timer?
+    /// Timer for checking expired tutorial holograms.
     @State private var hologramCheckTimer: Timer?
+    /// The number of holograms caught by the user in the `catchHologram` step.
     @State private var hologramsCaughtCount: Int = 0
+    /// The target number of holograms the user needs to catch to complete the `catchHologram` step.
     private let hologramsToCatchGoal: Int = 3
+    /// The maximum number of tutorial holograms allowed on screen simultaneously.
     private let maxConcurrentTutorialHolograms: Int = 2
 
-
+    // MARK: - State Variables for UI Control
+    /// A Boolean indicating whether to show the alert for skipping the tutorial.
     @State private var showSkipAlert: Bool = false
-
+    /// A Boolean to trigger the "pulsing" animation for the "Next" button when it becomes active.
     @State private var showNextButtonReadyAnimation: Bool = false
+    /// The scale factor for the "Next" button's pulsing animation.
     @State private var nextButtonScale: CGFloat = 1.0
 
+    // MARK: - State Variables for Layout and Sizing
+    /// The total size of the `visionOSTutorialView`. Obtained via `GeometryReader`.
     @State private var viewSize: CGSize = .zero
+    /// The calculated size of the interactive demo area within the tutorial view.
     @State private var demoAreaSize: CGSize = .zero
     
+    // MARK: - State Variables for Distraction Learning Step
+    /// A sample `Distraction` object used to demonstrate distractions.
     @State private var sampleDistraction: Distraction?
+    /// Timer for scheduling the appearance of sample distractions.
     @State private var distractionAppearTimer: Timer?
 
-    @State private var tutorialHeartsToShow: Int = 3 // Start by showing all full for explanation
-
+    // MARK: - State Variables for Hearts Learning Step
+    /// The number of hearts to display during the `learnHearts` step.
+    @State private var tutorialHeartsToShow: Int = 3
+    /// A sample `TutorialHologram` used to demonstrate heart loss.
     @State private var demoHeartLossHologram: TutorialHologram?
+    /// Timer for managing the heart loss demonstration sequence.
     @State private var heartLossDemoTimer: Timer?
 
+    /// A Boolean to control the presentation of the `Home` view after tutorial completion.
     @State private var showHomeView = false
 
-    var body: some View {
+    /// Initializes a new `visionOSTutorialView`.
+    public init() {}
+
+    /// The body of the `visionOSTutorialView`.
+    public var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
+                // Skip Button Area
                 HStack {
                     Spacer()
-                    Button(action: {
-                        showSkipAlert = true
-                    }) {
+                    Button(action: { showSkipAlert = true }) {
                         Text("Skip")
                             .font(.system(size: 17, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.7))
@@ -172,12 +111,13 @@ struct visionOSTutorialView: View {
                             .padding(.vertical, 8)
                     }
                     .buttonStyle(.plain)
-                    .padding([.top, .trailing], 25) // Ensured this matches OnboardingView's visionOS skip button
+                    .padding([.top, .trailing], 25)
                 }
-                .frame(height: 50) // Ensured this matches OnboardingView's visionOS HStack for the skip button
+                .frame(height: 50)
 
                 Spacer()
 
+                // Title and Subtitle
                 Text(currentTitle)
                     .font(.system(size: 40, weight: .bold, design: .default))
                     .padding(.bottom, 10)
@@ -191,6 +131,7 @@ struct visionOSTutorialView: View {
                     .padding(.bottom, 20)
                     .animation(.easeInOut, value: currentSubtitle)
 
+                // Interactive Demo Area
                 ZStack {
                     switch currentStep {
                     case .dragCircle:
@@ -204,18 +145,15 @@ struct visionOSTutorialView: View {
                                 .position(hologram.position)
                                 .transition(.asymmetric(insertion: .scale.animation(.spring()), removal: .opacity.animation(.easeInOut)))
                         }
-
                         MainCircle(
                             isGazingAtTarget: isDraggingCircle,
                             position: circlePosition
                         )
-
                         ForEach(activeSparkEffects) { effect in
                             SparkleExplosionView(onComplete: { removeSparkEffect(id: effect.id) })
                                 .position(effect.position)
                                 .allowsHitTesting(false)
                         }
-                        
                         ForEach(activeFlyingPoints) { point in
                             FlyingPointsView(point: point)
                                 .id(point.id)
@@ -232,7 +170,6 @@ struct visionOSTutorialView: View {
                             position: circlePosition
                         )
                         .opacity(0.5)
-
                         if let distraction = sampleDistraction {
                             VisionOSDistractionView(distraction: distraction)
                                 .position(distraction.position)
@@ -241,57 +178,34 @@ struct visionOSTutorialView: View {
                     case .learnScoring:
                         ScrollView {
                             VStack(alignment: .leading, spacing: 20) {
-
                                 HStack(spacing: 10) {
-                                    Image(systemName: "scope")
-                                        .font(.title2)
-                                        .foregroundColor(.cyan)
+                                    Image(systemName: "scope").font(.title2).foregroundColor(.cyan)
                                     VStack(alignment: .leading) {
-                                        Text("Catch Hologram")
-                                            .font(.headline)
-                                        Text("Base: **+3 points**")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
+                                        Text("Catch Hologram").font(.headline)
+                                        Text("Base: **+3 points**").font(.subheadline).foregroundColor(.secondary)
                                     }
                                 }
                                 .padding(.vertical, 5)
-
                                 Divider()
-
                                 HStack(spacing: 10) {
-                                    Image(systemName: "flame.fill")
-                                        .font(.title2)
-                                        .foregroundColor(.orange)
+                                    Image(systemName: "flame.fill").font(.title2).foregroundColor(.orange)
                                     VStack(alignment: .leading) {
-                                        Text("Streak Bonus")
-                                            .font(.headline)
-                                        Text("Every **5** consecutive catches: **+5 bonus points**")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
+                                        Text("Streak Bonus").font(.headline)
+                                        Text("Every **5** consecutive catches: **+5 bonus points**").font(.subheadline).foregroundColor(.secondary)
                                     }
                                 }
                                 .padding(.vertical, 5)
-                                
                                 Divider()
-
                                 HStack(spacing: 10) {
-                                    Image(systemName: "arrow.up.right.circle.fill")
-                                        .font(.title2)
-                                        .foregroundColor(.yellow)
+                                    Image(systemName: "arrow.up.right.circle.fill").font(.title2).foregroundColor(.yellow)
                                     VStack(alignment: .leading) {
-                                        Text("Score Multiplier")
-                                            .font(.headline)
-                                        Text("Increases as game time progresses:")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
+                                        Text("Score Multiplier").font(.headline)
+                                        Text("Increases as game time progresses:").font(.subheadline).foregroundColor(.secondary)
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("• Start: **1.0x**")
                                             Text("• Mid-game: **1.5x**")
                                             Text("• Late-game: **2.0x**")
-                                        }
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                        .padding(.leading, 15)
+                                        }.font(.caption).foregroundColor(.gray).padding(.leading, 15)
                                     }
                                 }
                                 .padding(.vertical, 5)
@@ -304,7 +218,6 @@ struct visionOSTutorialView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 25))
                         .shadow(radius: 5)
                     case .learnHearts:
-                        // Main content for heart explanation
                         VStack(spacing: 25) {
                             HStack(spacing: 10) {
                                 ForEach(0..<3) { index in
@@ -316,22 +229,14 @@ struct visionOSTutorialView: View {
                                 }
                             }
                             .padding(.bottom, 10)
-
                             VStack(alignment: .leading, spacing: 15) {
-                                Text("You start with **3 hearts**.")
-                                    .font(.title3.weight(.medium))
-                                
+                                Text("You start with **3 hearts**.").font(.title3.weight(.medium))
                                 HStack(alignment: .top) {
-                                    Image(systemName: "exclamationmark.shield.fill")
-                                        .foregroundColor(.yellow)
-                                        .font(.title2)
+                                    Image(systemName: "exclamationmark.shield.fill").foregroundColor(.yellow).font(.title2)
                                     Text("Letting a hologram expire (like the one above!) makes you **lose 1 heart**.")
                                 }
-                                
                                 HStack(alignment: .top) {
-                                     Image(systemName: "gamecontroller.fill")
-                                        .foregroundColor(.red)
-                                        .font(.title2)
+                                     Image(systemName: "gamecontroller.fill").foregroundColor(.red).font(.title2)
                                     Text("If you lose all 3 hearts, the **game ends!**")
                                 }
                             }
@@ -344,7 +249,6 @@ struct visionOSTutorialView: View {
                         .background(Material.regularMaterial)
                         .clipShape(RoundedRectangle(cornerRadius: 25))
                         .shadow(radius: 5)
-                        // Overlay the demo hologram for this step
                         if let hologram = demoHeartLossHologram {
                             HologramView()
                                 .position(hologram.position)
@@ -360,7 +264,7 @@ struct visionOSTutorialView: View {
                     DragGesture(minimumDistance: 0, coordinateSpace: .local)
                         .onChanged { value in
                             guard currentStep != .learnDistractions && currentStep != .learnScoring && currentStep != .learnHearts else { return }
-                            // ... (rest of drag gesture)
+                            
                             if !isDraggingCircle {
                                 isDraggingCircle = true
                                 dragStartCirclePosition = circlePosition
@@ -429,7 +333,7 @@ struct visionOSTutorialView: View {
                     self.dragStartCirclePosition = self.circlePosition
                 }
             }
-            .alert("Skip Tutorial", isPresented: $showSkipAlert) { // This alert also matches OnboardingView's visionOS alert
+            .alert("Skip Tutorial", isPresented: $showSkipAlert) {
                 Button("Skip", role: .destructive) { completeTutorial() }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -483,7 +387,6 @@ struct visionOSTutorialView: View {
             sampleDistraction = nil
             showNextButtonReadyAnimation = true
             startNextButtonAnimation()
-            
             if demoAreaSize != .zero {
                  self.circlePosition = CGPoint(x: self.demoAreaSize.width / 2, y: self.demoAreaSize.height / 2)
                 self.dragStartCirclePosition = self.circlePosition
@@ -494,21 +397,15 @@ struct visionOSTutorialView: View {
             currentSubtitle = "Maximize your score with these tips:"
             showNextButtonReadyAnimation = true
             startNextButtonAnimation()
-            activeTutorialHolograms.removeAll()
-            activeSparkEffects.removeAll()
-            activeFlyingPoints.removeAll()
-            sampleDistraction = nil
+            activeTutorialHolograms.removeAll(); activeSparkEffects.removeAll(); activeFlyingPoints.removeAll(); sampleDistraction = nil
         case .learnHearts:
             currentTitle = "Stay in the Game!"
             currentSubtitle = "Save your hearts to keep playing:"
             tutorialHeartsToShow = 3
-            demoHeartLossHologram = nil // Ensure demo hologram is reset
+            demoHeartLossHologram = nil
             showNextButtonReadyAnimation = true
             startNextButtonAnimation()
-            activeTutorialHolograms.removeAll()
-            activeSparkEffects.removeAll()
-            activeFlyingPoints.removeAll()
-            sampleDistraction = nil
+            activeTutorialHolograms.removeAll(); activeSparkEffects.removeAll(); activeFlyingPoints.removeAll(); sampleDistraction = nil
             startHeartLossDemo()
         }
     }
@@ -525,12 +422,10 @@ struct visionOSTutorialView: View {
             return !hasDraggedOnce
         case .catchHologram:
             return hologramsCaughtCount < hologramsToCatchGoal
-        case .learnDistractions:
-            return false
-        case .learnScoring:
+        case .learnDistractions, .learnScoring:
             return false
         case .learnHearts:
-            return false // "Start Game!" button always enabled
+            return false
         }
     }
 
@@ -543,14 +438,13 @@ struct visionOSTutorialView: View {
         case .learnDistractions:
             setupStep(.learnScoring)
         case .learnScoring:
-            setupStep(.learnHearts) // Transition to heart step
+            setupStep(.learnHearts)
         case .learnHearts:
-            completeTutorial() // Finish tutorial
+            completeTutorial()
         }
     }
     
     private func completeTutorial() {
-        print("Tutorial completed/skipped for visionOS.")
         stopHologramTimers()
         stopDistractionTimer()
         stopHeartLossDemoTimer()
@@ -558,23 +452,14 @@ struct visionOSTutorialView: View {
         let descriptor = FetchDescriptor<UserProgress>()
         if let progress = try? modelContext.fetch(descriptor).first {
             progress.hasCompletedOnboarding = true
-            do {
-                try modelContext.save()
-                print("UserProgress updated: hasCompletedOnboarding = true")
-            } catch {
-                print("Failed to save UserProgress: \(error)")
-            }
         } else {
-            // If no UserProgress, create one
-            print("No UserProgress found, creating a new one.")
             let newProgress = UserProgress(hasCompletedOnboarding: true) 
             modelContext.insert(newProgress)
-            do {
-                try modelContext.save()
-                print("New UserProgress created and saved: hasCompletedOnboarding = true")
-            } catch {
-                 print("Failed to save new UserProgress: \(error)")
-            }
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
         }
         
         showHomeView = true
@@ -611,12 +496,12 @@ struct visionOSTutorialView: View {
         let spawnY = CGFloat.random(in: padding...(demoAreaSize.height - padding))
         let newPosition = CGPoint(x: spawnX, y: spawnY)
 
-        if newPosition.distance(to: circlePosition) < mainCircleVisualRadius + TutorialHologram.radius + 20 {
-            return
+        if newPosition.distance(to: circlePosition) < mainCircleVisualRadius + TutorialHologram.radius + 20 { 
+            return 
         }
 
         let newHologram = TutorialHologram(position: newPosition)
-        withAnimation {
+        withAnimation { 
              activeTutorialHolograms.append(newHologram)
         }
     }
@@ -625,7 +510,7 @@ struct visionOSTutorialView: View {
         let now = Date()
         activeTutorialHolograms.removeAll { hologram in
             if now.timeIntervalSince(hologram.creationTime) > TutorialHologram.lifespan {
-                return true
+                return true 
             }
             return false
         }
@@ -638,20 +523,20 @@ struct visionOSTutorialView: View {
         for hologram in activeTutorialHolograms {
             let distance = circlePosition.distance(to: hologram.position)
             let catchThreshold = mainCircleVisualRadius * 0.5 + TutorialHologram.radius * 0.8
+            
             if distance < catchThreshold {
                 caughtIDs.append(hologram.id)
-                
                 hologramsCaughtCount += 1
                 triggerSparkEffect(at: hologram.position)
-                triggerFlyingPoint(text: "+3", at: hologram.position)
+                triggerFlyingPoint(text: "+3", at: hologram.position) 
                 
                 if hologramsCaughtCount >= hologramsToCatchGoal {
                     currentSubtitle = "Great! You've caught \(hologramsCaughtCount) holograms. Tap Next to continue."
                     showNextButtonReadyAnimation = true
                     startNextButtonAnimation()
-                    stopHologramTimers()
-                    activeTutorialHolograms.removeAll()
-                    break
+                    stopHologramTimers() 
+                    activeTutorialHolograms.removeAll() 
+                    break 
                 } else {
                     currentSubtitle = "Caught \(hologramsCaughtCount)/\(hologramsToCatchGoal). Keep going!"
                 }
@@ -659,7 +544,7 @@ struct visionOSTutorialView: View {
         }
         
         if !caughtIDs.isEmpty {
-            withAnimation {
+            withAnimation { 
                 activeTutorialHolograms.removeAll { caughtIDs.contains($0.id) }
             }
         }
@@ -684,7 +569,7 @@ struct visionOSTutorialView: View {
     }
 
     private func startDistractionTimer() {
-        stopDistractionTimer()
+        stopDistractionTimer() 
         distractionAppearTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
             showSampleDistraction()
         }
@@ -696,9 +581,10 @@ struct visionOSTutorialView: View {
     }
 
     private func showSampleDistraction() {
-        guard demoAreaSize != .zero else { return }
+        guard demoAreaSize != .zero else { return } 
+        
         let distractionX = demoAreaSize.width * 0.5
-        let distractionY = demoAreaSize.height * 0.25
+        let distractionY = demoAreaSize.height * 0.25 
 
         sampleDistraction = Distraction(
             position: CGPoint(x: distractionX, y: distractionY),
@@ -706,17 +592,17 @@ struct visionOSTutorialView: View {
             message: "Project Deadline in 1 hour!",
             appIcon: "calendar.badge.exclamationmark",
             iconColors: [.orange, .red],
-            soundID: 0
+            soundID: 0 
         )
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-            if currentStep == .learnDistractions {
-                self.sampleDistraction = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { 
+            if currentStep == .learnDistractions { 
+                self.sampleDistraction = nil 
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { 
                 if currentStep == .learnDistractions {
                     let anotherDistractionX = demoAreaSize.width * 0.5
-                    let anotherDistractionY = demoAreaSize.height * 0.35
+                    let anotherDistractionY = demoAreaSize.height * 0.35 
                     self.sampleDistraction = Distraction(
                         position: CGPoint(x: anotherDistractionX, y: anotherDistractionY),
                         title: "New Message",
@@ -731,46 +617,33 @@ struct visionOSTutorialView: View {
     }
 
     private func startHeartLossDemo() {
-        stopHeartLossDemoTimer()
+        stopHeartLossDemoTimer() 
         guard demoAreaSize != .zero else { return }
 
-        // Sequence:
-        // 1. Show hologram (after 1s)
-        // 2. Hologram disappears (after 2.5s of being visible) & heart is lost
-        // 3. Heart reappears (after 1.5s)
-        
-        let hologramDemoPosition = CGPoint(x: demoAreaSize.width / 2, y: demoAreaSize.height * 0.20) // Position above the text card
+        let hologramDemoPosition = CGPoint(x: demoAreaSize.width / 2, y: demoAreaSize.height * 0.20) 
 
         heartLossDemoTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
-            guard self.currentStep == .learnHearts else {
-                self.stopHeartLossDemoTimer()
-                return
-            }
+            guard self.currentStep == .learnHearts else { self.stopHeartLossDemoTimer(); return } 
+            
             withAnimation {
                 self.demoHeartLossHologram = TutorialHologram(position: hologramDemoPosition)
             }
 
-            // Nested timer or DispatchQueue for next part of sequence
             self.heartLossDemoTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: false) { _ in
-                guard self.currentStep == .learnHearts else {
-                    self.stopHeartLossDemoTimer()
-                    return
-                }
+                guard self.currentStep == .learnHearts else { self.stopHeartLossDemoTimer(); return }
+                
                 withAnimation {
-                    self.demoHeartLossHologram = nil // Hologram disappears
-                    self.tutorialHeartsToShow = 2   // Heart is lost
+                    self.demoHeartLossHologram = nil 
+                    self.tutorialHeartsToShow = 2   
                 }
 
                 self.heartLossDemoTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { _ in
-                    guard self.currentStep == .learnHearts else {
-                        self.stopHeartLossDemoTimer()
-                        return
-                    }
+                    guard self.currentStep == .learnHearts else { self.stopHeartLossDemoTimer(); return }
+                    
                     withAnimation {
-                        self.tutorialHeartsToShow = 3 // Heart reappears (tutorial reset)
+                        self.tutorialHeartsToShow = 3   
                     }
-                     // Optionally, re-run the demo or just stop
-                    self.stopHeartLossDemoTimer() // Stop after one full cycle
+                    self.stopHeartLossDemoTimer() 
                 }
             }
         }
@@ -780,10 +653,6 @@ struct visionOSTutorialView: View {
         heartLossDemoTimer?.invalidate()
         heartLossDemoTimer = nil
     }
-}
-
-#Preview {
-    visionOSTutorialView()
 }
 
 #endif

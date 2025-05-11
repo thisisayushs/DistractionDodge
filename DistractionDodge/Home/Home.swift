@@ -2,7 +2,7 @@
 //  Home.swift
 //  DistractionDodge
 //
-//  Created by Ayush Singh on 5/4/25.
+//  Created by Ayush Kumar Singh on 5/4/25.
 //
 
 import SwiftUI

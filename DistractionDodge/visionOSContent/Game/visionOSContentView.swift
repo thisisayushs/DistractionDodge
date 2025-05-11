@@ -2,83 +2,13 @@
 //  visionOSContentView.swift
 //  DistractionDodge
 //
-//  Created by Ayush Singh on 5/10/25.
+//  Created by Ayush Kumar Singh on 5/5/25.
 //
-
-import SwiftUI
-import SwiftData // For ModelContext
-
 #if os(visionOS)
-
-// MARK: - Hologram Definitions (You can move these to a new file later)
-struct Hologram: Identifiable, Equatable {
-    let id = UUID()
-    var position: CGPoint
-    let creationTime = Date() // Used to manage lifespan
-}
-
-struct HologramView: View {
-    var body: some View {
-        Circle()
-            .fill(Color.cyan.opacity(0.5))
-            .frame(width: 90, height: 90)
-            .overlay(
-                Circle()
-                    .stroke(Color.cyan.opacity(0.8), lineWidth: 2)
-                    .blur(radius: 3)
-            )
-            .shadow(color: .cyan.opacity(0.7), radius: 10, x: 0, y: 0)
-            .transition(.scale.combined(with: .opacity))
-    }
-}
-// END: Hologram Definitions
-
-struct CollisionEffect: Identifiable {
-    let id = UUID()
-    var position: CGPoint
-}
-
-struct SparkleExplosionView: View {
-    @State private var scale: CGFloat = 0.2
-    @State private var opacity: Double = 1.0
-    let onComplete: () -> Void // Callback to remove from parent array
-
-    private let animationDuration: TimeInterval = 0.6
-
-    var body: some View {
-        ZStack {
-            // Expanding rings
-            ForEach(0..<3) { i in
-                Circle()
-                    .stroke(Color.yellow.opacity(opacity * (1.0 - Double(i) * 0.2)), lineWidth: 2)
-                    .scaleEffect(scale * (1.0 + CGFloat(i) * 0.3))
-                    .animation(Animation.easeOut(duration: animationDuration).delay(Double(i) * 0.05), value: scale)
-                    .animation(Animation.easeOut(duration: animationDuration).delay(Double(i) * 0.05), value: opacity)
-            }
-            // Central sparkle
-            Image(systemName: "sparkle")
-                .font(.system(size: 30))
-                .foregroundColor(.yellow.opacity(opacity))
-                .scaleEffect(scale * 1.5) // Make sparkle a bit bigger
-                .animation(Animation.spring(response: animationDuration * 0.5, dampingFraction: 0.5).delay(0.1), value: scale)
-                .animation(Animation.easeOut(duration: animationDuration * 0.8), value: opacity)
-
-        }
-        .onAppear {
-            // Trigger animation
-            self.scale = 1.3
-            self.opacity = 0.0
-            
-            // Schedule removal after animation
-            DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration + 0.1) { // Add slight buffer
-                onComplete()
-            }
-        }
-    }
-}
-// END: Collision Effect Definitions
-
-
+import SwiftUI
+import SwiftData
+// Note: Hologram, HologramView, CollisionEffect, SparkleExplosionView definitions
+// have been moved to their own files in Game/Models/ and SharedViews/
 
 struct visionOSContentView: View {
     // MARK: - Properties
@@ -106,7 +36,7 @@ struct visionOSContentView: View {
     private let initialSpawnIntervalRange_const: ClosedRange<Double> = 2.5...4.5
     private let finalSpawnIntervalRange_const: ClosedRange<Double> = 1.0...2.5
 
-    let hologramDiameter: CGFloat = 90
+    let hologramDiameter: CGFloat = 90 
     var hologramRadius_prop: CGFloat { hologramDiameter / 2 }
 
     @State private var activeCollisionEffects: [CollisionEffect] = []
@@ -153,10 +83,10 @@ struct visionOSContentView: View {
     @ViewBuilder
     private func buildDraggableCircle(geometry: GeometryProxy) -> some View {
         MainCircle(
-            isGazingAtTarget: self.isDragging, 
+            isGazingAtTarget: self.isDragging,
             position: self.circlePosition
         )
-        .hoverEffect() 
+        .hoverEffect()
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
@@ -199,7 +129,7 @@ struct visionOSContentView: View {
     @ViewBuilder
     private var buildDistractionsLayer: some View {
         ForEach(self.attentionViewModel.distractions) { distraction in
-            VisionOSDistractionView(distraction: distraction)
+            VisionOSDistractionView(distraction: distraction) 
                 .position(distraction.position)
                 .allowsHitTesting(false)
         }
@@ -227,6 +157,12 @@ struct visionOSContentView: View {
                         title: "Streak",
                         value: "\(attentionViewModel.visionOSCatchStreak)",
                         glowCondition: attentionViewModel.visionOSCatchStreak >= 5,
+                        glowColor: .cyan
+                    )
+                    FloatingCard(
+                        title: "Multiplier",
+                        value: String(format: "%.1fx", attentionViewModel.visionOSScoreMultiplier),
+                        glowCondition: attentionViewModel.visionOSScoreMultiplier > 1.0,
                         glowColor: .cyan
                     )
                 }
@@ -273,9 +209,8 @@ struct visionOSContentView: View {
             .onAppear {
                 self.viewSize = geometry.size
                 self.attentionViewModel.updateViewSize(geometry.size)
-                // Initial setup for circlePosition, gameDuration will be handled by gameID change or initial startGame call
                 self.attentionViewModel.setGameDuration(self.totalGameDuration)
-                self.startGame() // Initial game start on first appear
+                self.startGame()
             }
             .onDisappear {
                 self.stopGame()
@@ -283,7 +218,6 @@ struct visionOSContentView: View {
             .onChange(of: geometry.size) { oldSize, newSize in
                  self.viewSize = newSize
                  self.attentionViewModel.updateViewSize(newSize)
-                 // Reset circle position if view size changes during an active game
                  if !self.isDragging && self.attentionViewModel.gameActive && self.viewSize != .zero {
                      self.circlePosition = CGPoint(x: self.viewSize.width / 2, y: self.viewSize.height / 2)
                      self.attentionViewModel.visionOSCirclePosition = self.circlePosition
@@ -296,14 +230,12 @@ struct visionOSContentView: View {
                 self.attentionViewModel.visionOSHologramPositions = newValue.map { $0.position }
             }
             .onChange(of: attentionViewModel.gameID) { _, newGameID in
-                // This fires every time AttentionViewModel.startGame() generates a new gameID
-                guard attentionViewModel.gameActive else { return } // Ensure the game is actually marked active by the VM
+                guard attentionViewModel.gameActive else { return }
 
-                print("New game started/restarted with ID: \(newGameID)")
                 self.activeHolograms.removeAll()
                 self.activeCollisionEffects.removeAll()
                 self.showGameOverView = false
-                self.showPauseMenu = false // Ensure pause menu is dismissed on restart
+                self.showPauseMenu = false
 
                 if self.viewSize != .zero {
                     self.circlePosition = CGPoint(x: self.viewSize.width / 2, y: self.viewSize.height / 2)
@@ -312,22 +244,19 @@ struct visionOSContentView: View {
                 self.isDragging = false
 
                 if attentionViewModel.isVisionOSMode {
-                    self.stopHologramSpawning() // Clear any old view-local timers
+                    self.stopHologramSpawning()
                     self.startHologramSpawning()
                 }
             }
             .onChange(of: attentionViewModel.gameActive) { _, isActive in
-                if !isActive && !attentionViewModel.isPaused { // Game has ended (and not just paused)
-                    print("Game became inactive. Reason: \(attentionViewModel.endGameReason)")
-                    self.stopHologramSpawning() // Stop spawning if game ends
+                if !isActive && !attentionViewModel.isPaused {
+                    self.stopHologramSpawning() 
 
                     if attentionViewModel.endGameReason == .heartsDepleted {
                         self.showGameOverView = true
                     } else if attentionViewModel.endGameReason == .timeUp {
-                        print("Game ended due to Time Up. Navigating to ConclusionView.")
                         self.showConclusionView = true
                     }
-                    // These are also cleared by gameID change, but good to have for explicit game end
                     self.activeHolograms.removeAll()
                     self.activeCollisionEffects.removeAll()
                 }
@@ -347,7 +276,7 @@ struct visionOSContentView: View {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                // ViewModel handles its own resume logic from background
+                // ViewModel handles its own resume logic
             }
         }
     }
@@ -376,27 +305,16 @@ struct visionOSContentView: View {
     }
 
     // MARK: - Game Lifecycle
-    func startGame() { 
+    func startGame() {
         isDragging = false
-        // Initial view size might not be ready here, viewSize will be set by GeometryReader's onAppear/onChange
-        // Circle position reset will be handled by onChange(of: gameID)
-
-        // activeHolograms & activeCollisionEffects will be cleared by onChange(of: gameID)
         showGameOverView = false
         showPauseMenu = false
         showConclusionView = false
-
-        // This will generate a new gameID, triggering the .onChange(of: attentionViewModel.gameID)
         attentionViewModel.startGame(isVisionOSGame: true)
-        
-        // Hologram spawning is now primarily managed by .onChange(of: attentionViewModel.gameID)
-        // No need to explicitly call startHologramSpawning() here if the onChange handles it robustly.
-        // If gameID change triggers the setup, that's cleaner.
     }
 
-    func stopGame() { 
+    func stopGame() {
         stopHologramSpawning()
-        // Ensure AttentionViewModel is told it's a visionOS game stopping
         attentionViewModel.stopGame(isVisionOSGame: true)
     }
 
@@ -438,14 +356,12 @@ struct visionOSContentView: View {
         let maxY = viewSize.height - hologramTrueRadius - safeSpawnPadding
         
         guard maxX > minX && maxY > minY else {
-            print("Warning: Hologram spawn area too constrained. Cannot spawn hologram.")
             return
         }
 
         find_position_loop: repeat {
             attempts += 1
             if attempts > maxAttempts {
-                print("Could not find non-overlapping position for hologram after \(maxAttempts) attempts.")
                 return
             }
             newPosition = CGPoint(x: CGFloat.random(in: minX...maxX),
@@ -458,7 +374,7 @@ struct visionOSContentView: View {
 
             for existingHologram in activeHolograms {
                 let distance = newPosition.distance(to: existingHologram.position)
-                if distance < (hologramDiameter + 20) {
+                if distance < (hologramDiameter + 20) { 
                     continue find_position_loop
                 }
             }
@@ -496,7 +412,7 @@ struct visionOSContentView: View {
         var caughtHologramIDsAndPositions: [(UUID, CGPoint)] = []
         for hologram in activeHolograms {
             let distance = circlePosition.distance(to: hologram.position)
-            let catchThreshold = hologramRadius_prop + circleRadius * 0.3
+            let catchThreshold = hologramRadius_prop + circleRadius * 0.3 
             if distance < catchThreshold {
                 caughtHologramIDsAndPositions.append((hologram.id, hologram.position))
             }
@@ -507,9 +423,5 @@ struct visionOSContentView: View {
             attentionViewModel.handleVisionOSCatch()
         }
     }
-} // End of visionOSContentView
-
-
-
-
+}
 #endif

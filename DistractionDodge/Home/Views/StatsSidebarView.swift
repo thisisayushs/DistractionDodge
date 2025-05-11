@@ -1,3 +1,9 @@
+//
+//  StatsSidebarView.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/4/25.
+//
 import SwiftUI
 
 /// Sidebar view displaying session statistics and HealthKit integration.

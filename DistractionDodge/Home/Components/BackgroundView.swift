@@ -1,3 +1,9 @@
+//
+//  BackgroundView.swift
+//  DistractionDodge
+//
+//  Created by Ayush Kumar Singh on 5/4/25.
+//
 import SwiftUI
 
 /// A view that provides animated gradient backgrounds.

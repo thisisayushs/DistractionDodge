@@ -2,7 +2,7 @@
 //  PauseMenuView.swift
 //  DistractionDodge
 //
-//  Created by Ayush Kumar Singh on 22/01/25.
+//  Created by Ayush Kumar Singh on 1/22/25.
 //
 
 import SwiftUI
@@ -119,7 +119,7 @@ struct MenuButton: View {
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(0.15))
-                .background( // This nested background is a bit unusual, consider simplifying if it's not rendering as expected
+                .background(
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(Color.white.opacity(0.3), lineWidth: 1)
                 )
