@@ -50,6 +50,26 @@ class HealthKitManager: ObservableObject {
         }
     }
 
+    /// Re-checks HealthKit authorization status and updates `isSynced` property.
+    /// Call this when the app becomes active to reflect any permission changes made outside the app.
+    func updateAuthorizationStatus() {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            // If HealthKit is not available, reflect this in isSynced (or a new state variable if needed)
+            // For now, assuming !isHealthDataAvailable means not synced.
+            if self.isSynced { // Only update if there's a change to avoid unnecessary UI redraws
+                self.isSynced = false
+            }
+            return
+        }
+
+        let currentStatus = healthStore.authorizationStatus(for: mindfulType)
+        let newSyncedStatus = (currentStatus == .sharingAuthorized)
+        
+        if self.isSynced != newSyncedStatus { // Only update if there's a change
+            self.isSynced = newSyncedStatus
+        }
+    }
+
     // MARK: - Authorization
 
     /// Requests authorization from the user to share mindful session data with HealthKit.

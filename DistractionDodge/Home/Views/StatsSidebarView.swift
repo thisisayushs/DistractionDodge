@@ -19,6 +19,7 @@ struct StatsSidebarView: View {
     let longestVisionOSStreak: Double
     
     @ObservedObject var healthKitManager: HealthKitManager
+    @Environment(\.scenePhase) private var scenePhase
     
     /// Formats time interval into human-readable string
     /// - Parameter seconds: Duration in seconds
@@ -63,7 +64,7 @@ struct StatsSidebarView: View {
             StatCard(
                 title: "Best Streak",
                 value: "\(Int(longestVisionOSStreak))",
-                icon: "sparkles"
+                icon: "bolt.fill"
             )
             #else
             StatCard(
@@ -119,22 +120,26 @@ struct StatsSidebarView: View {
             .buttonStyle(.plain)
             #endif
             .disabled(healthKitManager.isAuthorizing)
-            .alert("Health Access Denied", isPresented: $healthKitManager.showSettingsAlert) {
-                Button("Open Settings", role: .none) { 
-                    if let url = URL(string: UIApplication.openSettingsURLString), UIApplication.shared.canOpenURL(url) {
-                         UIApplication.shared.open(url)
-                    } else if let url = URL(string: "x-apple-health://") { 
+            .alert("Health Access Required", isPresented: $healthKitManager.showSettingsAlert) {
+                Button("Open Health", role: .none) {
+                    if let url = URL(string: "x-apple-health://") {
                         UIApplication.shared.open(url)
+                                                    
                     }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Please enable Health access in Settings to sync your mindful minutes.") 
+                Text("Please enable Health access in the Health app to sync your focus sessions as mindful minutes.")
             }
             .alert("Could not sync with Health", isPresented: $healthKitManager.showError) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text("Please make sure Health access is enabled for the app in Settings and that Health data is available on this device.") 
+                Text("Please make sure Health access is enabled for the app and that Health data is available on this device.")
+            }
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .active {
+                healthKitManager.updateAuthorizationStatus()
             }
         }
     }

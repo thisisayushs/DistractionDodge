@@ -171,7 +171,7 @@ struct ConclusionView: View {
                                     // Reset animation states
                                     displayedScore = 0
                                     scoreScale = 0.5
-                                    isAnimating = false // TODO: Confirm if isAnimating has a distinct role here
+                                    isAnimating = false 
                                     shouldAnimateButton = false
                                     
                                     // Initial score scale animation
