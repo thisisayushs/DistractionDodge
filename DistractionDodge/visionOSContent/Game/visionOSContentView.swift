@@ -7,8 +7,7 @@
 #if os(visionOS)
 import SwiftUI
 import SwiftData
-// Note: Hologram, HologramView, CollisionEffect, SparkleExplosionView definitions
-// have been moved to their own files in Game/Models/ and SharedViews/
+
 
 struct visionOSContentView: View {
     // MARK: - Properties
