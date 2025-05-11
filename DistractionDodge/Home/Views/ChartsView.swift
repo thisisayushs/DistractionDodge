@@ -3,7 +3,8 @@
 //  DistractionDodge
 //
 //  Created by Ayush Kumar Singh on 5/4/25.
-//import SwiftUI
+//
+import SwiftUI
 import Charts
 
 /// Container view for focus and streak charts.
