@@ -24,7 +24,7 @@ struct AppMessages {
             "Dad: Just landed at the airport",
             "John: Let's meet for coffee",
             "Sara: Don't forget about tomorrow",
-            "Alex: Check out this link"
+            "Lily: You're the best!"
         ],
         "Calendar": [
             "Team Meeting in 15 minutes",
