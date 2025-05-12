@@ -41,11 +41,12 @@ struct ChartsView: View {
                     focusTimeData: focusTimeData,
                     timeRange: timeRange
                 )
-                
+                #if os(iOS)
                 StreakChart(
                     streakData: streakData,
                     timeRange: timeRange
                 )
+                #endif
             }
         }
         .frame(width: 500)

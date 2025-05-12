@@ -4,6 +4,7 @@
 //
 //  Created by Ayush Kumar Singh on 5/4/25.
 //
+#if os(iOS)
 import SwiftUI
 import Charts
 
@@ -60,3 +61,4 @@ struct StreakChart: View {
         }
     }
 }
+#endif

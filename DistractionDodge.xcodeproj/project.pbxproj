@@ -29,6 +29,7 @@
 				Game/Tutorial/StyledTextEffect.swift = (ios, );
 				Game/Tutorial/TutorialStep.swift = (ios, );
 				Game/Tutorial/TutorialView.swift = (ios, );
+				Home/Charts/StreakChart.swift = (ios, );
 				Onboarding/DistractionBackground.swift = (ios, );
 				Services/EyeTrackingViewController.swift = (ios, );
 				visionOSContent/Game/Distractions/VisionOSDistractionView.swift = (xros, );
