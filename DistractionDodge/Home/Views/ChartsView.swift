@@ -16,9 +16,11 @@ struct ChartsView: View {
     @Binding var timeRange: StatsView.TimeRange
     /// Focus time data points for chart
     let focusTimeData: [(date: Date, minutes: Double)]
-    /// Streak data points for chart
+    /// Streak data points for chart (iOS: TimeInterval)
     let streakData: [(date: Date, streak: TimeInterval)]
-    
+    /// Streak data points for visionOS chart (catch count)
+    let visionOSStreakData: [(date: Date, streakCount: Int)]
+
     var body: some View {
         VStack(spacing: 30) {
             HStack(spacing: 15) {
@@ -44,6 +46,11 @@ struct ChartsView: View {
                 #if os(iOS)
                 StreakChart(
                     streakData: streakData,
+                    timeRange: timeRange
+                )
+                #elseif os(visionOS)
+                VisionOSStreakChart(
+                    streakData: visionOSStreakData,
                     timeRange: timeRange
                 )
                 #endif

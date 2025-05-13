@@ -16,10 +16,10 @@ final class GameSession {
     /// Total score achieved in the session
     var score: Int
     
-    /// Current focus streak duration in seconds
+    /// Current focus streak duration in seconds (used for iOS)
     var focusStreak: TimeInterval
     
-    /// Longest focus streak achieved in seconds
+    /// Longest focus streak achieved in seconds (used for iOS)
     var bestStreak: TimeInterval
     
     /// Total time spent focused in seconds
@@ -31,6 +31,9 @@ final class GameSession {
     /// Number of distractions successfully ignored
     var distractionResistCount: Int
     
+    /// Best catch streak achieved in a visionOS session (number of consecutive catches)
+    var visionOSBestCatchStreak: Int
+    
     /// Creates a new game session with optional initial values.
     /// - Parameters:
     ///   - score: Initial score, defaults to 0
@@ -38,12 +41,14 @@ final class GameSession {
     ///   - bestStreak: Best streak achieved, defaults to 0
     ///   - totalFocusTime: Total focus duration, defaults to 0
     ///   - distractionResistCount: Distractions resisted, defaults to 0
+    ///   - visionOSBestCatchStreak: Best catch streak for visionOS, defaults to 0
     init(
         score: Int = 0,
         focusStreak: TimeInterval = 0,
         bestStreak: TimeInterval = 0,
         totalFocusTime: TimeInterval = 0,
-        distractionResistCount: Int = 0
+        distractionResistCount: Int = 0,
+        visionOSBestCatchStreak: Int = 0
     ) {
         self.score = score
         self.focusStreak = focusStreak
@@ -51,5 +56,6 @@ final class GameSession {
         self.totalFocusTime = totalFocusTime
         self.date = Date()
         self.distractionResistCount = distractionResistCount
+        self.visionOSBestCatchStreak = visionOSBestCatchStreak
     }
 }

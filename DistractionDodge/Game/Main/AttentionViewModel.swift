@@ -358,10 +358,11 @@ class AttentionViewModel: ObservableObject {
         if isVisionOSGame {
             session = GameSession(
                 score: self.score,
-                focusStreak: TimeInterval(self.visionOSCatchStreak), // Storing visionOS streak (count) as TimeInterval
-                bestStreak: 0, // Not directly applicable for visionOS in the same way as iOS
+                focusStreak: 0, // iOS-specific, set to 0 for visionOS sessions
+                bestStreak: 0, // iOS-specific, set to 0 for visionOS sessions
                 totalFocusTime: self.actualPlayedDuration,
-                distractionResistCount: self.score // This seems to be placeholder, might need adjustment later
+                distractionResistCount: self.score, // Placeholder, review if this is the correct metric for "distraction resist" in visionOS
+                visionOSBestCatchStreak: self.visionOSCatchStreak // Store the visionOS catch streak for this session
             )
         } else {
             session = GameSession(
@@ -369,7 +370,8 @@ class AttentionViewModel: ObservableObject {
                 focusStreak: focusStreak,
                 bestStreak: bestStreak,
                 totalFocusTime: totalFocusTime,
-                distractionResistCount: distractions.count // This makes more sense for iOS
+                distractionResistCount: distractions.count, // This makes more sense for iOS
+                visionOSBestCatchStreak: 0 // Set to 0 for iOS sessions
             )
         }
         modelContext.insert(session)
@@ -380,9 +382,9 @@ class AttentionViewModel: ObservableObject {
                 progress.highScore = score
             }
             if isVisionOSGame {
-                let currentVisionOSSessionStreak = Double(self.visionOSCatchStreak)
-                if currentVisionOSSessionStreak > progress.longestVisionOSStreak {
-                    progress.longestVisionOSStreak = currentVisionOSSessionStreak
+                // This correctly updates the all-time longest visionOS streak in UserProgress
+                if Double(self.visionOSCatchStreak) > progress.longestVisionOSStreak {
+                    progress.longestVisionOSStreak = Double(self.visionOSCatchStreak)
                 }
             } else {
                 if bestStreak > progress.longestStreak {

@@ -39,13 +39,30 @@ struct StatsContentView: View {
         .sorted { $0.date < $1.date }
     }
     
-    /// Filtered streak data based on selected range
+    /// Filtered streak data based on selected range (for iOS TimeInterval based streaks)
     private var streakData: [(date: Date, streak: TimeInterval)] {
         Dictionary(grouping: filteredSessions) { session in
             Calendar.current.startOfDay(for: session.date)
         }
         .map { date, sessionsInDay in
-            (date, sessionsInDay.map { $0.bestStreak }.max() ?? 0)
+            // Ensure we only consider iOS streaks (where visionOSBestCatchStreak would be 0)
+            let iosSessions = sessionsInDay.filter { $0.visionOSBestCatchStreak == 0 }
+            return (date, iosSessions.map { $0.bestStreak }.max() ?? 0)
+        }
+        .sorted { $0.date < $1.date }
+    }
+    
+    /// Filtered visionOS streak data
+    private var visionOSStreakData: [(date: Date, streakCount: Int)] {
+        Dictionary(grouping: filteredSessions) { session in
+            Calendar.current.startOfDay(for: session.date)
+        }
+        .map { date, sessionsInDay in
+            // Ensure we only consider visionOS streaks (where visionOSBestCatchStreak > 0)
+            // If a day has both iOS and visionOS sessions, this will prioritize visionOS streaks for this chart.
+            // If a session could theoretically have both (which it shouldn't by design),
+            // this logic correctly picks the visionOSBestCatchStreak.
+            return (date, sessionsInDay.map { $0.visionOSBestCatchStreak }.max() ?? 0)
         }
         .sorted { $0.date < $1.date }
     }
@@ -65,7 +82,8 @@ struct StatsContentView: View {
             ChartsView(
                 timeRange: $timeRange,
                 focusTimeData: focusTimeData,
-                streakData: streakData
+                streakData: streakData,
+                visionOSStreakData: visionOSStreakData
             )
             
             StatsSidebarView(
