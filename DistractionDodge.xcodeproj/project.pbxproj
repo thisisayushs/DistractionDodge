@@ -30,6 +30,7 @@
 				Game/Tutorial/TutorialStep.swift = (ios, );
 				Game/Tutorial/TutorialView.swift = (ios, );
 				Home/Charts/StreakChart.swift = (ios, );
+				Home/Charts/VisionOSStreakChart.swift = (xros, );
 				Onboarding/DistractionBackground.swift = (ios, );
 				Services/EyeTrackingViewController.swift = (ios, );
 				visionOSContent/Game/Distractions/VisionOSDistractionView.swift = (xros, );

@@ -278,6 +278,8 @@ struct visionOSContentView: View {
                 // ViewModel handles its own resume logic
             }
         }
+        .statusBarHidden()
+        .persistentSystemOverlays(.hidden)
     }
     
     // MARK: - Private _GameAreaView Struct

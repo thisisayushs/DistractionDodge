@@ -57,5 +57,10 @@ struct ChartsView: View {
             }
         }
         .frame(width: 500)
+        #if os(iOS)
+        .statusBarHidden()
+        .persistentSystemOverlays(.hidden)
+        #endif
+        
     }
 }

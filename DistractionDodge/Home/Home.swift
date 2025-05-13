@@ -142,8 +142,10 @@ struct Home: View {
             StatsView(sessions: sessions, healthKitManager: healthKitManager)
         }
         .preferredColorScheme(.dark)
+        #if os(iOS)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
+        #endif
     }
 }
 
