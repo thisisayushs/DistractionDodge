@@ -297,7 +297,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Distraction Dodge";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Distraction Dodge uses the camera to track your eye movements and determine your focus area, helping you improve attention.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "DistractionDodge needs permission to save your focus sessions as mindful minutes in Apple Health.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Distraction Dodge needs permission to save your focus sessions as mindful minutes in Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -338,7 +338,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Distraction Dodge";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Distraction Dodge uses the camera to track your eye movements and determine your focus area, helping you improve attention.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "DistractionDodge needs permission to save your focus sessions as mindful minutes in Apple Health.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Distraction Dodge needs permission to save your focus sessions as mindful minutes in Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
