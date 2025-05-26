@@ -1,6 +1,6 @@
 # Welcome to Distraction Dodge
 
-A fun and effective focus training experience for iPad and Apple Vision.
+A fun and effective science-backed focus training experience for iPad and Apple Vision.
 
 ![App Screenshot](Screenshots/Poster.png)
 
