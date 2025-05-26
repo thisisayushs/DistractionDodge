@@ -44,6 +44,18 @@
 </table>
 
 - Get an instant score recap, best streak, and a personalized tip to boost your next session.
+
+<table align="center" width="100%" cellspacing="10" cellpadding="10">
+  <tr>
+    <td align="center" width="50%">
+      <img src="Screenshots/iPadOS/Conclusion.jpg" alt="iPadOS Conclusion screen." width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <img src="Screenshots/visionOS/Conclusion.jpg" alt="visionOS Conclusion window." width="100%" />
+    </td>
+  </tr>
+</table>
+
 - Track your daily best streaks, daily focus time, through interactive weekly and monthly charts, along with lifetime game count, best score and best streak.
 
 <table align="center" width="100%" cellspacing="10" cellpadding="10">
