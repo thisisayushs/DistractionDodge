@@ -105,3 +105,7 @@ A fun and effective focus training experience for iPad and Apple Vision.
 ## Available on the App Store
 
 https://apps.apple.com/us/app/distraction-dodge/id6745779732
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
