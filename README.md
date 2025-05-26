@@ -84,9 +84,9 @@
 
 ## Architecture Highlights
 
--** SwiftUI** for declarative UI and animation on both platforms.
+- **SwiftUI** for declarative UI and animation on both platforms.
 
-- *ARKit Face Tracking* (lookAtPoint, eyeBlink, eyeSquint) for gaze verification on iPad.
+- **ARKit Face Tracking** (lookAtPoint, eyeBlink, eyeSquint) for gaze verification on iPad.
 
 - **SwiftData** for persistence (Session, Streak models).
 
