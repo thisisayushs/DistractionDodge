@@ -81,3 +81,25 @@
     </td>
   </tr>
 </table>
+
+## Architecture Highlights
+
+-** SwiftUI** for declarative UI and animation on both platforms.
+
+- *ARKit Face Tracking* (lookAtPoint, eyeBlink, eyeSquint) for gaze verification on iPad.
+
+- **SwiftData** for persistence (Session, Streak models).
+
+- **Swift Charts** for scatter-plot dashboards.
+
+- **HealthKit** (HKCategoryTypeIdentifier.mindfulSession) opt-in export.
+
+## Installation
+
+1. Clone this repository: `git clone https://github.com/thisisayushs/DistractionDodge.git`
+2. Open the project in Xcode.
+3. Run the app on a simulator or connected device.
+
+## Available on the App Store
+
+https://apps.apple.com/us/app/distraction-dodge/id6745779732
