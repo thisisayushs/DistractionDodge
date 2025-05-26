@@ -4,6 +4,10 @@ A fun and effective science-backed focus training experience for iPad and Apple 
 
 ![App Screenshot](Screenshots/Poster.png)
 
+## Available on the App Store
+
+App Store Link - https://apps.apple.com/us/app/distraction-dodge/id6745779732
+
 ## Features
 
 - A comprehensive and interactive tutorial to get you upto the speed on the mechanics of the game.
@@ -101,10 +105,6 @@ A fun and effective science-backed focus training experience for iPad and Apple 
 1. Clone this repository: `git clone https://github.com/thisisayushs/DistractionDodge.git`
 2. Open the project in Xcode.
 3. Run the app on a simulator or connected device.
-
-## Available on the App Store
-
-https://apps.apple.com/us/app/distraction-dodge/id6745779732
 
 ## License
 
